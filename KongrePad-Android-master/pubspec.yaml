@@ -41,9 +41,11 @@ dependencies:
   qr_code_scanner: ^1.0.1
   http: ^1.2.1
   shared_preferences: ^2.2.0
-  syncfusion_flutter_pdfviewer: ^24.2.8
+  syncfusion_flutter_pdfviewer: 23.1.39
   pusher_channels_flutter: ^2.2.1
-
+  firebase_messaging: ^15.1.1
+  firebase_core: ^3.4.1
+  pusher_beams: ^1.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

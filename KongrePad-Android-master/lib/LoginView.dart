@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:kongrepad/AlertService.dart';
 import 'package:kongrepad/MainPageView.dart';
+import 'package:pusher_beams/pusher_beams.dart';
 
 import 'AnnouncementsView.dart';
 import 'AppConstants.dart';
@@ -19,15 +21,15 @@ import 'PusherService.dart';
 //import 'functions/notification_helper.dart';
 
 void main() async {
-  //await Firebase.initializeApp(); // Initialize Firebase
 
   WidgetsFlutterBinding.ensureInitialized();
- // NotificationHelper.initialize();
- // var pusherService = AnnouncementPusherService();
-//  await pusherService.initialize();
+  await Firebase.initializeApp();
 
-  // AnnouncementService announcementService = AnnouncementService();
-  // await announcementService.fetchPastAnnouncements();  // Geçmiş duyuruları göster
+  PusherBeams beamsClient = PusherBeams.instance;
+
+  await beamsClient.start('dc312300-76d4-4fa3-ad7f-f6fec48cbb56');  // Pusher Beams Instance ID'nizi buraya ekleyin
+  await beamsClient.addDeviceInterest('debug-meeting_2');  // Cihazın abone olacağı "interest" ekleyin
+
 
   runApp(const MyApp());
 
