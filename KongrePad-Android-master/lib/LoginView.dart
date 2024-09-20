@@ -28,7 +28,7 @@ void main() async {
   PusherBeams beamsClient = PusherBeams.instance;
 
   await beamsClient.start('dc312300-76d4-4fa3-ad7f-f6fec48cbb56');  // Pusher Beams Instance ID'nizi buraya ekleyin
-  await beamsClient.addDeviceInterest('debug-meeting_2');  // Cihazın abone olacağı "interest" ekleyin
+ // await beamsClient.addDeviceInterest('debug-meeting_2');  // Cihazın abone olacağı "interest" ekleyin
 
 
   runApp(const MyApp());

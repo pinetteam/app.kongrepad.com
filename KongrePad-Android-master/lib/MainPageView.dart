@@ -19,6 +19,7 @@ import 'package:kongrepad/VirtualStandView.dart';
 import 'package:kongrepad/Models/Meeting.dart';
 import 'package:kongrepad/Models/Participant.dart';
 import 'package:kongrepad/Models/VirtualStand.dart';
+import 'package:pusher_beams/pusher_beams.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LowerHalfEllipse extends StatelessWidget {
@@ -122,6 +123,21 @@ class _MainPageViewState extends State<MainPageView> {
     } catch (e) {
       print('Error: $e');
     }
+
+    // Kullanıcının meeting_id'sini aldıktan sonra abone etme işlemini yapalım
+    if (meeting != null && meeting!.id != null) {
+      final meetingId = meeting!.id.toString();
+
+      // Pusher Beams'e daha önce abone olunan tüm interest'leri temizle
+      PusherBeams beamsClient = PusherBeams.instance;
+
+      // Önceki tüm interest'leri temizle
+      await beamsClient.clearDeviceInterests();
+
+      // Sadece ilgili meeting_id'ye abone et
+      await beamsClient.addDeviceInterest('debug-meeting_$meetingId');
+    }
+
     try {
       final url = Uri.parse('http://app.kongrepad.com/api/v1/participant');
       final response = await http.get(
@@ -143,7 +159,7 @@ class _MainPageViewState extends State<MainPageView> {
           context,
           MaterialPageRoute(builder: (context) => const LoginView()),
         );
-        throw Exception('Failed to load meeting');
+        throw Exception('Failed to load participant');
       }
     } catch (e) {
       print('Error: $e');
