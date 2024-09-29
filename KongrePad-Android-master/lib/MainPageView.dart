@@ -83,17 +83,24 @@ class _MainPageViewState extends State<MainPageView> {
   }
 
   Future<void> getData() async {
+    print("getData fonksiyonu başladı"); // Log başlatıldı
+
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     if (prefs.getString('token') == null) {
+      print("Token bulunamadı, LoginView'a yönlendiriliyor"); // Token kontrolü
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const LoginView()),
       );
+      return;
     }
+
     final token = prefs.getString('token');
+    print("Token bulundu: $token"); // Tokenin bulunduğu loglandı
 
     try {
       final url = Uri.parse('http://app.kongrepad.com/api/v1/meeting');
+      print("Meeting verisi çekiliyor..."); // API isteği başlıyor
       final response = await http.get(
         url,
         headers: <String, String>{
@@ -101,45 +108,53 @@ class _MainPageViewState extends State<MainPageView> {
         },
       );
 
+      print("Meeting API isteği tamamlandı. Status Code: ${response.statusCode}"); // Status code loglandı
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
+        print("Meeting verisi başarıyla alındı: $jsonData"); // API yanıtı loglandı
         final meetingJson = MeetingJSON.fromJson(jsonData);
+
         setState(() {
           meeting = meetingJson.data;
         });
+
         if (meeting == null) {
+          print("Meeting boş, LoginView'a yönlendiriliyor..."); // Eğer meeting boşsa log
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const LoginView()),
           );
+        } else {
+          print("Meeting ID: ${meeting!.id}"); // Meeting id loglandı
         }
       } else {
+        print("Meeting verisi yüklenemedi, LoginView'a yönlendiriliyor"); // Hata logu
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const LoginView()),
         );
-        throw Exception('Failed to load meeting');
       }
     } catch (e) {
-      print('Error: $e');
+      print("Error in meeting API request: $e"); // Hata loglandı
     }
 
-    // Kullanıcının meeting_id'sini aldıktan sonra abone etme işlemini yapalım
     if (meeting != null && meeting!.id != null) {
       final meetingId = meeting!.id.toString();
+      print("Pusher Beams abone olma işlemi başlıyor. Meeting ID: $meetingId"); // Abonelik işlemi başlıyor
 
-      // Pusher Beams'e daha önce abone olunan tüm interest'leri temizle
       PusherBeams beamsClient = PusherBeams.instance;
 
-      // Önceki tüm interest'leri temizle
-      await beamsClient.clearDeviceInterests();
+      await beamsClient.clearDeviceInterests(); // Önceki interest'ler temizleniyor
+      print("Pusher Beams önceki interest'ler temizlendi.");
 
-      // Sadece ilgili meeting_id'ye abone et
       await beamsClient.addDeviceInterest('debug-meeting_$meetingId');
+      print("Pusher Beams yeni interest eklendi: debug-meeting_$meetingId"); // Yeni interest eklendi loglandı
     }
 
     try {
       final url = Uri.parse('http://app.kongrepad.com/api/v1/participant');
+      print("Participant verisi çekiliyor..."); // API isteği başlıyor
       final response = await http.get(
         url,
         headers: <String, String>{
@@ -147,26 +162,31 @@ class _MainPageViewState extends State<MainPageView> {
         },
       );
 
+      print("Participant API isteği tamamlandı. Status Code: ${response.statusCode}"); // Status code loglandı
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
+        print("Participant verisi başarıyla alındı: $jsonData"); // API yanıtı loglandı
         final participantJson = ParticipantJSON.fromJson(jsonData);
+
         setState(() {
           participant = participantJson.data;
           subscribePusher("meeting-${meeting?.id}-${participant?.type}");
         });
       } else {
+        print("Participant verisi yüklenemedi, LoginView'a yönlendiriliyor"); // Hata logu
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const LoginView()),
         );
-        throw Exception('Failed to load participant');
       }
     } catch (e) {
-      print('Error: $e');
+      print("Error in participant API request: $e"); // Hata loglandı
     }
 
     try {
       final url = Uri.parse('http://app.kongrepad.com/api/v1/virtual-stand');
+      print("Virtual stand verisi çekiliyor..."); // API isteği başlıyor
       final response = await http.get(
         url,
         headers: <String, String>{
@@ -174,17 +194,25 @@ class _MainPageViewState extends State<MainPageView> {
         },
       );
 
+      print("Virtual stand API isteği tamamlandı. Status Code: ${response.statusCode}"); // Status code loglandı
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
+        print("Virtual stand verisi başarıyla alındı: $jsonData"); // API yanıtı loglandı
         final virtualStandsJson = VirtualStandsJSON.fromJson(jsonData);
+
         setState(() {
           virtualStands = virtualStandsJson.data;
           _loading = false;
         });
+      } else {
+        print("Virtual stand verisi yüklenemedi."); // Hata logu
       }
     } catch (e) {
-      print('Error: $e');
+      print("Error in virtual stand API request: $e"); // Hata loglandı
     }
+
+    print("getData fonksiyonu başarıyla tamamlandı"); // Tüm işlem bitti
   }
 
 

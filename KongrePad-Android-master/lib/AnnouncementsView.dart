@@ -1,10 +1,11 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:kongrepad/Models/Announcement.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pusher_beams/pusher_beams.dart';
+
+import 'Models/Announcement.dart';
 
 class AnnouncementsView extends StatefulWidget {
   const AnnouncementsView({super.key});
@@ -14,26 +15,73 @@ class AnnouncementsView extends StatefulWidget {
 }
 
 class _AnnouncementsViewState extends State<AnnouncementsView> {
+  List<String> combinedNotifications = []; // Hem Pusher Beams hem de API'den gelen bildirimler için liste
+  bool _loading = true;
 
+  @override
+  void initState() {
+    super.initState();
+    print("initState: Başladı");
+    loadNotifications(); // Bildirimleri SharedPreferences'tan yükler
+    getData(); // API'den duyuruları alır
+    setupPusherBeams(); // Pusher Beams bildirimlerini alır
+  }
 
+  // Bildirimleri `SharedPreferences`'tan yükler
+  Future<void> loadNotifications() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? savedNotifications = prefs.getStringList('notifications');
+
+    setState(() {
+      combinedNotifications = savedNotifications ?? [];
+    });
+
+    print("SharedPreferences'tan yüklenen bildirimler: $combinedNotifications");
+  }
+
+  // Pusher Beams'ten gelen bildirimleri yakalamak ve ekranda göstermek için setup
+  void setupPusherBeams() {
+    print("setupPusherBeams: Başladı");
+
+    PusherBeams.instance.onMessageReceivedInTheForeground((notification) async {
+      print("setupPusherBeams: Bildirim alındı: $notification");  // Bildirimin içeriğini logla
+
+      final title = notification['title']?.toString() ?? 'Yeni Bildirim';
+      final body = notification['body']?.toString() ?? 'Bir bildirim aldınız';
+
+      print("setupPusherBeams: Title: $title, Body: $body");  // Title ve body loglanıyor
+
+      // Gelen bildirimi listeye ekle ve UI'ı güncelle
+      setState(() {
+        combinedNotifications.add("$title: $body");
+      });
+
+      // Bildirimi SharedPreferences'a kaydet
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      List<String> savedNotifications = prefs.getStringList('notifications') ?? [];
+      savedNotifications.add("$title: $body");
+      await prefs.setStringList('notifications', savedNotifications);
+
+      print("setupPusherBeams: Bildirim kaydedildi ve listeye eklendi.");
+    });
+  }
+
+  // API'den duyuruları almak için fonksiyon
   Future<void> getData() async {
-    print('getData: Başladı');  // Fonksiyonun başladığını loglayın
+    print('getData: Başladı');
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
-    // Token kontrolü
     if (token == null) {
-      print('getData: Token bulunamadı');  // Token bulunamadıysa hata yazdır
+      print('getData: Token bulunamadı');
       return;
     }
 
-    print('getData: Token bulundu: $token');  // Token bulunduysa token'ı loglayın
+    print('getData: Token bulundu: $token');
 
     try {
       final url = Uri.parse('http://app.kongrepad.com/api/v1/announcement');
-      print('getData: API isteği gönderiliyor...');  // API isteği başlatıldığını loglayın
-
-      // HTTP isteğini yapın
+      print('getData: API isteği gönderiliyor...');
       final response = await http.get(
         url,
         headers: <String, String>{
@@ -41,56 +89,31 @@ class _AnnouncementsViewState extends State<AnnouncementsView> {
         },
       );
 
-      print('getData: API isteği tamamlandı, statusCode: ${response.statusCode}');  // API isteğinin sonucunu loglayın
+      print('getData: API isteği tamamlandı, statusCode: ${response.statusCode}');
       print(response.body);
-      // Yanıt kontrolü
+
       if (response.statusCode == 200) {
-        print('getData: Yanıt başarılı, body: ${response.body}');  // Başarılı yanıt durumunda JSON yanıtını loglayın
-
-        // Gelen yanıtı tam olarak görmek için ayrıntılı olarak loglayalım
         final jsonData = jsonDecode(response.body);
-        print('getData: Çözülen JSON: $jsonData');  // JSON verisini loglayın
+        print('getData: Çözülen JSON: $jsonData');
 
-        // API'den dönen "data" alanını ayrıntılı loglayalım
-        if (jsonData['data'] == null) {
-          print('getData: JSON içindeki data null');
-        } else {
-          print('getData: JSON içindeki data uzunluğu: ${jsonData['data'].length}');
-          print('getData: JSON içeriği: ${jsonData['data']}'); // Data içeriğini tam olarak logla
-        }
-
-        // Gelen verileri modelimize çevirelim
         final announcementsJson = AnnouncementsJSON.fromJson(jsonData);
 
-        // announcementsJson.data'nın null olup olmadığını kontrol edin
-        if (announcementsJson.data == null || announcementsJson.data!.isEmpty) {
-          print('getData: announcementsJson data boş ya da null, API duyuruları döndürmedi.');
-        } else {
-          print('getData: announcementsJson data dolu, duyuru sayısı: ${announcementsJson.data!.length}');
-        }
-
         setState(() {
-          announcements = announcementsJson.data ?? [];  // Null ise boş bir liste atıyoruz
+          // API'den gelen duyuruları da combinedNotifications listesine ekle
+          announcementsJson.data?.forEach((announcement) {
+            combinedNotifications.add(announcement.title.toString());
+          });
+
           _loading = false;
         });
 
-        print('getData: Duyurular başarıyla alındı, duyuru sayısı: ${announcements?.length}');
+        print('getData: Duyurular başarıyla alındı, duyuru sayısı: ${announcementsJson.data?.length}');
       } else {
         print('getData: Yanıt başarısız, statusCode: ${response.statusCode}, body: ${response.body}');
       }
     } catch (e) {
-      print('getData: Hata: $e');  // Hata durumunda hata mesajını loglayın
+      print('getData: Hata: $e');
     }
-  }
-
-
-  List<Announcement>? announcements;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    getData();
   }
 
   @override
@@ -103,8 +126,7 @@ class _AnnouncementsViewState extends State<AnnouncementsView> {
           body: _loading
               ? Center(
             child: CircularProgressIndicator(
-              valueColor:
-              AlwaysStoppedAnimation<Color>(Colors.white),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           )
               : SingleChildScrollView(
@@ -115,124 +137,90 @@ class _AnnouncementsViewState extends State<AnnouncementsView> {
                   padding: const EdgeInsets.all(10),
                   height: screenHeight * 0.1,
                   decoration: const BoxDecoration(color: Colors.redAccent),
-                  child: Container(
-                    width: screenWidth,
-                    child: Stack(
-                      alignment: Alignment.centerLeft,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            height: screenHeight * 0.05,
-                            width: screenHeight * 0.05,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white, // Circular background color
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SvgPicture.asset(
-                                'assets/icon/chevron.left.svg',
-                                color: Colors.redAccent,
-                                height: screenHeight * 0.03,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Bildirimler",
-                                style: TextStyle(fontSize: 25, color: Colors.white),
-                              )
-                            ]),
-                      ],
-                    ),
-                  ),
-                ),
-                SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: Container(
-                    height: screenHeight * 0.775,
-                    width: screenWidth,
-                    child: Column(
-                      children: announcements != null
-                          ? announcements!.map((announcement) {
-                        return Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Container(
-                            alignment: Alignment.topLeft,
-                            width: screenWidth * 0.9,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    SvgPicture.asset(
-                                      'assets/icon/bell.svg',
-                                      color: Colors.black,
-                                      height: screenHeight * 0.03,
-                                    ),
-                                    Text(
-                                      announcement.title.toString(),
-                                      style: const TextStyle(
-                                          fontSize: 20, color: Colors.black),
-                                    ),
-                                  ],
-                                ),
-                                const Divider(
-                                  height: 20,
-                                  thickness: 1,
-                                  color: Colors.black,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList()
-                          : [],
-                    ),
-                  ),
-                ),
-                Container(
-                  width: screenWidth,
-                  height: screenHeight * 0.1,
-                  decoration: BoxDecoration(color: Colors.redAccent),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
                     children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey),
-                        onPressed: () {
-                          //todo bildirimleri temizle
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
                         },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SvgPicture.asset(
-                              'assets/icon/bell.svg',
-                              color: Colors.black,
-                              height: screenHeight * 0.02,
+                        child: Container(
+                          height: screenHeight * 0.05,
+                          width: screenHeight * 0.05,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white, // Circular background color
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SvgPicture.asset(
+                              'assets/icon/chevron.left.svg',
+                              color: Colors.redAccent,
+                              height: screenHeight * 0.03,
                             ),
-                            SizedBox(
-                              width: screenWidth*0.01,
-                            ),
-                            const Text(
-                              'Tüm Duyuruları Okudum',
-                              style:
-                              TextStyle(fontSize: 20, color: Colors.black),
-                            ),
-                          ],
+                          ),
                         ),
+                      ),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Bildirimler",
+                            style: TextStyle(fontSize: 25, color: Colors.white),
+                          )
+                        ],
                       ),
                     ],
                   ),
                 ),
+
+                // Combined bildirimler burada gösteriliyor
+                if (combinedNotifications.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ...combinedNotifications.map((notification) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white, // Bildirim için ayrı bir alan
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(8),
+                              child: Row(
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/icon/bell.svg',
+                                    color: Colors.black,
+                                    height: screenHeight * 0.03,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      notification,
+                                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        const Divider(thickness: 2),
+                      ],
+                    ),
+                  ),
               ]),
             ),
           )),

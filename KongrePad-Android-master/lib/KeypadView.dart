@@ -5,6 +5,7 @@ import 'package:kongrepad/AppConstants.dart';
 import 'package:http/http.dart' as http;
 import 'package:kongrepad/Models/Keypad.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
 class KeypadView extends StatefulWidget {
   const KeypadView({super.key, required this.hallId});
@@ -44,10 +45,26 @@ class _KeypadViewState extends State<KeypadView> {
           keypad = keypadJson.data;
           _loading = false;
         });
+
+        // Pusher Aboneliği
+        if (keypad != null) {
+          PusherService.subscribeToChannel('keypad-${keypad!.id}');
+        }
+      } else {
+        _showError("API isteği başarısız oldu. Lütfen tekrar deneyin.");
       }
     } catch (e) {
-      print('Error: $e');
+      _showError('Veri alınırken hata oluştu: $e');
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
@@ -69,7 +86,8 @@ class _KeypadViewState extends State<KeypadView> {
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           )
-              : Container(
+              : keypad?.options?.isNotEmpty == true
+              ? Container(
             height: screenHeight,
             alignment: Alignment.center,
             child: Column(
@@ -90,7 +108,8 @@ class _KeypadViewState extends State<KeypadView> {
                       width: screenWidth,
                       child: Text(
                         "Anketler",
-                        style: TextStyle(fontSize: 25, color: Colors.white),
+                        style: TextStyle(
+                            fontSize: 25, color: Colors.white),
                       )),
                 ),
                 Text(
@@ -100,7 +119,7 @@ class _KeypadViewState extends State<KeypadView> {
                 ),
                 SingleChildScrollView(
                   scrollDirection: Axis.vertical,
-                  child: keypad! != null ? Container(
+                  child: Container(
                     height: screenHeight * 0.65,
                     width: screenWidth,
                     child: Column(
@@ -112,18 +131,21 @@ class _KeypadViewState extends State<KeypadView> {
                             width: screenWidth * 0.8,
                             child: ElevatedButton(
                                 style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
+                                  backgroundColor:
+                                  MaterialStateProperty.all<Color>(
                                       AppConstants.buttonLightPurple),
-                                  foregroundColor: MaterialStateProperty.all<Color>(
+                                  foregroundColor:
+                                  MaterialStateProperty.all<Color>(
                                       Colors.white),
-                                  padding:
-                                  MaterialStateProperty.all<EdgeInsetsGeometry>(
+                                  padding: MaterialStateProperty.all<
+                                      EdgeInsetsGeometry>(
                                     const EdgeInsets.all(12),
                                   ),
                                   shape: MaterialStateProperty.all<
                                       RoundedRectangleBorder>(
                                     RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
+                                      borderRadius:
+                                      BorderRadius.circular(14),
                                     ),
                                   ),
                                 ),
@@ -143,9 +165,15 @@ class _KeypadViewState extends State<KeypadView> {
                         );
                       }).toList(),
                     ),
-                  ) : Container(),
+                  ),
                 ),
               ],
+            ),
+          )
+              : Center(
+            child: Text(
+              "Aktif bir keypad bulunamadı.",
+              style: TextStyle(fontSize: 20, color: Colors.white),
             ),
           )),
     );
@@ -155,38 +183,52 @@ class _KeypadViewState extends State<KeypadView> {
     setState(() {
       _sending = true;
     });
-    final url = Uri.parse(
-        'https://app.kongrepad.com/api/v1/keypad/${keypad?.id!}/vote');
+    final url =
+    Uri.parse('https://app.kongrepad.com/api/v1/keypad/${keypad?.id!}/vote');
     final body = jsonEncode({
       'option': answerId,
     });
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    http
-        .post(
-      url,
-      headers: {
-        'Authorization': 'Bearer ${prefs.getString('token')}',
-        'Content-Type': 'application/json',
-      },
-      body: body,
-    )
-        .then((response) {
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer ${prefs.getString('token')}',
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      );
       final jsonResponse = jsonDecode(response.body);
       if (jsonResponse['status']) {
-        //todo make alerts
         Navigator.of(context).pop();
       } else {
-        //todo make alerts burayı diğer sayfalara da koy
+        _showError('Cevap gönderilemedi. Lütfen tekrar deneyin.');
       }
+    } catch (error) {
+      _showError('Cevap gönderilirken hata oluştu.');
+    } finally {
       setState(() {
         _sending = false;
       });
-    }).catchError((error) {
-      print(error);
-      setState(() {
-        _sending = false;
-      });
-    });
+    }
+  }
+}
+
+class PusherService {
+  static final PusherService _instance = PusherService._internal();
+
+  factory PusherService() {
+    return _instance;
+  }
+
+  PusherService._internal();
+
+  static Future<void> subscribeToChannel(String channelName) async {
+    PusherChannelsFlutter pusher = PusherChannelsFlutter.getInstance();
+    await pusher.init(apiKey: "314fc649c9f65b8d7960", cluster: "eu");
+    await pusher.connect();
+    pusher.unsubscribe(channelName: channelName);
+    pusher.subscribe(channelName: channelName);
   }
 }
