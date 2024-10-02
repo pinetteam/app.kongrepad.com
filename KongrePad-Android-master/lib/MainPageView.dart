@@ -11,7 +11,7 @@ import 'package:kongrepad/LoginView.dart';
 import 'package:kongrepad/ProfileView.dart';
 import 'package:kongrepad/ProgramDaysForMailView.dart';
 import 'package:kongrepad/ProgramDaysView.dart';
-import 'package:kongrepad/PusherService.dart';
+//import 'package:kongrepad/PusherService.dart';
 import 'package:kongrepad/ScoreGameView.dart';
 import 'package:kongrepad/SessionView.dart';
 import 'package:kongrepad/SurveysView.dart';
@@ -20,7 +20,12 @@ import 'package:kongrepad/Models/Meeting.dart';
 import 'package:kongrepad/Models/Participant.dart';
 import 'package:kongrepad/Models/VirtualStand.dart';
 import 'package:pusher_beams/pusher_beams.dart';
+//import 'package:pusher_channels_flutter/pusher-js/core/connection/protocol/message-types.dart';
+import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'KeypadView.dart';
+import 'Models/Keypad.dart';
 
 class LowerHalfEllipse extends StatelessWidget {
   final double width;
@@ -80,6 +85,47 @@ class _MainPageViewState extends State<MainPageView> {
   Future<void> logOut() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.remove("token");
+  }
+  Future<bool> checkForKeypad(int hallId) async {
+    print('Checking for an active keypad for hallId: $hallId');
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      print('No token found. Aborting keypad check.');
+      return false;
+    }
+
+    try {
+      final url = Uri.parse('http://app.kongrepad.com/api/v1/hall/$hallId/active-keypad');
+      final response = await http.get(
+        url,
+        headers: <String, String>{
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        print('Keypad JSON response: $jsonData');
+
+        final keypadJson = KeypadJSON.fromJson(jsonData);
+        if (keypadJson.data != null) {
+          print('Active keypad found: ${keypadJson.data}');
+          return true; // Active keypad exists
+        } else {
+          print('No active keypad found.');
+          return false; // No active keypad
+        }
+      } else {
+        print('Error fetching keypad data: ${response.statusCode}');
+        return false; // Error occurred
+      }
+    } catch (e) {
+      print('Error while checking for keypad: $e');
+      return false; // Error occurred
+    }
   }
 
   Future<void> getData() async {
@@ -217,14 +263,70 @@ class _MainPageViewState extends State<MainPageView> {
 
 
   Future<void> subscribePusher(String channel) async {
-    PusherService.subscribeToChannel(channel);
+    PusherService pusherService = PusherService();
+    await pusherService.subscribeToChannel(channel);
   }
+
+
 
   @override
   void initState() {
     super.initState();
+
+
+    _subscribeToPusher();
+    // Fetch initial data for the meeting, participant, and virtual stands
     getData();
+
+    // Subscribe to Pusher for live keypad updates
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _subscribeToPusher();  // Set up real-time monitoring
+    });
+
+    // After getting meeting details, check if there's an active keypad
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (meeting != null && meeting!.sessionFirstHallId != null) {
+        bool hasKeypad = await checkForKeypad(meeting!.sessionFirstHallId!);
+        if (hasKeypad) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => KeypadView(hallId: meeting!.sessionFirstHallId!)),
+          );
+        }
+      }
+    });
   }
+
+// Pusher subscription logic
+  Future<void> _subscribeToPusher() async {
+    PusherChannelsFlutter pusher = PusherChannelsFlutter.getInstance();
+    await pusher.init(apiKey: "314fc649c9f65b8d7960", cluster: "eu");
+    await pusher.connect();
+
+    // Subscribe to the channel for keypad updates
+    pusher.subscribe(
+      channelName: 'keypad-updates',
+      onEvent: (event) {
+        print('Keypad event received: ${event.data}');
+
+        // Here, you can parse the event data and check if a keypad became active
+        if (event.eventName == 'keypad-activated') {
+          // Example logic: Navigate to KeypadView if a keypad was activated
+          int hallId = int.parse(event.data['hall_id']);  // Extract hallId from event
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => KeypadView(hallId: hallId),
+            ),
+          );
+        }
+      },
+    );
+
+    print('Subscribed to Pusher for live keypad updates');
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -336,9 +438,22 @@ class _MainPageViewState extends State<MainPageView> {
           SizedBox(
             height: screenHeight * 0.04,
           ),
+          //BURAYA BAK
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+             /*ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const KeypadView(hallId: 1), // Replace with appropriate hallId
+                    ),
+                  );
+                },
+                child: const Text('Go to Keypad'),
+              ),
+    */
               SizedBox(
                 width: screenWidth * 0.45,
                 height: screenHeight * 0.16,

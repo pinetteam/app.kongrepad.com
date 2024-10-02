@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:kongrepad/AlertService.dart';
@@ -7,29 +6,34 @@ import 'package:kongrepad/AppConstants.dart';
 import 'package:http/http.dart' as http;
 import 'package:kongrepad/Models/Survey.dart';
 import 'package:kongrepad/Models/SurveyQuestion.dart';
+import 'package:kongrepad/SurveysView.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SurveyView extends StatefulWidget {
-  const SurveyView({super.key, required this.survey});
+  const SurveyView({super.key, required this.survey, required this.isEditable});
 
   final Survey survey;
+  final bool isEditable;
 
   @override
-  State<SurveyView> createState() => _SurveyViewState(survey);
+  State<SurveyView> createState() => _SurveyViewState(survey, isEditable);
 }
 
 class _SurveyViewState extends State<SurveyView> {
   Survey? survey;
+  bool isEditable;
+
   List<SurveyQuestion>? questions;
   Set<int> answers = {};
   bool _sending = false;
   bool _loading = true;
 
-  _SurveyViewState(this.survey);
+  _SurveyViewState(this.survey, this.isEditable);
 
   Future<void> getData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
+    final storedAnswers = prefs.getString('survey_${survey?.id}_answers');
 
     try {
       final url = Uri.parse(
@@ -46,6 +50,22 @@ class _SurveyViewState extends State<SurveyView> {
         final questionsJson = SurveyQuestionsJSON.fromJson(jsonData);
         setState(() {
           questions = questionsJson.data;
+
+          // Pre-select answers based on previous selections
+          if (!isEditable && storedAnswers != null) {
+            // Parse stored answers
+            final List<int> previousAnswers = List<int>.from(jsonDecode(storedAnswers));
+
+            for (var question in questions!) {
+              for (var option in question.options!) {
+                if (previousAnswers.contains(option.id)) {
+                  option.isSelected = true;
+                  answers.add(option.id!);  // Pre-select the user's previous answers
+                }
+              }
+            }
+          }
+
           _loading = false;
         });
       }
@@ -112,8 +132,7 @@ class _SurveyViewState extends State<SurveyView> {
                       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Text(
                           survey!.title.toString(),
-                          style:
-                          const TextStyle(fontSize: 25, color: Colors.white),
+                          style: const TextStyle(fontSize: 25, color: Colors.white),
                         )
                       ]),
                     ],
@@ -130,7 +149,7 @@ class _SurveyViewState extends State<SurveyView> {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.white,
                     ),
                     width: screenWidth,
@@ -150,7 +169,7 @@ class _SurveyViewState extends State<SurveyView> {
                                 Text(
                                   question.question.toString(),
                                   textAlign: TextAlign.start,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       fontSize: 22,
                                       color: Colors.black,
                                       fontWeight: FontWeight.bold),
@@ -159,36 +178,36 @@ class _SurveyViewState extends State<SurveyView> {
                                     ? Column(
                                     mainAxisAlignment:
                                     MainAxisAlignment.start,
-                                    children:
-                                    question.options!.map((option) {
+                                    children: question.options!.map((option) {
                                       return CheckboxListTile(
                                         shape: const CircleBorder(),
                                         contentPadding: EdgeInsets.zero,
                                         title: Text(
                                           option.option.toString(),
                                           textAlign: TextAlign.start,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                               fontSize: 20,
                                               color: Colors.black),
                                         ),
-                                        value: option.isSelected,
-                                        onChanged: (value) {
+                                        value: option.isSelected,  // Show the previous answer
+                                        onChanged: isEditable  // Enable or disable based on isEditable
+                                            ? (value) {
                                           setState(() {
-                                            question.options!
-                                                .forEach((o) {
+                                            question.options!.forEach((o) {
                                               if (o == option) {
                                                 o.isSelected = value!;
-                                                answers.add(o.id!);
-                                              } else {
-                                                o.isSelected = false;
-                                                answers.remove(o.id);
+                                                if (value) {
+                                                  answers.add(o.id!);
+                                                } else {
+                                                  answers.remove(o.id);
+                                                }
                                               }
                                             });
                                           });
-                                        },
+                                        }
+                                            : null,  // Disable if not editable
                                         controlAffinity:
-                                        ListTileControlAffinity
-                                            .leading,
+                                        ListTileControlAffinity.leading,
                                       );
                                     }).toList())
                                     : Container(),
@@ -210,28 +229,32 @@ class _SurveyViewState extends State<SurveyView> {
               Container(
                 height: screenHeight * 0.1,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: AppConstants.backgroundBlue),
+                decoration: const BoxDecoration(color: AppConstants.backgroundBlue),
                 child: Container(
-                  height: screenHeight*0.07,
+                  height: screenHeight * 0.07,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants. buttonGreen,
+                      backgroundColor: isEditable
+                          ? AppConstants.buttonGreen
+                          : Colors.grey,  // Button is greyed out if survey is not editable
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12), // <-- Radius
                       ),
                     ),
-                    onPressed: _sending
+                    onPressed: _sending || !isEditable  // Disable the send button if survey is not editable
                         ? null
                         : () {
                       _sendAnswers();
                     },
                     child: _sending
-                        ? CircularProgressIndicator(
+                        ? const CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     )
                         : Text(
-                      'Cevapları Gönder',
-                      style: TextStyle(fontSize: 20, color: Colors.white),
+                      isEditable
+                          ? 'Cevapları Gönder'
+                          : 'Bu anketi zaten cevapladınız',  // Change button text if not editable
+                      style: const TextStyle(fontSize: 20, color: Colors.white),
                     ),
                   ),
                 ),
@@ -245,8 +268,8 @@ class _SurveyViewState extends State<SurveyView> {
     setState(() {
       _sending = true;
     });
-    if (answers.length != questions?.length) {
 
+    if (answers.length != questions?.length) {
       AlertService().showAlertDialog(
         context,
         title: 'Uyarı',
@@ -257,31 +280,39 @@ class _SurveyViewState extends State<SurveyView> {
       });
       return;
     }
-    final url = Uri.parse(
-        'https://app.kongrepad.com/api/v1/survey/${survey?.id!}/vote');
+
+    final url = Uri.parse('https://app.kongrepad.com/api/v1/survey/${survey?.id!}/vote');
     final body = jsonEncode({
       'options': "[${answers.map((int e) => e.toString()).join(",")}]",
     });
 
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    http
-        .post(
-      url,
-      headers: {
-        'Authorization': 'Bearer ${prefs.getString('token')}',
-        'Content-Type': 'application/json',
-      },
-      body: body,
-    )
-        .then((response) {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer ${prefs.getString('token')}',
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      );
+
       final jsonResponse = jsonDecode(response.body);
       if (jsonResponse['status']) {
+        // Store answers locally in SharedPreferences
+        await prefs.setString('survey_${survey?.id}_answers', jsonEncode(answers.toList()));
+
         AlertService().showAlertDialog(
           context,
           title: 'Başarılı',
           content: "Teşekkürler, ankete başarıyla katıldınız!",
+          onDismiss: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const SurveysView()),
+            );
+          },
         );
-        Navigator.of(context).pop();
       } else {
         AlertService().showAlertDialog(
           context,
@@ -289,14 +320,17 @@ class _SurveyViewState extends State<SurveyView> {
           content: 'Bir hata meydana geldi!',
         );
       }
-      setState(() {
-        _sending = false;
-      });
-    }).catchError((error) {
+    } catch (error) {
       print(error);
+      AlertService().showAlertDialog(
+        context,
+        title: 'Hata',
+        content: 'Bir hata meydana geldi!',
+      );
+    } finally {
       setState(() {
         _sending = false;
       });
-    });
+    }
   }
 }
