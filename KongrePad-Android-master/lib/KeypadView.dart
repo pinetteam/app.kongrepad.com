@@ -22,6 +22,7 @@ class _KeypadViewState extends State<KeypadView> {
   Keypad? keypad;
   bool _sending = false;
   bool _loading = true;
+  String? questionText; // Gelen soruyu tutmak için
 
   _KeypadViewState(this.hallId);
 
@@ -31,7 +32,6 @@ class _KeypadViewState extends State<KeypadView> {
     print('KeypadView initialized');
     print('hallId passed to this view: $hallId');
     getData();
-    // Pusher için abone olmayı çağırıyoruz
     _subscribeToPusher();
   }
 
@@ -72,6 +72,8 @@ class _KeypadViewState extends State<KeypadView> {
         setState(() {
           keypad = keypadJson.data;
           _loading = false;
+          // Artık `keypad` alanını kullanarak soru metnini gösteriyoruz
+          questionText = keypad?.keypad?.isNotEmpty == true ? keypad?.keypad : "Soru mevcut değil";
         });
 
         if (keypad != null) {
@@ -92,7 +94,6 @@ class _KeypadViewState extends State<KeypadView> {
   }
 
   Future<void> _subscribeToPusher() async {
-    // Pusher için abonelik
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -101,23 +102,18 @@ class _KeypadViewState extends State<KeypadView> {
       await pusher.init(apiKey: "314fc649c9f65b8d7960", cluster: "eu");
       await pusher.connect();
 
-      // Subscribing to a specific channel
       await pusher.subscribe(channelName: 'keypad-updates');
 
-      // Dinleyiciye gelen olayları yazdırma ve işleme
-      // Pusher olaylarını dinlerken
       pusher.onEvent = (PusherEvent event) {
         print('Pusher event received: ${event.toString()}');
 
-        if (event.channelName == 'keypad-updates' && event.eventName == 'keypad-changed') {
+        if (event.channelName == 'keypad-updates' && event.eventName == 'keypad-activated') {
           print('Pusher keypad update received: ${event.data}');
 
-          // Veriyi parse et
           if (event.data != null && event.data!.isNotEmpty) {
             Map<String, dynamic> jsonData = jsonDecode(event.data!);
             print('Decoded Pusher event data: $jsonData');
 
-            // Keypad sayfasına yönlendirme
             if (jsonData.containsKey('keypad_id')) {
               int keypadId = jsonData['keypad_id'];
 
@@ -178,14 +174,18 @@ class _KeypadViewState extends State<KeypadView> {
                   ),
                 ),
                 child: Text(
-                  "Anketler",
-                  style: TextStyle(fontSize: 25, color: Colors.white),
+                  "Lütfen size en uygun yanıtı seçiniz",
+                  style: const TextStyle(fontSize: 23, color: Colors.white),
                 ),
               ),
-              Text(
-                "Fill in our surveys to help us",
-                style: TextStyle(fontSize: 25, color: Colors.white),
-                textAlign: TextAlign.center,
+              // Soru metnini buraya ekliyoruz
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Text(
+                  questionText ?? "", // Soru metnini gösteriyoruz
+                  style: const TextStyle(fontSize: 25, color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
               ),
               SingleChildScrollView(
                 scrollDirection: Axis.vertical,
@@ -195,11 +195,14 @@ class _KeypadViewState extends State<KeypadView> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: keypad!.options!.map((option) {
+                      print('Keypad ID: ${keypad?.id}');
+
                       print('Rendering option: ${option.option} with id: ${option.id}');
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: SizedBox(
-                          width: screenWidth * 0.8,
+                          width: screenWidth * 1,
+                          height: screenHeight*0.09,
                           child: ElevatedButton(
                               onPressed: () {
                                 print('Option selected: ${option.option} (ID: ${option.id})');
@@ -210,7 +213,7 @@ class _KeypadViewState extends State<KeypadView> {
                                 children: [
                                   Text(
                                     option.option.toString(),
-                                    style: TextStyle(fontSize: 20),
+                                    style: const TextStyle(fontSize: 19),
                                   ),
                                 ],
                               )),
@@ -226,7 +229,7 @@ class _KeypadViewState extends State<KeypadView> {
             : Center(
           child: Text(
             "No active keypad found.",
-            style: TextStyle(fontSize: 20, color: Colors.white),
+            style: const TextStyle(fontSize: 20, color: Colors.white),
           ),
         ),
       ),
@@ -236,35 +239,65 @@ class _KeypadViewState extends State<KeypadView> {
   Future<void> _sendAnswer(int answerId) async {
     setState(() {
       _sending = true;
+      print('Keypad ID: ${keypad?.id}');
     });
+
+    // Eğer keypad ID null veya 0 ise, bu aşamada bir sorun var demektir.
+    if (keypad?.id == null || keypad?.id == 0) {
+      print('Error: Keypad ID null or invalid!');
+      _showError('Keypad ID is invalid. Please try again.');
+      return;
+    }
 
     print('Sending answerId: $answerId for keypadId: ${keypad?.id}');
-    final url = Uri.parse('https://app.kongrepad.com/api/v1/keypad/${keypad?.id!}/vote');
+
+    // Eğer keypad ID'nin doğru bir değer olduğundan eminsek URL'yi dinamik olarak oluşturuyoruz
+    final url = Uri.parse('https://app.kongrepad.com/api/v1/keypad/${keypad?.id}/keypad-vote');
+    print('POST URL: $url'); // URL'yi kontrol et
+
+    // İstek gövdesini oluşturuyoruz
     final body = jsonEncode({
       'option': answerId,
+      'participant_id': 123, // Geçici olarak participant_id ekliyoruz (gerçek değerle değiştirin)
+      'keypad_id': keypad?.id, // Keypad ID'yi ekliyoruz
     });
+    print('POST Body: $body'); // Gönderilen JSON'u logluyoruz
 
+    // Tokeni alıyoruz
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print('Token: $token'); // Token'i kontrol et
+
     try {
       print('Posting vote to API...');
       final response = await http.post(
         url,
         headers: {
-          'Authorization': 'Bearer ${prefs.getString('token')}',
+          'Authorization': 'Bearer $token', // Authorization header'ı kontrol et
           'Content-Type': 'application/json',
         },
         body: body,
       );
 
+      // HTTP yanıtını logluyoruz
       print('Vote response status: ${response.statusCode}');
       print('Vote response body: ${response.body}');
+      print('Keypad ID: ${keypad?.id}');
 
-      final jsonResponse = jsonDecode(response.body);
-      if (jsonResponse['status']) {
-        print('Vote submitted successfully.');
-        Navigator.of(context).pop();
+      // Yanıt durumunu kontrol ediyoruz
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status']) {
+          print('Vote submitted successfully.');
+          _showError(' Tebrikler .');
+
+          Navigator.of(context).pop();
+        } else {
+          print('Vote submission failed.');
+          _showError(' Daha önceden yanıt verdiniz .');
+        }
       } else {
-        print('Vote submission failed.');
+        print('Vote submission failed with status code: ${response.statusCode}');
         _showError('Vote submission failed. Please try again.');
       }
     } catch (error) {
@@ -276,13 +309,14 @@ class _KeypadViewState extends State<KeypadView> {
       });
     }
   }
-}
 
+
+}
 
 class PusherService {
   static final PusherService _instance = PusherService._internal();
   final Map<String, bool> _subscribedChannels = {};
-  bool _isPusherInitialized = false;  // Pusher'ın başlatılıp başlatılmadığını izler
+  bool _isPusherInitialized = false;
 
   factory PusherService() {
     return _instance;
@@ -290,7 +324,6 @@ class PusherService {
 
   PusherService._internal();
 
-  // Pusher'ı sadece bir kez başlatmak için yeni fonksiyon
   Future<void> initPusher() async {
     if (!_isPusherInitialized) {
       PusherChannelsFlutter pusher = PusherChannelsFlutter.getInstance();
@@ -302,12 +335,10 @@ class PusherService {
   }
 
   Future<void> subscribeToChannel(String channelName) async {
-    // Pusher'ı sadece bir kez başlatıyoruz
     await initPusher();
 
     PusherChannelsFlutter pusher = PusherChannelsFlutter.getInstance();
 
-    // Eğer kanal zaten abone olduysa, tekrar abone olmadan çık
     if (_subscribedChannels[channelName] == true) {
       print('Already subscribed to channel: $channelName');
       return;
@@ -316,7 +347,6 @@ class PusherService {
     await pusher.subscribe(channelName: channelName);
     print('Subscribed to Pusher channel: $channelName');
 
-    // Kanalı abone listesine ekleyin
     _subscribedChannels[channelName] = true;
   }
 
@@ -326,9 +356,7 @@ class PusherService {
     if (_subscribedChannels[channelName] == true) {
       await pusher.unsubscribe(channelName: channelName);
       print('Unsubscribed from Pusher channel: $channelName');
-      // Abonelikten çıktığınızda, listeden çıkarın
       _subscribedChannels[channelName] = false;
     }
   }
 }
-

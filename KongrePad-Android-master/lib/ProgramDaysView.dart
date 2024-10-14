@@ -74,7 +74,7 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
               color: AppConstants.programBackgroundYellow
           ),
           height: screenHeight,
-          alignment: Alignment.center,
+          alignment: Alignment.topLeft,
           child: SingleChildScrollView(
             child: Column(
               children: [

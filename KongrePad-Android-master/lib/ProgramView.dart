@@ -1,7 +1,7 @@
 import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:kongrepad/AppConstants.dart';
 import 'package:http/http.dart' as http;
@@ -29,7 +29,7 @@ class _ProgramViewState extends State<ProgramView> {
 
   Future<void> getData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ;
+    final token = prefs.getString('token');
 
     try {
       final url = Uri.parse('https://app.kongrepad.com/api/v1/hall/$hallId');
@@ -64,6 +64,7 @@ class _ProgramViewState extends State<ProgramView> {
     Size screenSize = MediaQuery.of(context).size;
     double screenWidth = screenSize.width;
     double screenHeight = screenSize.height;
+
     return Scaffold(
       body: _loading
           ? const Center(
@@ -71,431 +72,186 @@ class _ProgramViewState extends State<ProgramView> {
           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
         ),
       )
-          : Container(
-          color: AppConstants.programBackgroundYellow,
-          height: screenHeight,
-          alignment: Alignment.center,
-          child: Padding(
-            padding: EdgeInsets.all(5),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  height: screenHeight * 0.1,
-                  decoration: const BoxDecoration(color: AppConstants.buttonYellow),
-                  child: Container(
-                    width: screenWidth,
-                    child: Stack(
-                      alignment: Alignment.centerLeft,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            height: screenHeight * 0.05,
-                            width: screenHeight * 0.05,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SvgPicture.asset(
-                                'assets/icon/chevron.left.svg',
-                                color: AppConstants.buttonYellow,
-                                height: screenHeight * 0.03,
-                              ),
-                            ),
+          : SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Üst kısımdaki başlık
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: AppConstants.buttonYellow,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SvgPicture.asset(
+                            'assets/icon/chevron.left.svg',
+                            color: AppConstants.buttonYellow,
+                            height: screenHeight * 0.03,
                           ),
                         ),
-                        const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Bilimsel Program",
-                                style: TextStyle(fontSize: 25, color: Colors.white),
-                              )
-                            ]),
-                      ],
+                      ),
                     ),
+                    Padding(
+                       padding: EdgeInsets.only(right: 55),
+                      child: const Text(
+                        "Bilimsel Program",
+                        style: TextStyle(
+                            fontSize: 25, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.01),
+
+              // Ana salon ve program günü kısmı
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppConstants.programBackgroundYellow,
+                    border: Border.all(color: Colors.black),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Text(
+                        hall?.title.toString() ?? "",
+                        style: const TextStyle(
+                            fontSize: 23, color: Colors.black),
+                      ),
+                      Text(
+                        programDay!.day.toString(),
+                        style: const TextStyle(
+                            fontSize: 20, color: Colors.grey),
+                      ),
+                    ],
                   ),
                 ),
+              ),
 
-
-                SizedBox(height: screenHeight*0.01,),
-                SingleChildScrollView(
-                  child: SizedBox(
-                    width: screenWidth * 0.96,
-                    height: screenHeight*0.10,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppConstants.programBackgroundYellow,
-                        border: Border.all(color: Colors.black),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: EdgeInsets.all(12),
-                      child: SingleChildScrollView(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    hall?.title.toString() ?? "",
-                                    style: TextStyle(
-                                        fontSize: 23,
+              // Program listesi
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: programDay?.programs?.length ?? 0,
+                itemBuilder: (context, index) {
+                  final program = programDay!.programs![index];
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(
+                                width: screenWidth * 0.3,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppConstants
+                                        .programBackgroundYellow,
+                                    border: Border.all(
                                         color: Colors.black),
+                                    borderRadius:
+                                    BorderRadius.circular(14),
                                   ),
-                                  Text(
-                                    programDay!.day.toString(),
-                                    style: TextStyle(
-                                        fontSize: 20,
-                                        color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Container(
-                  alignment: Alignment.topCenter,
-                  width: screenWidth,
-                  height: screenHeight * 0.763,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: Container(
-                      width: screenWidth,
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: programDay!.programs!.map((program) {
-                          return Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: IntrinsicHeight(
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
                                     children: [
-                                      SizedBox(
-                                        width: screenWidth * 0.2,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: AppConstants.programBackgroundYellow,
-                                            border: Border.all(color: Colors.black),
-                                            borderRadius: BorderRadius.circular(14),
-                                          ),
-                                          padding: EdgeInsets.all(12),
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                program.startAt.toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 20,
-                                                    color: AppConstants.backgroundBlue),
-                                              ),
-                                              Expanded(
-                                                child: Container(
-                                                  height: double.infinity,
-                                                  width: screenWidth*0.006,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                              Text(
-                                                program.finishAt.toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 20,
-                                                    color: AppConstants.backgroundBlue),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                      Text(
+                                        program.startAt.toString(),
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            color: AppConstants
+                                                .backgroundBlue),
                                       ),
-                                      const SizedBox(width: 10,),
-                                      Expanded(
-                                        child: SizedBox(
-                                          width: screenWidth * 0.6,
-                                          child: Container(
-                                            alignment: AlignmentDirectional.centerStart,
-                                            decoration: BoxDecoration(
-                                              color: AppConstants.hallsButtonBlue,
-                                              border: Border.all(color: Colors.black),
-                                              borderRadius: BorderRadius.circular(14),
-                                            ),
-                                            padding: EdgeInsets.all(12),
-                                            child: Container(
-                                              child:Column(
-                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    program.title.toString(),
-                                                    textAlign: TextAlign.start,
-                                                    style: TextStyle(
-                                                        fontSize: 20,
-                                                        color: Colors.black),
-                                                  ),
-                                                  program.chairs!.isNotEmpty ? Text(
-                                                    (program.chairs?.length == 1 ? "Moderatör: " : "Moderatörler: ") + program.chairs!.map((chair) => chair.fullName).join(', ').toString(),
-                                                    textAlign: TextAlign.start,
-                                                    style: TextStyle(
-                                                        fontSize: 20,
-                                                        color: CupertinoColors.systemGrey),
-                                                  ) : Container(),
-                                                  program.description != null ? Text(
-                                                    program.description.toString(),
-                                                    textAlign: TextAlign.start,
-                                                    style: TextStyle(
-                                                        fontSize: 20,
-                                                        color: CupertinoColors.systemGrey),
-                                                  ) : Container(),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        program.finishAt.toString(),
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            color: AppConstants
+                                                .backgroundBlue),
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
-
-                              program.type == "session" && program.sessions?.length !=0 ?
-                              Column(
-                                  children: program.sessions!.map((session)
-                                  {
-                                    return Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: IntrinsicHeight(
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            SizedBox(
-                                              width: screenWidth * 0.2,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: AppConstants.programBackgroundYellow,
-                                                  border: Border.all(color: Colors.black),
-                                                  borderRadius: BorderRadius.circular(14),
-                                                ),
-                                                padding: EdgeInsets.all(12),
-                                                child: Column(
-                                                  children: [
-                                                    Text(
-                                                      session.startAt.toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 20,
-                                                          color: AppConstants.backgroundBlue),
-                                                    ),
-                                                    Expanded(
-                                                      child: Container(
-                                                        height: double.infinity,
-                                                        width: screenWidth*0.006,
-                                                        color: Colors.black,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      session.finishAt.toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 20,
-                                                          color: AppConstants.backgroundBlue),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 10,),
-                                            SizedBox(
-                                              width: screenWidth * 0.65,
-                                              child: Container(
-                                                alignment: AlignmentDirectional.centerStart,
-                                                decoration: BoxDecoration(
-                                                  color: AppConstants.hallsButtonBlue,
-                                                  border: Border.all(color: Colors.black),
-                                                  borderRadius: BorderRadius.circular(14),
-                                                ),
-                                                padding: EdgeInsets.all(12),
-                                                child: Container(
-                                                  child:Column(
-                                                    mainAxisAlignment: MainAxisAlignment.start,
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        session.title.toString(),
-                                                        textAlign: TextAlign.start,
-                                                        style: TextStyle(
-                                                            fontSize: 20,
-                                                            color: Colors.black),
-                                                      ),
-                                                      session.speakerName != null ? Text(
-                                                        "Konuşmacı: " + session.speakerName.toString(),
-                                                        textAlign: TextAlign.start,
-                                                        style: TextStyle(
-                                                            fontSize: 20,
-                                                            color: CupertinoColors.systemGrey),
-                                                      ) : Container(),
-                                                      session.description != null ? Text(
-                                                        session.description.toString(),
-                                                        textAlign: TextAlign.start,
-                                                        style: TextStyle(
-                                                            fontSize: 20,
-                                                            color: CupertinoColors.systemGrey),
-                                                      ) : Container(),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppConstants.hallsButtonBlue,
+                                    border: Border.all(
+                                        color: Colors.black),
+                                    borderRadius:
+                                    BorderRadius.circular(14),
+                                  ),
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        program.title.toString(),
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.black),
                                       ),
-                                    );
-                                  }).toList()) : Container(),
-                              program.type == "debate" && program.debates?.length !=0 ?
-                              Column(
-                                  children: program.debates!.map((debate)
-                                  {
-                                    return Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: IntrinsicHeight(
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            SizedBox(
-                                              width: screenWidth * 0.2,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: AppConstants.programBackgroundYellow,
-                                                  border: Border.all(color: Colors.black),
-                                                  borderRadius: BorderRadius.circular(14),
-                                                ),
-                                                padding: EdgeInsets.all(12),
-                                                child: Column(
-                                                  children: [
-                                                    Text(
-                                                      debate.votingStartedAt.toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 20,
-                                                          color: AppConstants.backgroundBlue),
-                                                    ),
-                                                    Expanded(
-                                                      child: Container(
-                                                        height: double.infinity,
-                                                        width: screenWidth*0.006,
-                                                        color: Colors.black,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      debate.votingFinishedAt.toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 20,
-                                                          color: AppConstants.backgroundBlue),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 10,),
-                                            Expanded(
-                                              child: SizedBox(
-                                                width: screenWidth * 0.65,
-                                                child: Container(
-                                                  alignment: AlignmentDirectional.centerStart,
-                                                  decoration: BoxDecoration(
-                                                    color: AppConstants.hallsButtonBlue,
-                                                    border: Border.all(color: Colors.black),
-                                                    borderRadius: BorderRadius.circular(14),
-                                                  ),
-                                                  padding: EdgeInsets.all(12),
-                                                  child: Container(
-                                                    child:Column(
-                                                      mainAxisAlignment: MainAxisAlignment.start,
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                          debate.title.toString(),
-                                                          textAlign: TextAlign.start,
-                                                          style: TextStyle(
-                                                              fontSize: 20,
-                                                              color: Colors.black),
-                                                        ),
-                                                        debate.teams!.isNotEmpty
-                                                            ? Column(
-                                                          crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                          children: debate
-                                                              .teams!
-                                                              .map((team) =>
-                                                              Column(
-                                                                children: [
-                                                                  Text(
-                                                                    team.title.toString(),
-                                                                    textAlign:
-                                                                    TextAlign.start,
-                                                                    style:
-                                                                    TextStyle(
-                                                                      fontSize: 20,
-                                                                      color: CupertinoColors.systemGrey,
-                                                                    ),
-                                                                  ),
-                                                                  Text(
-                                                                    team.description.toString(),
-                                                                    textAlign:
-                                                                    TextAlign.start,
-                                                                    style:
-                                                                    TextStyle(
-                                                                      fontSize: 20,
-                                                                      color: CupertinoColors.systemGrey,
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ))
-                                                              .toList(),
-                                                        )
-                                                            : Container(),
-                                                        debate.description != null ? Text(
-                                                          debate.description.toString(),
-                                                          textAlign: TextAlign.start,
-                                                          style: TextStyle(
-                                                              fontSize: 20,
-                                                              color: CupertinoColors.systemGrey),
-                                                        ) : Container(),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                                      if (program.chairs!.isNotEmpty)
+                                        Text(
+                                          (program.chairs!.length == 1
+                                              ? "Moderatör: "
+                                              : "Moderatörler: ") +
+                                              program.chairs!
+                                                  .map((chair) =>
+                                              chair.fullName)
+                                                  .join(', '),
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              color: CupertinoColors
+                                                  .black),
                                         ),
-                                      ),
-                                    );
-                                  }).toList()) : Container(),
+                                      if (program.description != null)
+                                        Text(
+                                          program.description.toString(),
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              color: CupertinoColors
+                                                  .systemGrey),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
-                          );
-                        }).toList(),
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ],
-            ),
-          )),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
