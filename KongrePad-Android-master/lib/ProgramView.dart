@@ -105,7 +105,7 @@ class _ProgramViewState extends State<ProgramView> {
                       ),
                     ),
                     Padding(
-                       padding: EdgeInsets.only(right: 55),
+                      padding: EdgeInsets.only(right: 80),
                       child: const Text(
                         "Bilimsel Program",
                         style: TextStyle(
@@ -243,6 +243,238 @@ class _ProgramViewState extends State<ProgramView> {
                             ],
                           ),
                         ),
+
+                        // Sessions gösterimi
+                        if (program.type == "session" &&
+                            program.sessions?.isNotEmpty == true)
+                          Column(
+                            children: program.sessions!.map((session) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.stretch,
+                                    children: [
+                                      SizedBox(
+                                        width: screenWidth * 0.3,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppConstants
+                                                .programBackgroundYellow,
+                                            border: Border.all(
+                                                color: Colors.black),
+                                            borderRadius:
+                                            BorderRadius.circular(14),
+                                          ),
+                                          padding:
+                                          const EdgeInsets.all(12),
+                                          child: Column(
+                                            children: [
+                                              Text(
+                                                session.startAt
+                                                    .toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 18,
+                                                    color: AppConstants
+                                                        .backgroundBlue),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                session.finishAt
+                                                    .toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 18,
+                                                    color: AppConstants
+                                                        .backgroundBlue),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppConstants
+                                                .hallsButtonBlue,
+                                            border: Border.all(
+                                                color: Colors.black),
+                                            borderRadius:
+                                            BorderRadius.circular(14),
+                                          ),
+                                          padding:
+                                          const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                session.title.toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 18,
+                                                    color:
+                                                    Colors.black),
+                                              ),
+                                              if (session.speakerName !=
+                                                  null)
+                                                Text(
+                                                  "Konuşmacı: ${session.speakerName}",
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      color: CupertinoColors
+                                                          .black),
+                                                ),
+                                              if (session.description !=
+                                                  null)
+                                                Text(
+                                                  session.description
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      color: CupertinoColors
+                                                          .systemGrey),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+
+                        // Debates gösterimi
+                        if (program.type == "debate" &&
+                            program.debates?.isNotEmpty == true)
+                          Column(
+                            children: program.debates!.map((debate) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.stretch,
+                                    children: [
+                                      SizedBox(
+                                        width: screenWidth * 0.3,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppConstants
+                                                .programBackgroundYellow,
+                                            border: Border.all(
+                                                color: Colors.black),
+                                            borderRadius:
+                                            BorderRadius.circular(14),
+                                          ),
+                                          padding:
+                                          const EdgeInsets.all(12),
+                                          child: Column(
+                                            children: [
+                                              Text(
+                                                debate.votingStartedAt
+                                                    .toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 18,
+                                                    color: AppConstants
+                                                        .backgroundBlue),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                debate.votingFinishedAt
+                                                    .toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 18,
+                                                    color: AppConstants
+                                                        .backgroundBlue),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppConstants
+                                                .hallsButtonBlue,
+                                            border: Border.all(
+                                                color: Colors.black),
+                                            borderRadius:
+                                            BorderRadius.circular(14),
+                                          ),
+                                          padding:
+                                          const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                debate.title.toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 18,
+                                                    color:
+                                                    Colors.black),
+                                              ),
+                                              if (debate.teams != null)
+                                                Column(
+                                                  crossAxisAlignment:
+                                                  CrossAxisAlignment
+                                                      .start,
+                                                  children: debate.teams!
+                                                      .map((team) {
+                                                    return Column(
+                                                      crossAxisAlignment:
+                                                      CrossAxisAlignment
+                                                          .start,
+                                                      children: [
+                                                        Text(
+                                                          team.title
+                                                              .toString(),
+                                                          style: const TextStyle(
+                                                              fontSize:
+                                                              16,
+                                                              color: CupertinoColors
+                                                                  .black),
+                                                        ),
+                                                        if (team
+                                                            .description !=
+                                                            null)
+                                                          Text(
+                                                            team.description
+                                                                .toString(),
+                                                            style: const TextStyle(
+                                                                fontSize:
+                                                                16,
+                                                                color: CupertinoColors
+                                                                    .black),
+                                                          ),
+                                                      ],
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              if (debate.description !=
+                                                  null)
+                                                Text(
+                                                  debate.description
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      color: CupertinoColors
+                                                          .black),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
                       ],
                     ),
                   );

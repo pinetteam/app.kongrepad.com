@@ -7,7 +7,7 @@ import 'package:kongrepad/AnnouncementsView.dart';
 import 'package:kongrepad/AppConstants.dart';
 import 'package:kongrepad/AskQuestionView.dart';
 import 'package:kongrepad/HallsView.dart';
-import 'package:kongrepad/LoginView.dart';
+import 'package:kongrepad/main.dart';
 import 'package:kongrepad/ProfileView.dart';
 import 'package:kongrepad/ProgramDaysForMailView.dart';
 import 'package:kongrepad/ProgramDaysView.dart';
