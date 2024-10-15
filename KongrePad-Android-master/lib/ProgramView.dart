@@ -66,6 +66,7 @@ class _ProgramViewState extends State<ProgramView> {
     double screenHeight = screenSize.height;
 
     return Scaffold(
+      backgroundColor: AppConstants.programBackgroundYellow,
       body: _loading
           ? const Center(
         child: CircularProgressIndicator(
@@ -132,12 +133,12 @@ class _ProgramViewState extends State<ProgramView> {
                       Text(
                         hall?.title.toString() ?? "",
                         style: const TextStyle(
-                            fontSize: 23, color: Colors.black),
+                            fontSize: 25, color: Colors.black),
                       ),
                       Text(
                         programDay!.day.toString(),
                         style: const TextStyle(
-                            fontSize: 20, color: Colors.grey),
+                            fontSize: 20, color: Colors.black),
                       ),
                     ],
                   ),
@@ -177,7 +178,7 @@ class _ProgramViewState extends State<ProgramView> {
                                       Text(
                                         program.startAt.toString(),
                                         style: const TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 20,
                                             color: AppConstants
                                                 .backgroundBlue),
                                       ),
@@ -185,7 +186,7 @@ class _ProgramViewState extends State<ProgramView> {
                                       Text(
                                         program.finishAt.toString(),
                                         style: const TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 20,
                                             color: AppConstants
                                                 .backgroundBlue),
                                       ),
@@ -211,7 +212,7 @@ class _ProgramViewState extends State<ProgramView> {
                                       Text(
                                         program.title.toString(),
                                         style: const TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 20,
                                             color: Colors.black),
                                       ),
                                       if (program.chairs!.isNotEmpty)
@@ -224,7 +225,7 @@ class _ProgramViewState extends State<ProgramView> {
                                               chair.fullName)
                                                   .join(', '),
                                           style: const TextStyle(
-                                              fontSize: 16,
+                                              fontSize: 18,
                                               color: CupertinoColors
                                                   .black),
                                         ),
@@ -232,9 +233,9 @@ class _ProgramViewState extends State<ProgramView> {
                                         Text(
                                           program.description.toString(),
                                           style: const TextStyle(
-                                              fontSize: 16,
+                                              fontSize: 18,
                                               color: CupertinoColors
-                                                  .systemGrey),
+                                                  .black),
                                         ),
                                     ],
                                   ),
@@ -275,7 +276,7 @@ class _ProgramViewState extends State<ProgramView> {
                                                 session.startAt
                                                     .toString(),
                                                 style: const TextStyle(
-                                                    fontSize: 18,
+                                                    fontSize: 20,
                                                     color: AppConstants
                                                         .backgroundBlue),
                                               ),
@@ -284,7 +285,7 @@ class _ProgramViewState extends State<ProgramView> {
                                                 session.finishAt
                                                     .toString(),
                                                 style: const TextStyle(
-                                                    fontSize: 18,
+                                                    fontSize: 20,
                                                     color: AppConstants
                                                         .backgroundBlue),
                                               ),
@@ -312,7 +313,7 @@ class _ProgramViewState extends State<ProgramView> {
                                               Text(
                                                 session.title.toString(),
                                                 style: const TextStyle(
-                                                    fontSize: 18,
+                                                    fontSize: 20,
                                                     color:
                                                     Colors.black),
                                               ),
@@ -321,7 +322,7 @@ class _ProgramViewState extends State<ProgramView> {
                                                 Text(
                                                   "Konuşmacı: ${session.speakerName}",
                                                   style: const TextStyle(
-                                                      fontSize: 16,
+                                                      fontSize: 18,
                                                       color: CupertinoColors
                                                           .black),
                                                 ),
@@ -331,9 +332,10 @@ class _ProgramViewState extends State<ProgramView> {
                                                   session.description
                                                       .toString(),
                                                   style: const TextStyle(
-                                                      fontSize: 16,
+
+                                                      fontSize: 18,
                                                       color: CupertinoColors
-                                                          .systemGrey),
+                                                          .black),
                                                 ),
                                             ],
                                           ),
@@ -377,7 +379,7 @@ class _ProgramViewState extends State<ProgramView> {
                                                 debate.votingStartedAt
                                                     .toString(),
                                                 style: const TextStyle(
-                                                    fontSize: 18,
+                                                    fontSize: 20,
                                                     color: AppConstants
                                                         .backgroundBlue),
                                               ),
@@ -386,7 +388,7 @@ class _ProgramViewState extends State<ProgramView> {
                                                 debate.votingFinishedAt
                                                     .toString(),
                                                 style: const TextStyle(
-                                                    fontSize: 18,
+                                                    fontSize: 20,
                                                     color: AppConstants
                                                         .backgroundBlue),
                                               ),
@@ -414,7 +416,7 @@ class _ProgramViewState extends State<ProgramView> {
                                               Text(
                                                 debate.title.toString(),
                                                 style: const TextStyle(
-                                                    fontSize: 18,
+                                                    fontSize: 20,
                                                     color:
                                                     Colors.black),
                                               ),
@@ -435,7 +437,7 @@ class _ProgramViewState extends State<ProgramView> {
                                                               .toString(),
                                                           style: const TextStyle(
                                                               fontSize:
-                                                              16,
+                                                              18,
                                                               color: CupertinoColors
                                                                   .black),
                                                         ),
@@ -447,7 +449,7 @@ class _ProgramViewState extends State<ProgramView> {
                                                                 .toString(),
                                                             style: const TextStyle(
                                                                 fontSize:
-                                                                16,
+                                                                18,
                                                                 color: CupertinoColors
                                                                     .black),
                                                           ),
@@ -461,7 +463,7 @@ class _ProgramViewState extends State<ProgramView> {
                                                   debate.description
                                                       .toString(),
                                                   style: const TextStyle(
-                                                      fontSize: 16,
+                                                      fontSize: 18,
                                                       color: CupertinoColors
                                                           .black),
                                                 ),

@@ -451,11 +451,22 @@ class _MainPageViewState extends State<MainPageView> {
                               ),
                             );
                           },
-                          child: Image.network(
-                            'https://app.kongrepad.com/storage/virtual-stands/${stand.fileName}.${stand.fileExtension}',
-                            height: screenHeight * 0.04,
-                            fit: BoxFit.contain,
-                          ),
+                          child:ShaderMask(
+                            shaderCallback: (Rect bounds) {
+                              return const LinearGradient(
+                                colors: [Colors.grey, Colors.grey], // Gri tonlama
+                              ).createShader(bounds);
+                            },
+                            blendMode: BlendMode.srcIn, // Yalnızca görselin renkli kısmına uygula
+                            child: Image.network(
+                              'https://app.kongrepad.com/storage/virtual-stands/${stand.fileName}.${stand.fileExtension}',
+                              fit: BoxFit.contain,
+                            ),
+                          )
+
+
+
+
                         ),
                       );
                     }).toList() ??
