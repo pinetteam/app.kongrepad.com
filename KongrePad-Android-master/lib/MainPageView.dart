@@ -1,3 +1,5 @@
+// MainPageView.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'dart:convert';
@@ -21,13 +23,15 @@ import 'package:kongrepad/Models/VirtualStand.dart';
 import 'package:pusher_beams/pusher_beams.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:kongrepad/DebateView.dart';
 import 'KeypadView.dart';
 import 'Models/Keypad.dart';
 
-class LowerHalfEllipse extends StatelessWidget {
+class LowerHalfEllipse extends StatelessWidget   {
   final double width;
   final double height;
+
+  const LowerHalfEllipse(this.width, this.height, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -42,11 +46,9 @@ class LowerHalfEllipse extends StatelessWidget {
       ),
     );
   }
-
-  const LowerHalfEllipse(this.width, this.height, {super.key});
 }
 
-class LowerHalfEllipsePainter extends CustomPainter {
+class LowerHalfEllipsePainter extends CustomPainter   {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -65,7 +67,7 @@ class LowerHalfEllipsePainter extends CustomPainter {
   }
 }
 
-class MainPageView extends StatefulWidget {
+class MainPageView extends StatefulWidget  {
   const MainPageView({super.key, required this.title});
 
   final String title;
@@ -74,11 +76,12 @@ class MainPageView extends StatefulWidget {
   State<MainPageView> createState() => _MainPageViewState();
 }
 
-class _MainPageViewState extends State<MainPageView> {
+class _MainPageViewState extends State<MainPageView>  with WidgetsBindingObserver{
   Meeting? meeting;
   Participant? participant;
   List<VirtualStand>? virtualStands;
   bool _loading = true;
+  PusherChannelsFlutter? pusher;
 
   Future<void> logOut() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -318,12 +321,14 @@ class _MainPageViewState extends State<MainPageView> {
                 int hallId = data['hall_id'];
                 print('hall_id found: $hallId');  // Burada hallId yazdırılıyor
 
-                if (hallId == 6) {
-                  print('Correct Hall ID (6), showing keypad');
+                // Mevcut hall_id ile karşılaştırma
+                if (hallId == meeting!.sessionFirstHallId) {
+                  print('Correct Hall ID: $hallId');
                 } else {
                   print('Incorrect Hall ID: $hallId');
                 }
 
+                // 'keypad-activated' event'ini işleme
                 if (event.eventName == 'keypad-activated') {
                   print('Keypad activated event received. Navigating to KeypadView...');
                   Navigator.push(
@@ -331,9 +336,23 @@ class _MainPageViewState extends State<MainPageView> {
                     MaterialPageRoute(
                         builder: (context) => KeypadView(hallId: hallId)),
                   );
-                } else {
-                  print('Unhandled event type: ${event.eventName}');
                 }
+
+                // **Debate eventlerini işleme**
+                if (event.eventName == 'debate' || event.eventName == 'debate-activated') {
+                  print('${event.eventName} event received. Checking hall_id...');
+                  if (hallId == meeting!.sessionFirstHallId) {
+                    print('hall_id matched! Navigating to DebateView...');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => DebateView(hallId: hallId)),
+                    );
+                  } else {
+                    print('Incorrect Hall ID for debate: $hallId');
+                  }
+                }
+
               } else {
                 print('Error: hall_id not found in event data.');
               }
@@ -344,7 +363,6 @@ class _MainPageViewState extends State<MainPageView> {
             print('No data received in Pusher event.');
           }
         },
-
       );
 
       subscribedChannels.add(channelName);
@@ -357,7 +375,7 @@ class _MainPageViewState extends State<MainPageView> {
   @override
   void initState() {
     super.initState();
-
+    WidgetsBinding.instance.addObserver(this);
     getData();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -374,7 +392,53 @@ class _MainPageViewState extends State<MainPageView> {
       }
     });
   }
+  Future<void> _connectToPusher() async {
+    if (isPusherConnected) {
+      print('Pusher is already connected');
+      return;
+    }
+    pusher = PusherChannelsFlutter.getInstance();
+    await pusher?.init(apiKey: "314fc649c9f65b8d7960", cluster: "eu");
+    await pusher?.connect();
+    isPusherConnected = true;
+    print("Pusher connected successfully.");
 
+    await pusher?.subscribe(channelName: 'meeting-1-attendee', onEvent: _handlePusherEvent);
+  }
+
+  void _handlePusherEvent(PusherEvent event) {
+    print('Event received on channel: meeting-1-attendee');
+    print('Event Name: ${event.eventName}');
+    print('Event Data: ${event.data}');
+
+    // Event'in debate ya da debate-activated olmasına dikkat edin
+    if (event.eventName == 'debate' || event.eventName == 'debate-activated') {
+      print('Debate event triggered');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => DebateView(hallId: 1)),
+      );
+    } else {
+      print('Unhandled event type: ${event.eventName}');
+    }
+  }
+ /*   Degisek@override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);  // Lifecycle gözlemleyiciyi kaldırıyoruz
+    super.dispose();
+  } */
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Uygulama arka planda ya da öndeyken Pusher bağlantısını yönetiyoruz
+    if (state == AppLifecycleState.resumed) {
+      print("App resumed - reconnecting to Pusher");
+      _connectToPusher(); // Eğer uygulama aktif olursa Pusher'a tekrar bağlanıyoruz
+    } else if (state == AppLifecycleState.paused) {
+      print("App paused - you can handle Pusher disconnection if needed");
+      // Uygulama arka planda kalırken isterseniz Pusher bağlantısını kapatabilirsiniz.
+      // await pusher?.disconnect();
+    }
+  }
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -406,7 +470,8 @@ class _MainPageViewState extends State<MainPageView> {
                 ),
                 Text(
                   "${participant?.fullName}",
-                  style: const TextStyle(fontSize: 25, color: Colors.white),
+                  style:
+                  const TextStyle(fontSize: 25, color: Colors.white),
                 )
               ],
             ),
@@ -442,31 +507,27 @@ class _MainPageViewState extends State<MainPageView> {
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    VirtualStandView(stand: stand),
-                              ),
-                            );
-                          },
-                          child:ShaderMask(
-                            shaderCallback: (Rect bounds) {
-                              return const LinearGradient(
-                                colors: [Colors.grey, Colors.grey], // Gri tonlama
-                              ).createShader(bounds);
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      VirtualStandView(stand: stand),
+                                ),
+                              );
                             },
-                            blendMode: BlendMode.srcIn, // Yalnızca görselin renkli kısmına uygula
-                            child: Image.network(
-                              'https://app.kongrepad.com/storage/virtual-stands/${stand.fileName}.${stand.fileExtension}',
-                              fit: BoxFit.contain,
-                            ),
-                          )
-
-
-
-
+                            child: ShaderMask(
+                              shaderCallback: (Rect bounds) {
+                                return const LinearGradient(
+                                  colors: [Colors.grey, Colors.grey], // Gri tonlama
+                                ).createShader(bounds);
+                              },
+                              blendMode: BlendMode.srcIn, // Yalnızca görselin renkli kısmına uygula
+                              child: Image.network(
+                                'https://app.kongrepad.com/storage/virtual-stands/${stand.fileName}.${stand.fileExtension}',
+                                fit: BoxFit.contain,
+                              ),
+                            )
                         ),
                       );
                     }).toList() ??
@@ -701,8 +762,8 @@ class _MainPageViewState extends State<MainPageView> {
               height: screenHeight * 0.16,
               child: ElevatedButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                        AppConstants.buttonLightBlue),
+                    backgroundColor:
+                    MaterialStateProperty.all<Color>(AppConstants.buttonLightBlue),
                     foregroundColor:
                     MaterialStateProperty.all<Color>(Colors.white),
                     padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
@@ -769,7 +830,6 @@ class _MainPageViewState extends State<MainPageView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-
             SizedBox(
               width: screenWidth * 0.45,
               height: screenHeight * 0.16,
@@ -923,7 +983,15 @@ class _MainPageViewState extends State<MainPageView> {
             ],
           ),
         ),
-
+       /* ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => DebateView(hallId: 1)),
+              );
+            },
+            child: Text('data')) */
       ]),
     );
   }

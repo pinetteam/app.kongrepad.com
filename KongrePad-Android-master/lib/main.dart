@@ -93,6 +93,7 @@ class _LoginViewState extends State<LoginView> {
   initState(){
     super.initState();
     LoginCheck();
+
   }
 //344c1051-b28a-4934-8159-b12983258f86
   @override

@@ -163,24 +163,24 @@ class _KeypadViewState extends State<KeypadView> {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                height: screenHeight * 0.1,
+                height: screenHeight * 0.11,
                 decoration: const BoxDecoration(
                   color: AppConstants.backgroundBlue,
                   border: Border(
                     bottom: BorderSide(
                       color: Colors.white, // Border color
-                      width: 2, // Border width
+                      width: 1, // Border width
                     ),
                   ),
                 ),
                 child: Text(
-                  "Lütfen size en uygun yanıtı seçiniz",
-                  style: const TextStyle(fontSize: 23, color: Colors.white),
+                  "Lütfen size en uygun yanıtı seçiniz.",
+                  style: const TextStyle(fontSize: 22, color: Colors.white),
                 ),
               ),
               // Soru metnini buraya ekliyoruz
               Padding(
-                padding: const EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(8.0),
                 child: Text(
                   questionText ?? "", // Soru metnini gösteriyoruz
                   style: const TextStyle(fontSize: 25, color: Colors.white),
@@ -245,7 +245,7 @@ class _KeypadViewState extends State<KeypadView> {
     // Eğer keypad ID null veya 0 ise, bu aşamada bir sorun var demektir.
     if (keypad?.id == null || keypad?.id == 0) {
       print('Error: Keypad ID null or invalid!');
-      _showError('Keypad ID is invalid. Please try again.');
+      _showDialog('Hata', 'Keypad ID geçersiz. Lütfen tekrar deneyin.');
       return;
     }
 
@@ -289,25 +289,45 @@ class _KeypadViewState extends State<KeypadView> {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status']) {
           print('Vote submitted successfully.');
-          _showError(' Tebrikler .');
-
+          _showDialog('Başarılı', 'Tebrikler, oy başarıyla gönderildi.');
           Navigator.of(context).pop();
         } else {
           print('Vote submission failed.');
-          _showError(' Daha önceden yanıt verdiniz .');
+          _showDialog('Başarısız', 'Daha önceden yanıt verdiniz.');
         }
       } else {
         print('Vote submission failed with status code: ${response.statusCode}');
-        _showError('Vote submission failed. Please try again.');
+        _showDialog('Hata', 'Oy gönderimi başarısız. Lütfen tekrar deneyin.');
       }
     } catch (error) {
       print('Error sending vote: $error');
-      _showError('An error occurred while sending the vote.');
+      _showDialog('Hata', 'Oy gönderilirken bir hata oluştu.');
     } finally {
       setState(() {
         _sending = false;
       });
     }
+  }
+
+// Bu fonksiyon AlertDialog göstermek için kullanılıyor
+  void _showDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Tamam"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dialog'u kapat
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
 

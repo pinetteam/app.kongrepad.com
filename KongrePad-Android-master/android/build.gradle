@@ -10,6 +10,17 @@ subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 subprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin("com.android.application") ||
+                project.plugins.hasPlugin("com.android.library")) {
+            project.android {
+                compileSdkVersion 34 // SDK versiyonunu 35'e yükseltin
+            }
+        }
+    }
+}
+
+subprojects {
     project.evaluationDependsOn(':app')
 }
 
@@ -22,7 +33,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.0'  // Bu zaten mevcut olabilir
+        classpath 'com.android.tools.build:gradle:8.1.0'  // Bu zaten mevcut olabilir
         classpath 'com.google.gms:google-services:4.3.8'  // Firebase için bu satırı ekle
     }
 }
