@@ -9,6 +9,54 @@ import 'package:kongrepad/Models/Hall.dart';
 import 'package:kongrepad/Models/Program.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Map for translating English day names to Turkish
+Map<String, String> dayTranslations = {
+  'Monday': 'Pazartesi',
+  'Tuesday': 'Salı',
+  'Wednesday': 'Çarşamba',
+  'Thursday': 'Perşembe',
+  'Friday': 'Cuma',
+  'Saturday': 'Cumartesi',
+  'Sunday': 'Pazar',
+};
+
+// Map for translating English month names to Turkish
+Map<String, String> monthTranslations = {
+  'January': 'Ocak',
+  'February': 'Şubat',
+  'March': 'Mart',
+  'April': 'Nisan',
+  'May': 'Mayıs',
+  'June': 'Haziran',
+  'July': 'Temmuz',
+  'August': 'Ağustos',
+  'September': 'Eylül',
+  'October': 'Ekim',
+  'November': 'Kasım',
+  'December': 'Aralık',
+};
+
+// Function to translate day and month names to Turkish
+String translateDateToTurkish(String englishDate) {
+  String translatedDate = englishDate;
+
+  // Translate day names
+  dayTranslations.forEach((english, turkish) {
+    if (englishDate.contains(english)) {
+      translatedDate = translatedDate.replaceAll(english, turkish);
+    }
+  });
+
+  // Translate month names
+  monthTranslations.forEach((english, turkish) {
+    if (englishDate.contains(english)) {
+      translatedDate = translatedDate.replaceAll(english, turkish);
+    }
+  });
+
+  return translatedDate;
+}
+
 class ProgramView extends StatefulWidget {
   const ProgramView({super.key, required this.programDay, required this.hallId});
 
@@ -136,7 +184,7 @@ class _ProgramViewState extends State<ProgramView> {
                             fontSize: 25, color: Colors.black),
                       ),
                       Text(
-                        programDay!.day.toString(),
+                        translateDateToTurkish(programDay!.day.toString()), // Translate day to Turkish
                         style: const TextStyle(
                             fontSize: 20, color: Colors.black),
                       ),

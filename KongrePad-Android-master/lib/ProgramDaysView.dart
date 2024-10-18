@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:kongrepad/AppConstants.dart';
@@ -7,6 +6,52 @@ import 'package:http/http.dart' as http;
 import 'package:kongrepad/Models/Program.dart';
 import 'package:kongrepad/ProgramView.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Translation maps for day and month names
+Map<String, String> dayTranslations = {
+  'Monday': 'Pazartesi',
+  'Tuesday': 'Salı',
+  'Wednesday': 'Çarşamba',
+  'Thursday': 'Perşembe',
+  'Friday': 'Cuma',
+  'Saturday': 'Cumartesi',
+  'Sunday': 'Pazar',
+};
+
+Map<String, String> monthTranslations = {
+  'January': 'Ocak',
+  'February': 'Şubat',
+  'March': 'Mart',
+  'April': 'Nisan',
+  'May': 'Mayıs',
+  'June': 'Haziran',
+  'July': 'Temmuz',
+  'August': 'Ağustos',
+  'September': 'Eylül',
+  'October': 'Ekim',
+  'November': 'Kasım',
+  'December': 'Aralık',
+};
+
+String translateDateToTurkish(String englishDate) {
+  String translatedDate = englishDate;
+
+  // Translate day names
+  dayTranslations.forEach((english, turkish) {
+    if (englishDate.contains(english)) {
+      translatedDate = translatedDate.replaceAll(english, turkish);
+    }
+  });
+
+  // Translate month names
+  monthTranslations.forEach((english, turkish) {
+    if (englishDate.contains(english)) {
+      translatedDate = translatedDate.replaceAll(english, turkish);
+    }
+  });
+
+  return translatedDate;
+}
 
 class ProgramDaysView extends StatefulWidget {
   const ProgramDaysView({super.key, required this.hallId});
@@ -23,8 +68,7 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
     final token = prefs.getString('token');
 
     try {
-      final url =
-      Uri.parse('https://app.kongrepad.com/api/v1/hall/$hallId/program');
+      final url = Uri.parse('https://app.kongrepad.com/api/v1/hall/$hallId/program');
       final response = await http.get(
         url,
         headers: <String, String>{
@@ -62,6 +106,7 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
     Size screenSize = MediaQuery.of(context).size;
     double screenWidth = screenSize.width;
     double screenHeight = screenSize.height;
+
     return Scaffold(
         body: _loading
             ? const Center(
@@ -71,8 +116,7 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
         )
             : Container(
           decoration: BoxDecoration(
-              color: AppConstants.programBackgroundYellow
-          ),
+              color: AppConstants.programBackgroundYellow),
           height: screenHeight,
           alignment: Alignment.topLeft,
           child: SingleChildScrollView(
@@ -121,7 +165,8 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
                             children: [
                               Text(
                                 "Gün Seçiniz",
-                                style: TextStyle(fontSize: 25, color: Colors.white),
+                                style: TextStyle(
+                                    fontSize: 25, color: Colors.white),
                               )
                             ]),
                       ],
@@ -135,56 +180,73 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
                     width: screenWidth,
                     child: Column(
                       children: programDays?.map((day) {
+                        String translatedDay = translateDateToTurkish(day.day!);
+
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: SizedBox(
                             width: screenWidth * 0.8,
                             child: ElevatedButton(
-                                style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
-                                      AppConstants.hallsButtonBlue),
-                                  foregroundColor: MaterialStateProperty.all<Color>(
-                                      AppConstants.backgroundBlue),
-                                  padding:
-                                  MaterialStateProperty.all<EdgeInsetsGeometry>(
-                                    const EdgeInsets.all(12),
-                                  ),
-                                  shape: MaterialStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
+                              style: ButtonStyle(
+                                backgroundColor:
+                                MaterialStateProperty.all<Color>(
+                                    AppConstants.hallsButtonBlue),
+                                foregroundColor:
+                                MaterialStateProperty.all<Color>(
+                                    AppConstants.backgroundBlue),
+                                padding:
+                                MaterialStateProperty.all<EdgeInsetsGeometry>(
+                                  const EdgeInsets.all(12),
+                                ),
+                                shape: MaterialStateProperty.all<
+                                    RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(14),
                                   ),
                                 ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => ProgramView(
-                                          programDay: day,
-                                          hallId: hallId,
-                                        )),
-                                  );
-                                },
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => ProgramView(
+                                        programDay: day,
+                                        hallId: hallId,
+                                      )),
+                                );
+                              },
+                              child: SizedBox(
+                                width: screenWidth * 0.7, // Adjust width
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.center,
                                   children: [
-                                    SvgPicture.asset(
-                                      'assets/icon/chevron.right.2.svg',
-                                      color: AppConstants.backgroundBlue,
-                                      height: screenHeight * 0.03,
+                                    Padding(
+                                      padding: EdgeInsets.all(2),
+                                      child: SvgPicture.asset(
+                                        'assets/icon/chevron.right.2.svg',
+                                        color: AppConstants.backgroundBlue,
+                                        height: screenHeight * 0.03,
+                                      ),
                                     ),
                                     SizedBox(
-                                      width: screenWidth*0.01,
+                                      width: screenWidth * 0.03,
                                     ),
                                     Flexible(
-                                      child: Text(
-                                        day.day.toString(),
-                                        style: TextStyle(fontSize: 20),
+                                      child: Center(
+                                        child: Text(
+                                          translatedDay,
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
-                                )),
+                                ),
+                              ),
+                            ),
                           ),
                         );
                       }).toList() ?? [],

@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:kongrepad/AlertService.dart';
@@ -516,18 +517,14 @@ class _MainPageViewState extends State<MainPageView>  with WidgetsBindingObserve
                                 ),
                               );
                             },
-                            child: ShaderMask(
-                              shaderCallback: (Rect bounds) {
-                                return const LinearGradient(
-                                  colors: [Colors.grey, Colors.grey], // Gri tonlama
-                                ).createShader(bounds);
-                              },
-                              blendMode: BlendMode.srcIn, // Yalnızca görselin renkli kısmına uygula
+                            child: Padding(
+                              padding: EdgeInsets.all(5),
                               child: Image.network(
                                 'https://app.kongrepad.com/storage/virtual-stands/${stand.fileName}.${stand.fileExtension}',
                                 fit: BoxFit.contain,
                               ),
                             )
+
                         ),
                       );
                     }).toList() ??
@@ -900,17 +897,19 @@ class _MainPageViewState extends State<MainPageView>  with WidgetsBindingObserve
                           builder: (context) => const ScoreGameView()),
                     );
                   },
-                  child: Column(
+                  child: const Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SvgPicture.asset(
-                        'assets/icon/leaf.fill.svg',
-                        color: Colors.white,
-                        height: screenHeight * 0.06,
+                      Center(
+                        child: Icon(
+                          FontAwesomeIcons.qrcode,  // QR kod ikonu
+                          size: 60,                 // İkon boyutu
+                          color: Colors.white,       // İkon rengi
+                        ),
                       ),
                       const Text(
-                        'Doğaya Can Ver',
-                        style: TextStyle(fontSize: 18),
+                        'QR okut',
+                        style: TextStyle(fontSize: 20),
                       ),
                     ],
                   )),

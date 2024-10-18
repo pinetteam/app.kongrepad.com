@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:kongrepad/AlertService.dart';
 import 'package:kongrepad/Models/ScoreGame.dart';
@@ -127,11 +128,14 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                         child: Container(
               width: screenHeight * 0.3,
               height: screenHeight * 0.3,
-              child: Padding(
+              child: const Padding(
                 padding: EdgeInsets.all(8.0),
-                child: SvgPicture.asset(
-                  'assets/dogaya_can_ver.svg',
-                  width: screenWidth * 0.03,
+                child:   Center(
+                  child: Icon(
+                    FontAwesomeIcons.qrcode,  // QR kod ikonu
+                    size: 150,                 // İkon boyutu
+                    color: Colors.green,       // İkon rengi
+                  ),
                 ),
               ),
                         ),
