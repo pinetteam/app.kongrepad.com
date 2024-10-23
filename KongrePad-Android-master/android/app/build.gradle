@@ -11,6 +11,14 @@ if (localPropertiesFile.exists()) {
         localProperties.load(reader)
     }
 }
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+
+
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
@@ -44,23 +52,29 @@ android {
         applicationId "tr.com.pinet.kongrepad"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
-        versionCode 2  // Versiyon kodunu her güncellemede artırın.
+        versionCode 3  // Versiyon kodunu her güncellemede artırın.
         versionName "1.1.0"  // Versiyon adını istediğiniz gibi belirleyin.
     }
     signingConfigs {
         release {
-            keyAlias 'my-key-alias'           // Oluşturduğunuz keystore için kullandığınız alias
-            keyPassword 'kongrepad2024'   // Oluşturduğunuz keystore için belirlediğiniz şifre
-            storeFile file('my-release-key.jks') // Keystore dosyasının adı (keystore dosyanızın konumu)
-            storePassword 'kongrepad2024' // Keystore dosyasının şifresi
+            keyAlias keystoreProperties['keyAlias'] // 'upload' değeri key.properties dosyasından otomatik olarak alınacak
+            keyPassword keystoreProperties['keyPassword'] // key.properties'den otomatik olarak alınacak
+            storeFile file(keystoreProperties['storeFile']) // Keystore dosyasının yolu key.properties'den alınacak
+            storePassword keystoreProperties['storePassword'] // storePassword key.properties'den alınacak
         }
     }
 
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.debug
+            minifyEnabled false // Eğer minify yapmayacaksan, bunu false yap.
+            shrinkResources false // shrinkResources'u kapat. Bu hatayı çözmeli.
+
+            // Eğer minifyEnabled'ı kullanmak istersen, şunu yapabilirsin:
+            // minifyEnabled true // Düşük boyutlu APK için kod küçültme (R8)
+            // shrinkResources true // Hem minifyEnabled hem de shrinkResources açık olmalı.
+
+            signingConfig signingConfigs.release  // Imzalama işlemi Google Play tarafından yapılacak.
         }
     }
 }

@@ -107,6 +107,10 @@ class _ProgramViewState extends State<ProgramView> {
     getData();
   }
 
+  String getLogoUrl(Program program) {
+    return "https://app.kongrepad.com/storage/program-logos/${program.logoName}.${program.logoExtension}";
+  }
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -154,11 +158,10 @@ class _ProgramViewState extends State<ProgramView> {
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.only(right: 80),
+                      padding: const EdgeInsets.only(right: 80),
                       child: const Text(
                         "Bilimsel Program",
-                        style: TextStyle(
-                            fontSize: 25, color: Colors.white),
+                        style: TextStyle(fontSize: 25, color: Colors.white),
                       ),
                     ),
                   ],
@@ -180,13 +183,11 @@ class _ProgramViewState extends State<ProgramView> {
                     children: [
                       Text(
                         hall?.title.toString() ?? "",
-                        style: const TextStyle(
-                            fontSize: 25, color: Colors.black),
+                        style: const TextStyle(fontSize: 25, color: Colors.black),
                       ),
                       Text(
                         translateDateToTurkish(programDay!.day.toString()), // Translate day to Turkish
-                        style: const TextStyle(
-                            fontSize: 20, color: Colors.black),
+                        style: const TextStyle(fontSize: 20, color: Colors.black),
                       ),
                     ],
                   ),
@@ -206,19 +207,24 @@ class _ProgramViewState extends State<ProgramView> {
                       children: [
                         IntrinsicHeight(
                           child: Row(
-                            crossAxisAlignment:
-                            CrossAxisAlignment.stretch,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              // Zaman dilimi ve çizgi bölümü
                               SizedBox(
                                 width: screenWidth * 0.3,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: AppConstants
-                                        .programBackgroundYellow,
-                                    border: Border.all(
-                                        color: Colors.black),
-                                    borderRadius:
-                                    BorderRadius.circular(14),
+                                    color: AppConstants.programBackgroundYellow,
+                                    border: Border.all(color: Colors.black),
+                                    borderRadius: BorderRadius.circular(14),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 2,
+                                        blurRadius: 5,
+                                        offset: const Offset(0, 3), // Gölgeyi aşağıya verir
+                                      ),
+                                    ],
                                   ),
                                   padding: const EdgeInsets.all(12),
                                   child: Column(
@@ -226,17 +232,19 @@ class _ProgramViewState extends State<ProgramView> {
                                       Text(
                                         program.startAt.toString(),
                                         style: const TextStyle(
-                                            fontSize: 20,
-                                            color: AppConstants
-                                                .backgroundBlue),
+                                            fontSize: 20, color: AppConstants.backgroundBlue),
                                       ),
-                                      const SizedBox(height: 4),
+                                      Expanded(
+                                        child: Container(
+                                          width: 2.0, // Çizgi genişliği
+                                          color: Colors.black, // Çizgi rengi
+                                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                                        ),
+                                      ),
                                       Text(
                                         program.finishAt.toString(),
                                         style: const TextStyle(
-                                            fontSize: 20,
-                                            color: AppConstants
-                                                .backgroundBlue),
+                                            fontSize: 20, color: AppConstants.backgroundBlue),
                                       ),
                                     ],
                                   ),
@@ -247,43 +255,103 @@ class _ProgramViewState extends State<ProgramView> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: AppConstants.hallsButtonBlue,
-                                    border: Border.all(
-                                        color: Colors.black),
-                                    borderRadius:
-                                    BorderRadius.circular(14),
+                                    border: Border.all(color: Colors.black),
+                                    borderRadius: BorderRadius.circular(14),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 2,
+                                        blurRadius: 5,
+                                        offset: const Offset(0, 3), // Gölgeyi aşağıya verir
+                                      ),
+                                    ],
                                   ),
                                   padding: const EdgeInsets.all(12),
                                   child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
+                                      if (program.logoName != null)
+                                      // Logo gösterimi - Responsive hale getirme
+                                        Image.network(
+                                          getLogoUrl(program),
+                                          height: screenHeight * 0.15, // Yükseklik ayarı (responsive)
+                                          width: screenWidth * 0.65,  // Genişlik ayarı (responsive)
+                                          fit: BoxFit.contain,        // Logo kutuya sığacak şekilde boyutlandırılır
+                                        ),
+                                      const SizedBox(height: 8),
                                       Text(
                                         program.title.toString(),
-                                        style: const TextStyle(
-                                            fontSize: 20,
-                                            color: Colors.black),
+                                        style: const TextStyle(fontSize: 20, color: Colors.black),
                                       ),
                                       if (program.chairs!.isNotEmpty)
                                         Text(
                                           (program.chairs!.length == 1
                                               ? "Moderatör: "
                                               : "Moderatörler: ") +
-                                              program.chairs!
-                                                  .map((chair) =>
-                                              chair.fullName)
-                                                  .join(', '),
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              color: CupertinoColors
-                                                  .black),
+                                              program.chairs!.map((chair) => chair.fullName).join(', '),
+                                          style: const TextStyle(fontSize: 18, color: CupertinoColors.black),
                                         ),
                                       if (program.description != null)
                                         Text(
                                           program.description.toString(),
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              color: CupertinoColors
-                                                  .black),
+                                          style: const TextStyle(fontSize: 18, color: CupertinoColors.black),
+                                        ),
+
+                                      // Debate bölümü
+                                      if (program.debates != null)
+                                        Column(
+                                          children: program.debates!.map((debate) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(top: 8.0),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    debate.title!,
+                                                    style: const TextStyle(
+                                                      fontSize: 18,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  if (debate.description != null)
+                                                    Text(
+                                                      debate.description!,
+                                                      style: const TextStyle(
+                                                        fontSize: 16,
+                                                        color: CupertinoColors.black,
+                                                      ),
+                                                    ),
+                                                  // Debate takımları
+                                                  for (var team in debate.teams ?? [])
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(top: 8.0),
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            team.title!,
+                                                            style: const TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                          if (team.description != null)
+                                                            Text(
+                                                              team.description!,
+                                                              style: const TextStyle(
+                                                                fontSize: 14,
+                                                                color: CupertinoColors.black,
+                                                              ),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
                                         ),
                                     ],
                                   ),
@@ -292,239 +360,6 @@ class _ProgramViewState extends State<ProgramView> {
                             ],
                           ),
                         ),
-
-                        // Sessions gösterimi
-                        if (program.type == "session" &&
-                            program.sessions?.isNotEmpty == true)
-                          Column(
-                            children: program.sessions!.map((session) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: IntrinsicHeight(
-                                  child: Row(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
-                                    children: [
-                                      SizedBox(
-                                        width: screenWidth * 0.3,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: AppConstants
-                                                .programBackgroundYellow,
-                                            border: Border.all(
-                                                color: Colors.black),
-                                            borderRadius:
-                                            BorderRadius.circular(14),
-                                          ),
-                                          padding:
-                                          const EdgeInsets.all(12),
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                session.startAt
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 20,
-                                                    color: AppConstants
-                                                        .backgroundBlue),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                session.finishAt
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 20,
-                                                    color: AppConstants
-                                                        .backgroundBlue),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: AppConstants
-                                                .hallsButtonBlue,
-                                            border: Border.all(
-                                                color: Colors.black),
-                                            borderRadius:
-                                            BorderRadius.circular(14),
-                                          ),
-                                          padding:
-                                          const EdgeInsets.all(12),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                session.title.toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 20,
-                                                    color:
-                                                    Colors.black),
-                                              ),
-                                              if (session.speakerName !=
-                                                  null)
-                                                Text(
-                                                  "Konuşmacı: ${session.speakerName}",
-                                                  style: const TextStyle(
-                                                      fontSize: 18,
-                                                      color: CupertinoColors
-                                                          .black),
-                                                ),
-                                              if (session.description !=
-                                                  null)
-                                                Text(
-                                                  session.description
-                                                      .toString(),
-                                                  style: const TextStyle(
-
-                                                      fontSize: 18,
-                                                      color: CupertinoColors
-                                                          .black),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-
-                        // Debates gösterimi
-                        if (program.type == "debate" &&
-                            program.debates?.isNotEmpty == true)
-                          Column(
-                            children: program.debates!.map((debate) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: IntrinsicHeight(
-                                  child: Row(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
-                                    children: [
-                                      SizedBox(
-                                        width: screenWidth * 0.3,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: AppConstants
-                                                .programBackgroundYellow,
-                                            border: Border.all(
-                                                color: Colors.black),
-                                            borderRadius:
-                                            BorderRadius.circular(14),
-                                          ),
-                                          padding:
-                                          const EdgeInsets.all(12),
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                debate.votingStartedAt
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 20,
-                                                    color: AppConstants
-                                                        .backgroundBlue),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                debate.votingFinishedAt
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 20,
-                                                    color: AppConstants
-                                                        .backgroundBlue),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: AppConstants
-                                                .hallsButtonBlue,
-                                            border: Border.all(
-                                                color: Colors.black),
-                                            borderRadius:
-                                            BorderRadius.circular(14),
-                                          ),
-                                          padding:
-                                          const EdgeInsets.all(12),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                debate.title.toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 20,
-                                                    color:
-                                                    Colors.black),
-                                              ),
-                                              if (debate.teams != null)
-                                                Column(
-                                                  crossAxisAlignment:
-                                                  CrossAxisAlignment
-                                                      .start,
-                                                  children: debate.teams!
-                                                      .map((team) {
-                                                    return Column(
-                                                      crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .start,
-                                                      children: [
-                                                        Text(
-                                                          team.title
-                                                              .toString(),
-                                                          style: const TextStyle(
-                                                              fontSize:
-                                                              18,
-                                                              color: CupertinoColors
-                                                                  .black),
-                                                        ),
-                                                        if (team
-                                                            .description !=
-                                                            null)
-                                                          Text(
-                                                            team.description
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize:
-                                                                18,
-                                                                color: CupertinoColors
-                                                                    .black),
-                                                          ),
-                                                      ],
-                                                    );
-                                                  }).toList(),
-                                                ),
-                                              if (debate.description !=
-                                                  null)
-                                                Text(
-                                                  debate.description
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 18,
-                                                      color: CupertinoColors
-                                                          .black),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
                       ],
                     ),
                   );

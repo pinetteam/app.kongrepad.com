@@ -464,94 +464,92 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
     double screenWidth = screenSize.width;
     double screenHeight = screenSize.height;
 
-    return Expanded(
-      child: Scaffold(
-        body: Center(
-          child: Container(
-            padding: const EdgeInsets.all(15),
-            constraints: BoxConstraints(
-              maxHeight: screenHeight * 0.8, // Ekranın %80'ine kadar genişleyebilir
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min, // İçeriği minimum boyutta tutar
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextField(
-                  controller: _controller,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hintText: 'Lütfen Kodunuzu buraya giriniz',
-                    hintStyle: const TextStyle(color: Colors.orange),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.orange),
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.orange),
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        vertical: 10.0, horizontal: 15.0),
+    return Scaffold(
+      body: Center(
+        child: Container(
+          padding: const EdgeInsets.all(15),
+          constraints: BoxConstraints(
+            maxHeight: screenHeight * 0.8, // Ekranın %80'ine kadar genişleyebilir
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // İçeriği minimum boyutta tutar
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _controller,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Lütfen Kodunuzu buraya giriniz',
+                  hintStyle: const TextStyle(color: Colors.orange),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.orange),
+                    borderRadius: BorderRadius.circular(40),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.orange),
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                      vertical: 10.0, horizontal: 15.0),
                 ),
-                SizedBox(height: screenHeight * 0.02),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'Uygulamaya giriş yaparak ',
-                      style: const TextStyle(fontSize: 15, color: Colors.white),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: '6698 sayılı KVKK\'yı kabul ediyorum',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Colors.white,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              _showPopup(context);
-                            },
+              ),
+              SizedBox(height: screenHeight * 0.02),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: RichText(
+                  text: TextSpan(
+                    text: 'Uygulamaya giriş yaparak ',
+                    style: const TextStyle(fontSize: 15, color: Colors.white),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: '6698 sayılı KVKK\'yı kabul ediyorum',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.white,
+                          decoration: TextDecoration.underline,
                         ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                ElevatedButton(
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(AppConstants.loginButtonOrange),
-                    foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                      const EdgeInsets.all(12),
-                    ),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  onPressed: _submit,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'Giriş Yap',
-                        style: TextStyle(fontSize: 25),
-                      ),
-                      SvgPicture.asset(
-                        'assets/icon/chevron.right.svg',
-                        color: Colors.white,
-                        width: screenWidth * 0.05,
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            _showPopup(context);
+                          },
                       ),
                     ],
                   ),
+                  textAlign: TextAlign.center,
                 ),
-              ],
-            ),
+              ),
+              SizedBox(height: screenHeight * 0.02),
+              ElevatedButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all<Color>(AppConstants.loginButtonOrange),
+                  foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                    const EdgeInsets.all(12),
+                  ),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+                onPressed: _submit,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Giriş Yap',
+                      style: TextStyle(fontSize: 25),
+                    ),
+                    SvgPicture.asset(
+                      'assets/icon/chevron.right.svg',
+                      color: Colors.white,
+                      width: screenWidth * 0.05,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

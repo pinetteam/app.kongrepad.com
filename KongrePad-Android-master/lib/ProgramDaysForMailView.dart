@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
@@ -8,6 +7,52 @@ import 'package:kongrepad/AppConstants.dart';
 import 'package:kongrepad/Models/Program.dart';
 import 'package:kongrepad/ProgramMailView.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Translation maps for day and month names
+Map<String, String> dayTranslations = {
+  'Monday': 'Pazartesi',
+  'Tuesday': 'Salı',
+  'Wednesday': 'Çarşamba',
+  'Thursday': 'Perşembe',
+  'Friday': 'Cuma',
+  'Saturday': 'Cumartesi',
+  'Sunday': 'Pazar',
+};
+
+Map<String, String> monthTranslations = {
+  'January': 'Ocak',
+  'February': 'Şubat',
+  'March': 'Mart',
+  'April': 'Nisan',
+  'May': 'Mayıs',
+  'June': 'Haziran',
+  'July': 'Temmuz',
+  'August': 'Ağustos',
+  'September': 'Eylül',
+  'October': 'Ekim',
+  'November': 'Kasım',
+  'December': 'Aralık',
+};
+
+String translateDateToTurkish(String englishDate) {
+  String translatedDate = englishDate;
+
+  // Translate day names
+  dayTranslations.forEach((english, turkish) {
+    if (englishDate.contains(english)) {
+      translatedDate = translatedDate.replaceAll(english, turkish);
+    }
+  });
+
+  // Translate month names
+  monthTranslations.forEach((english, turkish) {
+    if (englishDate.contains(english)) {
+      translatedDate = translatedDate.replaceAll(english, turkish);
+    }
+  });
+
+  return translatedDate;
+}
 
 class ProgramDaysForMailView extends StatefulWidget {
   const ProgramDaysForMailView({super.key, required this.hallId});
@@ -139,6 +184,9 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                   width: screenWidth,
                   child: Column(
                     children: programDays?.map((day) {
+                      // Tarih çeviri fonksiyonunu burada çağırıyoruz
+                      String translatedDay = translateDateToTurkish(day.day.toString());
+
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: SizedBox(
@@ -192,7 +240,7 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                                   ),
                                   Flexible(
                                     child: Text(
-                                      day.day.toString(),
+                                      translatedDay,  // Çevrilmiş tarihi burada gösteriyoruz
                                       style:
                                       TextStyle(fontSize: 20),
                                     ),

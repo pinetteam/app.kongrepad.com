@@ -317,6 +317,7 @@ class _AskQuestionViewState extends State<AskQuestionView> {
     setState(() {
       _asking = true;
     });
+
     final url = Uri.parse(
         'https://app.kongrepad.com/api/v1/hall/${widget.hallId}/session-question');
     final body = jsonEncode({
@@ -325,40 +326,83 @@ class _AskQuestionViewState extends State<AskQuestionView> {
     });
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    http
-        .post(
-      url,
-      headers: {
-        'Authorization': 'Bearer ${prefs.getString('token')}',
-        'Content-Type': 'application/json',
-      },
-      body: body,
-    )
-        .then((response) {
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer ${prefs.getString('token')}',
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      );
+
       final jsonResponse = jsonDecode(response.body);
+
       if (jsonResponse['status']) {
-        AlertService().showAlertDialog(
-          context,
-          title: 'Başarılı',
-          content: "Sorunuz gönderildi!",
+        // Başarılı mesaj
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Başarılı'),
+              content: Text('Sorunuz başarıyla gönderildi!'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Dialog'u kapatır
+                    Navigator.of(context).pop(); // Sayfadan çıkış yapar
+                  },
+                  child: Text('Tamam'),
+                ),
+              ],
+            );
+          },
         );
-        Navigator.of(context).pop();
       } else {
-        AlertService().showAlertDialog(
-          context,
-          title: 'Hata',
-          content: "Bir sorun meydana geldi!",
+        // Başarısız mesaj
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Hata'),
+              content: Text('Bir sorun meydana geldi, lütfen tekrar deneyin!'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Dialog'u kapatır
+                  },
+                  child: Text('Tamam'),
+                ),
+              ],
+            );
+          },
         );
       }
+    } catch (e) {
+      // Hata durumu
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Hata'),
+            content: Text('Bir hata meydana geldi, lütfen tekrar deneyin!'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('Tamam'),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
       setState(() {
         _asking = false;
       });
-    }).catchError((error) {
-      print(error);
-      setState(() {
-        _asking = false;
-      });
-    });
+    }
   }
 
   Future<void> getData() async {
