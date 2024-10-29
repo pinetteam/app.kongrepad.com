@@ -1,11 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.pinet.kongrepad">
+          package="tr.com.pinet.kongrepad">
     <application
-        android:label="kongrepad"
+        android:label="KongrePad"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name=".MainActivity"
+            android:name="tr.com.pinet.kongrepad.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"

@@ -9,8 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:338957093363:android:b9a84dd7094af09ff82a86",
         "android_client_info": {
-          "package_name": "tr.com.pinet.kongrepad"
-        }
+          "package_name": "com.pinet.kongrepad"        }
       },
       "oauth_client": [],
       "api_key": [

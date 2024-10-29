@@ -106,7 +106,7 @@ class _ProgramMailViewState extends State<ProgramMailView> {
         });
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error fetching data: $e'); // LOG: Veri çekme hatası
     }
   }
 
@@ -213,13 +213,13 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
-                          IntrinsicHeight( // Satırın yüksekliğini eşitler
+                          IntrinsicHeight(
                             child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center, // Eşit boyda uzanmasını sağlar
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // Zaman ve çizgi bölümü (Sabit genişlikte tutacağız)
+                                // Zaman ve çizgi bölümü
                                 Container(
-                                  width: screenWidth * 0.25, // Sol kutucuğa sabit genişlik veriyoruz
+                                  width: screenWidth * 0.25,
                                   decoration: BoxDecoration(
                                     color: AppConstants.programBackgroundYellow,
                                     border: Border.all(color: Colors.black),
@@ -227,29 +227,29 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                                   ),
                                   padding: const EdgeInsets.all(12),
                                   child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Üst ve alt arasına yerleştirir
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        program.startAt ?? "", // Başlama saati
+                                        program.startAt ?? "",
                                         style: const TextStyle(fontSize: 18, color: AppConstants.backgroundBlue),
                                       ),
                                       Expanded(
                                         child: Container(
-                                          width: 2.0, // Çizgi genişliği
-                                          color: Colors.black, // Çizgi rengi
+                                          width: 2.0,
+                                          color: Colors.black,
                                           margin: const EdgeInsets.symmetric(vertical: 4.0),
                                         ),
                                       ),
                                       Text(
-                                        program.finishAt ?? "", // Bitiş saati
+                                        program.finishAt ?? "",
                                         style: const TextStyle(fontSize: 18, color: AppConstants.backgroundBlue),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 10), // İki kutu arasındaki boşluk
+                                const SizedBox(width: 10),
 
-                                // Sağ kutucuk genişliği artırılıyor ve içerikler sığdırılıyor
+                                // Sağ kutucuk genişliği ve içerikler
                                 Flexible(
                                   child: Container(
                                     decoration: BoxDecoration(
@@ -259,36 +259,33 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                                     ),
                                     padding: const EdgeInsets.all(12),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start, // İçerikleri sola yaslı yapar
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        // Program başlığı
                                         Text(
                                           program.title.toString(),
                                           style: const TextStyle(fontSize: 18, color: Colors.black),
-                                          maxLines: 2, // En fazla iki satır olacak şekilde sınırla
-                                          overflow: TextOverflow.ellipsis, // Çok uzun metinlerde üç nokta ekler
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        const SizedBox(height: 8), // Biraz boşluk bırakılır
-
-                                        // Moderatör bilgisi
+                                        const SizedBox(height: 8),
                                         if (program.chairs!.isNotEmpty)
                                           Text(
-                                            (program.chairs!.length == 1 ? "Moderatör: " : "Moderatörler: ") +
+                                            (program.chairs!.length == 1
+                                                ? "Moderatör: "
+                                                : "Moderatörler: ") +
                                                 program.chairs!.map((chair) => chair.fullName).join(', '),
                                             style: const TextStyle(fontSize: 16, color: CupertinoColors.black),
-                                            maxLines: 1, // En fazla bir satır olacak şekilde sınırla
-                                            overflow: TextOverflow.ellipsis, // Çok uzun metinlerde üç nokta ekler
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-
-                                        // Açıklama metni
                                         if (program.description != null)
                                           Padding(
                                             padding: const EdgeInsets.only(top: 8.0),
                                             child: Text(
                                               program.description.toString(),
-                                              style: const TextStyle(fontSize: 16, color: CupertinoColors.systemGrey),
-                                              maxLines: 3, // Açıklamayı en fazla 3 satır ile sınırla
-                                              overflow: TextOverflow.ellipsis, // Metni uzun olursa üç nokta ile keser
+                                              style: const TextStyle(fontSize: 16, color: CupertinoColors.black),
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
 
@@ -308,10 +305,10 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                                                     title: Text(
                                                       session.title!,
                                                       style: TextStyle(
-                                                        fontSize: screenWidth * 0.04, // Ekran genişliğine göre dinamik font boyutu
+                                                        fontSize: screenWidth * 0.04,
                                                       ),
-                                                      maxLines: 1, // En fazla bir satır ile sınırla
-                                                      overflow: TextOverflow.ellipsis, // Çok uzun metinlerde üç nokta ekler
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
                                                     ),
                                                     value: documents.contains(session.documentId),
                                                     onChanged: (bool? selected) {
@@ -332,7 +329,6 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                                     ),
                                   ),
                                 ),
-
                               ],
                             ),
                           ),
@@ -341,6 +337,7 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                     );
                   },
                 ),
+
                 // Mail Gönder Butonu
                 Container(
                   width: screenWidth,
@@ -394,45 +391,60 @@ class _ProgramMailViewState extends State<ProgramMailView> {
     setState(() {
       _sending = true;
     });
+
+    print('Mail Gönderme Başladı'); // LOG: Mail gönderme işlemi başladı
+
     final url = Uri.parse('https://app.kongrepad.com/api/v1/mail');
+    print('URL: $url'); // LOG: URL'yi yazdır
+
     final body = jsonEncode({
       'documents': "[${documents.map((int e) => e.toString()).join(",")}]",
     });
 
+    print('İstek Gövdesi: $body'); // LOG: İstek gövdesi yazdır
+
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    http
-        .post(
-      url,
-      headers: {
-        'Authorization': 'Bearer ${prefs.getString('token')}',
-        'Content-Type': 'application/json',
-      },
-      body: body,
-    )
-        .then((response) {
+    final token = prefs.getString('token');
+    print('Token: $token'); // LOG: Token yazdır
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      );
+
+      print('Yanıt Durum Kodu: ${response.statusCode}'); // LOG: HTTP durum kodu
+      print('Yanıt Gövdesi: ${response.body}'); // LOG: Yanıt gövdesi
+
       final jsonResponse = jsonDecode(response.body);
+      print('Çözülmüş Yanıt: $jsonResponse'); // LOG: JSON yanıtı
+
       if (jsonResponse['status']) {
         AlertService().showAlertDialog(
           context,
           title: 'Başarılı',
-          content: "Paylaşıma izin verilen sunumlardan talep ettikleriniz kongreden sonra tarafınıza mail olarak gönderilecektir.",
+          content:
+          "Paylaşıma izin verilen sunumlardan talep ettikleriniz kongreden sonra tarafınıza mail olarak gönderilecektir.",
         );
         Navigator.of(context).pop();
       } else {
+        print('Hata Mesajı: ${jsonResponse['message']}'); // LOG: Hata mesajı
         AlertService().showAlertDialog(
           context,
           title: 'Hata',
           content: 'Bir hata meydana geldi.',
         );
       }
-      setState(() {
-        _sending = false;
-      });
-    }).catchError((error) {
-      print(error);
-      setState(() {
-        _sending = false;
-      });
+    } catch (e) {
+      print('Mail Gönderme Hatası: $e'); // LOG: Hata durumunu yazdır
+    }
+
+    setState(() {
+      _sending = false;
     });
   }
 }

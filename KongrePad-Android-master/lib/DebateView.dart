@@ -28,6 +28,12 @@ class _DebateViewState extends State<DebateView> {
     final token = prefs.getString('token');
     print("Token: $token");
 
+    if (token == null) {
+      print("Error: Token is null. Redirecting to login.");
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
     try {
       final url = Uri.parse('http://app.kongrepad.com/api/v1/hall/$hallId/active-debate');
       print("Requesting data from: $url");
@@ -107,10 +113,9 @@ class _DebateViewState extends State<DebateView> {
             print('Event hall_id: $eventHallId');
             print('Widget hall_id: $widgetHallId');
 
-            // Kontrol: hall_id'lerin eşleşmesi
             if (eventHallId == widgetHallId) {
               print('hall_id matched! Reloading debate data...');
-              getData();  // Yeni debate verilerini yükle
+              getData();
             } else {
               print('Incorrect Hall ID: ${jsonData['hall_id']}');
             }
@@ -207,7 +212,7 @@ class _DebateViewState extends State<DebateView> {
                               ),
                             ),
                             onPressed: () {
-                              _sendAnswer(team.id!);
+                              _sendAnswer(1, team.id!); // İlgili `answerId` ve `team.id` gönderiliyor
                             },
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -240,39 +245,91 @@ class _DebateViewState extends State<DebateView> {
     );
   }
 
-  Future<void> _sendAnswer(int answerId) async {
+  Future<void> _sendAnswer(int answerId, int teamId) async {
     setState(() {
       _sending = true;
     });
-    final url = Uri.parse('https://app.kongrepad.com/api/v1/debate/${debate?.id!}/debate-vote');
-    final body = jsonEncode({
-      'option': answerId,
-    });
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final participantId = prefs.getInt('participant_id');
+    final debateId = debate?.id;
+
+    print("Debate ID: $debateId");
+    print("Token: $token");
+    print("Participant ID: $participantId");
+
+    if (token == null || participantId == null || debateId == null) {
+      print("Error: Token, participant_id, or debate_id is null. Redirecting to login.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Token, katılımcı veya debate bilgisi bulunamadı. Lütfen tekrar giriş yapın.")),
+      );
+
+      Navigator.pushReplacementNamed(context, '/login');
+      setState(() {
+        _sending = false;
+      });
+      return;
+    }
+
+    final url = Uri.parse('https://app.kongrepad.com/api/v1/debate/$debateId/debate-vote');
+    final body = jsonEncode({
+      'team': teamId,
+      'participant_id': participantId,
+      'debate_id': debateId,
+    });
+
+    print("Sending vote to URL: $url");
+    print("Request body: $body");
+
     try {
       final response = await http.post(
         url,
         headers: {
-          'Authorization': 'Bearer ${prefs.getString('token')}',
+          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
         body: body,
       );
 
+      print("Response status: ${response.statusCode}");
+      print("Response body: ${response.body}");
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['status']) {
+        if (jsonResponse['status'] == true) {
           print("Vote submitted successfully.");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Oyunuz başarıyla gönderildi.")),
+          );
           Navigator.of(context).pop();
         } else {
-          print("Failed to submit vote.");
+          print("Failed to submit vote. Response status is false.");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Oylama gönderilemedi. Tekrar deneyin.")),
+          );
         }
+      } else if (response.statusCode == 401) {
+        print("Unauthorized: Invalid token.");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Yetkisiz erişim. Lütfen tekrar giriş yapın.")),
+        );
+      } else if (response.statusCode == 400) {
+        print("Bad Request: ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Geçersiz istek. Verilerinizi kontrol edin.")),
+        );
       } else {
-        print("Error during vote submission: ${response.body}");
+        print("Unexpected error: ${response.statusCode}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Oylama gönderilirken bir hata oluştu.")),
+        );
       }
     } catch (error) {
       print('Error sending vote: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Oylama gönderilemedi: $error")),
+      );
     } finally {
       setState(() {
         _sending = false;

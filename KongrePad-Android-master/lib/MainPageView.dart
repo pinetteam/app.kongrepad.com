@@ -93,6 +93,7 @@ class _MainPageViewState extends State<MainPageView>  with WidgetsBindingObserve
     print('Checking for an active keypad for hallId: $hallId');
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+
     final token = prefs.getString('token');
 
     if (token == null) {
@@ -158,8 +159,7 @@ class _MainPageViewState extends State<MainPageView>  with WidgetsBindingObserve
         },
       );
 
-      print(
-          "Meeting API isteği tamamlandı. Status Code: ${response.statusCode}");
+      print("Meeting API isteği tamamlandı. Status Code: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
@@ -213,8 +213,7 @@ class _MainPageViewState extends State<MainPageView>  with WidgetsBindingObserve
         },
       );
 
-      print(
-          "Participant API isteği tamamlandı. Status Code: ${response.statusCode}");
+      print("Participant API isteği tamamlandı. Status Code: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
@@ -225,6 +224,12 @@ class _MainPageViewState extends State<MainPageView>  with WidgetsBindingObserve
           participant = participantJson.data;
           _subscribeToPusher(); // Pusher aboneliğini başlatıyoruz
         });
+
+        // participant_id'yi SharedPreferences'e kaydetme
+        if (participant != null && participant!.id != null) {
+          await prefs.setInt('participant_id', participant!.id!);
+          print("Participant ID kaydedildi: ${participant!.id}");
+        }
       } else {
         print("Participant verisi yüklenemedi, LoginView'a yönlendiriliyor");
         Navigator.push(
@@ -246,8 +251,7 @@ class _MainPageViewState extends State<MainPageView>  with WidgetsBindingObserve
         },
       );
 
-      print(
-          "Virtual stand API isteği tamamlandı. Status Code: ${response.statusCode}");
+      print("Virtual stand API isteği tamamlandı. Status Code: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);

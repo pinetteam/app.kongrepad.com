@@ -49,11 +49,11 @@ android {
     }
 
     defaultConfig {
-        applicationId "tr.com.pinet.kongrepad"
+        applicationId "com.pinet.kongrepad"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
-        versionCode 3  // Versiyon kodunu her güncellemede artırın.
-        versionName "1.1.0"  // Versiyon adını istediğiniz gibi belirleyin.
+        versionCode 13  // Versiyon kodunu her güncellemede artırın.
+        versionName "1.1.2"  // Versiyon adını istediğiniz gibi belirleyin.
     }
     signingConfigs {
         release {

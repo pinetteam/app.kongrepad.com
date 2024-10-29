@@ -297,6 +297,51 @@ class _ProgramViewState extends State<ProgramView> {
                                           style: const TextStyle(fontSize: 18, color: CupertinoColors.black),
                                         ),
 
+                                      // Sessions bölümü - Oturumlar ve saatleri
+                                      if (program.sessions != null)
+                                        Column(
+                                          children: program.sessions!.map((session) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(top: 8.0),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        '${session.startAt} - ${session.finishAt}', // Oturum saatleri
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Expanded(
+                                                        child: Text(
+                                                          session.title ?? '',
+                                                          style: const TextStyle(
+                                                            fontSize: 16,
+                                                            color: CupertinoColors.black,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  if (session.description != null)
+                                                    Text(
+                                                      session.description!,
+                                                      style: const TextStyle(
+                                                        fontSize: 16,
+                                                        color: CupertinoColors.black,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+
                                       // Debate bölümü
                                       if (program.debates != null)
                                         Column(

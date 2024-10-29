@@ -47,6 +47,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      routes: {
+        '/login': (context) => LoginView(), // LoginView'i '/login' rotasına bağladık.
+      },
       home:  Scaffold(body: LoginView()),
     );
   }
@@ -439,12 +442,20 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
         'username': _controller.text,
       }),
     );
-    if (jsonDecode(response.body)['token'] != null) {
+
+    // Yanıtı kontrol edin
+    final responseBody = jsonDecode(response.body);
+    if (responseBody['token'] != null) {
+      final token = responseBody['token'];
       setState(() {
-        responseText = jsonDecode(response.body)['token'];
+        responseText = token;
       });
+
+      // Token'ı SharedPreferences'a kaydedin
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', responseText);
+      await prefs.setString('token', token);
+      print("Token kaydedildi: $token");
+
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const MainPageView(title: 'Main Page')),
@@ -457,6 +468,7 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
