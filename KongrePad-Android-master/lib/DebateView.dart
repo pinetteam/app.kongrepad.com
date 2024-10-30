@@ -261,10 +261,10 @@ class _DebateViewState extends State<DebateView> {
 
     if (token == null || participantId == null || debateId == null) {
       print("Error: Token, participant_id, or debate_id is null. Redirecting to login.");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Token, katılımcı veya debate bilgisi bulunamadı. Lütfen tekrar giriş yapın.")),
+      await _showDialog(
+          'Hata',
+          "Token, katılımcı veya debate bilgisi bulunamadı. Lütfen tekrar giriş yapın."
       );
-
       Navigator.pushReplacementNamed(context, '/login');
       setState(() {
         _sending = false;
@@ -299,41 +299,50 @@ class _DebateViewState extends State<DebateView> {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status'] == true) {
           print("Vote submitted successfully.");
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Oyunuz başarıyla gönderildi.")),
-          );
-          Navigator.of(context).pop();
+          await _showDialog('Başarılı', "Oyunuz başarıyla gönderildi.");
+          Navigator.of(context).pop(); // işlem başarılı olursa sayfayı kapat
         } else {
           print("Failed to submit vote. Response status is false.");
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Oylama gönderilemedi. Tekrar deneyin.")),
-          );
+          await _showDialog('Hata', "Oylama gönderilemedi. Tekrar deneyin.");
         }
       } else if (response.statusCode == 401) {
         print("Unauthorized: Invalid token.");
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Yetkisiz erişim. Lütfen tekrar giriş yapın.")),
-        );
+        await _showDialog('Yetkisiz Erişim', "Lütfen tekrar giriş yapın.");
       } else if (response.statusCode == 400) {
         print("Bad Request: ${response.body}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Geçersiz istek. Verilerinizi kontrol edin.")),
-        );
+        await _showDialog('Geçersiz İstek', "Verilerinizi kontrol edin.");
       } else {
         print("Unexpected error: ${response.statusCode}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Oylama gönderilirken bir hata oluştu.")),
-        );
+        await _showDialog('Hata', "Oylama gönderilirken bir hata oluştu.");
       }
     } catch (error) {
       print('Error sending vote: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Oylama gönderilemedi: $error")),
-      );
+      await _showDialog('Hata', "Oylama gönderilemedi: $error");
     } finally {
       setState(() {
         _sending = false;
       });
     }
+  }
+
+  // Bu fonksiyon AlertDialog göstermek için kullanılıyor
+  Future<void> _showDialog(String title, String message) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Tamam"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dialog'u kapat
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

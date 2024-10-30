@@ -1,12 +1,8 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:kongrepad/AlertService.dart';
 import 'package:kongrepad/Models/ScoreGame.dart';
 import 'package:kongrepad/ScoreGamePointsView.dart';
 import 'AppConstants.dart';
@@ -69,148 +65,78 @@ class _ScoreGameViewState extends State<ScoreGameView> {
           ),
         )
             : SingleChildScrollView(
-              child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                height: screenHeight * 0.1,
+                decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.white,
+                        width: 1.0,
+                      ),
+                    ),
+                    color: AppConstants.backgroundBlue),
+                child: Container(
+                  width: screenWidth,
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        height: screenHeight * 0.1,
-                        decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.white,
-                    width: 1.0,
-                  ),
-                ),
-                color: AppConstants.backgroundBlue),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
                         child: Container(
-              width: screenWidth,
-              child: Stack(
-                alignment: Alignment.centerLeft,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      height: screenHeight * 0.05,
-                      width: screenHeight * 0.05,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white, // Circular background color
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: SvgPicture.asset(
-                          'assets/icon/chevron.left.svg',
-                          color: AppConstants.backgroundBlue,
-                          height: screenHeight * 0.03,
+                          height: screenHeight * 0.05,
+                          width: screenHeight * 0.05,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white, // Circular background color
+                          ),
+                          child: Icon(
+                            Icons.chevron_left,
+                            color: AppConstants.backgroundBlue,
+                            size: screenHeight * 0.03,
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Doğaya can ver",
+                      const Center(
+                        child: Text(
+                          "QR Okut",
                           style: TextStyle(fontSize: 25, color: Colors.white),
-                        )
-                      ]),
-                ],
-              ),
                         ),
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(screenWidth * 0.4),
-                        ),
-                        child: Container(
-              width: screenHeight * 0.3,
-              height: screenHeight * 0.3,
-              child: const Padding(
-                padding: EdgeInsets.all(8.0),
-                child:   Center(
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                width: screenHeight * 0.3,
+                height: screenHeight * 0.3,
+                child: const Center(
                   child: Icon(
-                    FontAwesomeIcons.qrcode,  // QR kod ikonu
-                    size: 150,                 // İkon boyutu
-                    color: Colors.green,       // İkon rengi
+                    FontAwesomeIcons.qrcode,
+                    size: 150,
+                    color: Colors.green,
                   ),
                 ),
               ),
-                        ),
-                      ),
-                      Text("${scoreGame?.userTotalPoint} puan",
-              style: TextStyle(
-                  color: AppConstants.scoreGameGreen,
-                  fontSize: 35,
-                  fontWeight: FontWeight.bold)),
-                      SizedBox(
-                        height: screenHeight * 0.18,
-                      ),
-                      ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(
-                    AppConstants.scoreGameGreen),
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
-                padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                  const EdgeInsets.all(12),
-                ),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
+              Text("${scoreGame?.userTotalPoint} puan",
+                  style: TextStyle(
+                      color: AppConstants.scoreGameGreen,
+                      fontSize: 35,
+                      fontWeight: FontWeight.bold)),
+              SizedBox(
+                height: screenHeight * 0.18,
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const ScoreGamePointsView()),
-                );
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  //todo kamera iconu koy
-                  SvgPicture.asset(
-                    'assets/icon/checklist.checked.svg',
-                    color: Colors.white,
-                    width: screenWidth * 0.03,
-                  ),
-                  SizedBox(
-                    width: screenWidth * 0.01,
-                  ),
-                  const Text(
-                    'Puan Geçmişim',
-                    style: TextStyle(
-                      fontSize: 25,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              )),
-                      SizedBox(
-                        height: screenHeight * 0.18,
-                      ),
-                      Container(
-                        width: screenWidth,
-                        height: screenHeight * 0.1,
-                        decoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.white,
-                    width: 1.0,
-                  ),
-                ),
-                color: AppConstants.backgroundBlue),
-                        child: Center(
-              child: ElevatedButton(
+              ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(
                         AppConstants.scoreGameGreen),
                     foregroundColor:
-                        MaterialStateProperty.all<Color>(Colors.white),
+                    MaterialStateProperty.all<Color>(Colors.black),
                     padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
                       const EdgeInsets.all(12),
                     ),
@@ -221,48 +147,108 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                     ),
                   ),
                   onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          contentPadding: EdgeInsets.zero,
-                          content: Container(
-                            width: screenWidth * 0.9,
-                            height: screenHeight * 0.9,
-                            child: const QRViewExample(),
-                          ),
-                        );
-                      },
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ScoreGamePointsView()),
                     );
                   },
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      //todo kamera iconu koy
-                      SvgPicture.asset(
-                        'assets/icon/chevron.right.svg',
+                      Icon(
+                        Icons.checklist_rtl,
                         color: Colors.white,
-                        width: screenWidth * 0.03,
+                        size: screenWidth * 0.03,
                       ),
                       SizedBox(
                         width: screenWidth * 0.01,
                       ),
                       const Text(
-                        'Kare Kodu Okut',
-                        style: TextStyle(fontSize: 25),
-                      ),
-                    ],
-                  )),
+                        'Puan Geçmişim',
+                        style: TextStyle(
+                          fontSize: 25,
+                          color: Colors.white,
                         ),
                       ),
                     ],
-                  ),
-            ));
+                  )),
+              SizedBox(
+                height: screenHeight * 0.18,
+              ),
+              Container(
+                width: screenWidth,
+                height: screenHeight * 0.1,
+                decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.white,
+                        width: 1.0,
+                      ),
+                    ),
+                    color: AppConstants.backgroundBlue),
+                child: Center(
+                  child: ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            AppConstants.scoreGameGreen),
+                        foregroundColor:
+                        MaterialStateProperty.all<Color>(Colors.white),
+                        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                          const EdgeInsets.all(12),
+                        ),
+                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              contentPadding: EdgeInsets.zero,
+                              content: Container(
+                                width: screenWidth * 0.9,
+                                height: screenHeight * 0.9,
+                                child: QRViewExample(
+                                  onQrSuccess: () => getData(), // QR Başarılı okutulduğunda getData çağrılıyor
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.qr_code_scanner,
+                            color: Colors.white,
+                            size: screenWidth * 0.03,
+                          ),
+                          SizedBox(
+                            width: screenWidth * 0.01,
+                          ),
+                          const Text(
+                            'Kare Kodu Okut',
+                            style: TextStyle(fontSize: 25),
+                          ),
+                        ],
+                      )),
+                ),
+              ),
+            ],
+          ),
+        ));
   }
 }
 
 class QRViewExample extends StatefulWidget {
-  const QRViewExample({Key? key}) : super(key: key);
+  final VoidCallback onQrSuccess;
+
+  const QRViewExample({Key? key, required this.onQrSuccess}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _QRViewExampleState();
@@ -274,15 +260,13 @@ class _QRViewExampleState extends State<QRViewExample> {
   QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
 
-  // In order to get hot reload to work we need to pause the camera if the platform
-  // is android, or resume the camera if the platform is iOS.
   @override
   void reassemble() {
     super.reassemble();
     if (Platform.isAndroid) {
-      controller!.pauseCamera();
+      controller?.pauseCamera();
     }
-    controller!.resumeCamera();
+    controller?.resumeCamera();
   }
 
   @override
@@ -298,10 +282,10 @@ class _QRViewExampleState extends State<QRViewExample> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
-                  if (result != null)
-                    Text('$responseText')
+                  if (responseText != null)
+                    Text(responseText!)
                   else
-                    const Text('Scan a code'),
+                    const Text('Bir kod okutun'),
                 ],
               ),
             ),
@@ -312,76 +296,68 @@ class _QRViewExampleState extends State<QRViewExample> {
   }
 
   Widget _buildQrView(BuildContext context) {
-    var scanArea = (MediaQuery.of(context).size.width < 400 ||
-            MediaQuery.of(context).size.height < 400)
-        ? 150.0
-        : 300.0;
+    var scanArea = 200.0;
     return QRView(
       key: qrKey,
       onQRViewCreated: _onQRViewCreated,
       overlay: QrScannerOverlayShape(
-          borderColor: Colors.red,
-          borderRadius: 10,
-          borderLength: 30,
-          borderWidth: 10,
-          cutOutSize: scanArea),
-      onPermissionSet: (ctrl, p) => _onPermissionSet(context, ctrl, p),
+        borderColor: Colors.red,
+        borderRadius: 10,
+        borderLength: 30,
+        borderWidth: 10,
+        cutOutSize: scanArea,
+      ),
     );
   }
 
   void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      this.controller = controller;
-    });
+    this.controller = controller;
     controller.scannedDataStream.listen((scanData) {
-      setState(() {
-        result = scanData;
-        if (result != null) {
-          SendQr(result!.code!);
-        }
-      });
+      controller.pauseCamera();
+      sendQr(scanData.code);
     });
   }
 
-  Future<void> SendQr(String code) async {
-    await controller?.pauseCamera();
-    final response = await http.post(
-      Uri.parse('http://app.kongrepad.com/api/v1/score-game/0/point'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'code': code,
-      }),
-    );
-    if (jsonDecode(response.body)['token'] != null) {
+  Future<void> sendQr(String? code) async {
+    if (code == null || code.isEmpty) {
       setState(() {
-        responseText = jsonDecode(response.body)['token'];
+        responseText = 'Geçersiz QR kod.';
       });
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', responseText!);
-      AlertService().showAlertDialog(
-        context,
-        title: 'Başarılı',
-        content: 'Qr Kod Başarıyla okutuldu.',
-      );
-    } else {
-      AlertService().showAlertDialog(
-        context,
-        title: 'Uyarı',
-        content: 'Yanlış Qr Kod Girdiniz!',
-      );
-      await controller?.resumeCamera();
+      return;
     }
-  }
 
-  void _onPermissionSet(BuildContext context, QRViewController ctrl, bool p) {
-    log('${DateTime.now().toIso8601String()}_onPermissionSet $p');
-    if (!p) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('no Permission')),
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final url = Uri.parse('http://app.kongrepad.com/api/v1/score-game/0/point');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(<String, String>{'code': code}),
       );
+
+      setState(() {
+        responseText = response.statusCode == 200
+            ? 'Kod başarıyla işlendi!'
+            : 'Yanlış QR kod girdiniz.';
+      });
+
+      if (response.statusCode == 200) {
+        widget.onQrSuccess(); // Başarılı ise ana sayfada getData() çağrılıyor
+      }
+    } catch (e) {
+      setState(() {
+        responseText = 'Bir hata oluştu: ${e.toString()}';
+      });
     }
+
+    Future.delayed(const Duration(seconds: 2), () {
+      controller?.resumeCamera();
+    });
   }
 
   @override

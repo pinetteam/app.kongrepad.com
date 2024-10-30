@@ -35,6 +35,7 @@ class _KeypadViewState extends State<KeypadView> {
     _subscribeToPusher();
   }
 
+
   Future<void> getData() async {
     print('Starting getData function for hallId: $hallId');
 
@@ -239,79 +240,67 @@ class _KeypadViewState extends State<KeypadView> {
   Future<void> _sendAnswer(int answerId) async {
     setState(() {
       _sending = true;
-      print('Keypad ID: ${keypad?.id}');
     });
 
-    // Eğer keypad ID null veya 0 ise, bu aşamada bir sorun var demektir.
     if (keypad?.id == null || keypad?.id == 0) {
-      print('Error: Keypad ID null or invalid!');
       _showDialog('Hata', 'Keypad ID geçersiz. Lütfen tekrar deneyin.');
+      setState(() {
+        _sending = false;
+      });
       return;
     }
 
-    print('Sending answerId: $answerId for keypadId: ${keypad?.id}');
-
-    // Eğer keypad ID'nin doğru bir değer olduğundan eminsek URL'yi dinamik olarak oluşturuyoruz
     final url = Uri.parse('https://app.kongrepad.com/api/v1/keypad/${keypad?.id}/keypad-vote');
-    print('POST URL: $url'); // URL'yi kontrol et
-
-    // İstek gövdesini oluşturuyoruz
     final body = jsonEncode({
       'option': answerId,
-      'participant_id': 123, // Geçici olarak participant_id ekliyoruz (gerçek değerle değiştirin)
-      'keypad_id': keypad?.id, // Keypad ID'yi ekliyoruz
+      'participant_id': 123, // Gerçek participant ID ile değiştirin
+      'keypad_id': keypad?.id,
     });
-    print('POST Body: $body'); // Gönderilen JSON'u logluyoruz
 
-    // Tokeni alıyoruz
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    print('Token: $token'); // Token'i kontrol et
 
     try {
-      print('Posting vote to API...');
       final response = await http.post(
         url,
         headers: {
-          'Authorization': 'Bearer $token', // Authorization header'ı kontrol et
+          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
         body: body,
       );
 
-      // HTTP yanıtını logluyoruz
-      print('Vote response status: ${response.statusCode}');
-      print('Vote response body: ${response.body}');
-      print('Keypad ID: ${keypad?.id}');
-
-      // Yanıt durumunu kontrol ediyoruz
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status']) {
-          print('Vote submitted successfully.');
-          _showDialog('Başarılı', 'Tebrikler, oy başarıyla gönderildi.');
-          Navigator.of(context).pop();
+          await _showDialog('Başarılı', 'Tebrikler, oy başarıyla gönderildi.');
+          // Oy başarıyla gönderildiğinde kanaldan çık
+          if (keypad?.id != null) {
+            String channelName = 'keypad-${keypad!.id}';
+            PusherService().unsubscribeFromChannel(channelName);
+            print('Unsubscribed from channel: $channelName');
+          }
+
+          Navigator.of(context).pop(); // Oy sonrası ekranı kapat
         } else {
-          print('Vote submission failed.');
           _showDialog('Başarısız', 'Daha önceden yanıt verdiniz.');
+
         }
       } else {
-        print('Vote submission failed with status code: ${response.statusCode}');
         _showDialog('Hata', 'Oy gönderimi başarısız. Lütfen tekrar deneyin.');
       }
     } catch (error) {
-      print('Error sending vote: $error');
       _showDialog('Hata', 'Oy gönderilirken bir hata oluştu.');
     } finally {
       setState(() {
         _sending = false;
-      });
+        });
     }
   }
 
-// Bu fonksiyon AlertDialog göstermek için kullanılıyor
-  void _showDialog(String title, String message) {
-    showDialog(
+  // Bu fonksiyon AlertDialog göstermek için kullanılıyor
+  Future<void> _showDialog(String title, String message) async {
+    return showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -329,7 +318,6 @@ class _KeypadViewState extends State<KeypadView> {
       },
     );
   }
-
 
 }
 

@@ -424,27 +424,42 @@ class _ProgramMailViewState extends State<ProgramMailView> {
       print('Çözülmüş Yanıt: $jsonResponse'); // LOG: JSON yanıtı
 
       if (jsonResponse['status']) {
-        AlertService().showAlertDialog(
-          context,
-          title: 'Başarılı',
-          content:
+        await _showDialog(
+          'Başarılı',
           "Paylaşıma izin verilen sunumlardan talep ettikleriniz kongreden sonra tarafınıza mail olarak gönderilecektir.",
         );
-        Navigator.of(context).pop();
       } else {
         print('Hata Mesajı: ${jsonResponse['message']}'); // LOG: Hata mesajı
-        AlertService().showAlertDialog(
-          context,
-          title: 'Hata',
-          content: 'Bir hata meydana geldi.',
-        );
+        await _showDialog('Hata', 'Bir hata meydana geldi.');
       }
     } catch (e) {
       print('Mail Gönderme Hatası: $e'); // LOG: Hata durumunu yazdır
+      await _showDialog('Hata', 'Mail gönderilirken bir hata oluştu.');
+    } finally {
+      setState(() {
+        _sending = false;
+      });
     }
+  }
 
-    setState(() {
-      _sending = false;
-    });
+  // Bu fonksiyon AlertDialog göstermek için kullanılıyor
+  Future<void> _showDialog(String title, String message) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Tamam"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dialog'u kapat
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

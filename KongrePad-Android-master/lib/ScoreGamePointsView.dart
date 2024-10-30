@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:kongrepad/AppConstants.dart';
@@ -7,186 +6,191 @@ import 'package:http/http.dart' as http;
 import 'package:kongrepad/Models/ScoreGamePoint.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class ScoreGamePointsView extends StatefulWidget {
   const ScoreGamePointsView({super.key});
-
 
   @override
   State<ScoreGamePointsView> createState() => _ScoreGamePointsViewState();
 }
 
-
 class _ScoreGamePointsViewState extends State<ScoreGamePointsView> {
+  List<ScoreGamePoint>? points;
+  bool _loading = true;
 
   Future<void> getData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ;
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      print("Token bulunamadı, kullanıcı giriş yapmamış.");
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+    print("Token bulundu: $token");
 
     try {
       final url = Uri.parse('http://app.kongrepad.com/api/v1/score-game/0/point');
+      print("URL: $url");
+
       final response = await http.get(
         url,
-        headers: <String, String>{
-          'Authorization': 'Bearer $token',
-        },
+        headers: <String, String>{'Authorization': 'Bearer $token'},
       );
 
+      print("API isteği tamamlandı. Status Code: ${response.statusCode}");
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        final pointsJson = ScoreGamePointsJSON.fromJson(jsonData);
-        setState(() {
-          points = pointsJson.data;
-          _loading = false;
-        });
+        if (response.headers['content-type']?.contains('application/json') ?? false) {
+          try {
+            final jsonData = jsonDecode(response.body);
+            final pointsJson = ScoreGamePointsJSON.fromJson(jsonData);
+
+            setState(() {
+              points = pointsJson.data;
+              _loading = false;
+            });
+
+            print("Veri başarıyla alındı: $points");
+          } catch (e) {
+            print('JSON Çözümleme Hatası: $e');
+          }
+        } else {
+          print("Beklenmeyen Yanıt Formatı: ${response.body}");
+        }
+      } else {
+        print("Sunucu Hatası (${response.statusCode}): ${response.body}");
       }
     } catch (e) {
-      print('Error: $e');
+      print('Ağ veya Çözümleme Hatası: $e');
     }
   }
-
-  List<ScoreGamePoint>? points;
-  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsFlutterBinding.ensureInitialized();
     getData();
   }
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
     double screenWidth = screenSize.width;
     double screenHeight = screenSize.height;
+
     return Scaffold(
-        body: _loading
-            ? const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
-            : Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              height: screenHeight*0.1,
-              decoration: const BoxDecoration(
-                  color: AppConstants.virtualStandBlue
-              ),
-              child: Container(
-                width: screenWidth,
-                child: Stack(
-                  children: [
-                    GestureDetector(
-                      onTap:() {
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        height: screenHeight*0.05,
-                        width: screenHeight*0.05,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppConstants.backgroundBlue, // Circular background color
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: SvgPicture.asset(
-                            'assets/icon/chevron.left.svg',
-                            color:Colors.white,
-                            height: screenHeight*0.03,
-                          ),
-                        ),
+      body: _loading
+          ? const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      )
+          : Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            height: screenHeight * 0.1,
+            decoration: const BoxDecoration(color: AppConstants.virtualStandBlue),
+            child: Stack(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    height: screenHeight * 0.05,
+                    width: screenHeight * 0.05,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppConstants.backgroundBlue,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: SvgPicture.asset(
+                        'assets/icon/chevron.left.svg',
+                        color: Colors.white,
+                        height: screenHeight * 0.03,
                       ),
                     ),
-                    const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                              "Puan Geçmişim",
-                            style: TextStyle(
-                                fontSize: 25,
-                                color: Colors.white
-                            ),
-                          )
-                        ]
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const Center(
+                  child: Text(
+                    "Puan Geçmişim",
+                    style: TextStyle(fontSize: 25, color: Colors.white),
+                  ),
+                ),
+              ],
             ),
-            SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: Container(
-              width: screenWidth,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: points != null ? points!.map((point) {
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: screenWidth * 0.2,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: AppConstants.programBackgroundYellow,
-                                border: Border.all(color: Colors.black),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              padding: EdgeInsets.all(12),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    point.createdAt.toString(),
-                                    style: const TextStyle(
-                                        fontSize: 20,
-                                        color: AppConstants.backgroundBlue),
-                                  ),
-                                ],
-                              ),
-                            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: points?.length ?? 0,
+              itemBuilder: (context, index) {
+                final point = points![index];
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // İlk Container: Kullanıcının aldığı puan
+                        Container(
+                          width: screenWidth * 0.2,
+                          decoration: BoxDecoration(
+                            color: AppConstants.programBackgroundYellow,
+                            border: Border.all(color: Colors.black),
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          const SizedBox(width: 5,),
-                          SizedBox(
-                            width: screenWidth * 0.6,
-                            child: Container(
-                              alignment: AlignmentDirectional.centerStart,
-                              decoration: BoxDecoration(
-                                color: AppConstants.hallsButtonBlue,
-                                border: Border.all(color: Colors.black),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              padding: EdgeInsets.all(10),
-                              child: Container(
-                                child:Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      point.title.toString(),
-                                      textAlign: TextAlign.start,
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.black),
-                                    ),
-                                  ],
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            '${point.point}', // Puan gösteriliyor
+                            style: const TextStyle(
+                              fontSize: 20,
+                              color: AppConstants.backgroundBlue,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        // İkinci Container: Session adı ve tarih bilgisi
+                        Container(
+                          width: screenWidth * 0.6,
+                          alignment: AlignmentDirectional.centerStart,
+                          decoration: BoxDecoration(
+                            color: AppConstants.hallsButtonBlue,
+                            border: Border.all(color: Colors.black),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                point.title.toString(), // Session adı
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.black,
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: 5),
+                              Text(
+                                point.createdAt.toString(), // Tarih bilgisi
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  );
-                }).toList() : [],
-              ),
+                  ),
+                );
+              },
             ),
-          )]
-        ));
+          ),
+        ],
+      ),
+    );
   }
-
 }
