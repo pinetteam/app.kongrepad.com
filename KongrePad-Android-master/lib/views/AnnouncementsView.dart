@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pusher_beams/pusher_beams.dart';
 
-import 'Models/Announcement.dart';
+import '../Models/Announcement.dart';
 
 class AnnouncementsView extends StatefulWidget {
   const AnnouncementsView({super.key});

@@ -3,9 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
-import 'package:kongrepad/AlertService.dart';
-import 'package:kongrepad/AppConstants.dart';
 import 'package:kongrepad/Models/Session.dart';
+import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AskQuestionView extends StatefulWidget {

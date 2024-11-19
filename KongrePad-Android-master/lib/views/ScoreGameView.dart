@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:kongrepad/Models/ScoreGame.dart';
-import 'package:kongrepad/ScoreGamePointsView.dart';
-import 'AppConstants.dart';
+import 'package:kongrepad/utils/app_constants.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'ScoreGamePointsView.dart';
 
 class ScoreGameView extends StatefulWidget {
   const ScoreGameView({super.key});
@@ -104,7 +105,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                       ),
                       const Center(
                         child: Text(
-                          "QR Okut",
+                          "Puan Topla",
                           style: TextStyle(fontSize: 25, color: Colors.white),
                         ),
                       ),
@@ -213,7 +214,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                                 width: screenWidth * 0.9,
                                 height: screenHeight * 0.9,
                                 child: QRViewExample(
-                                  onQrSuccess: () => getData(), // QR Başarılı okutulduğunda getData çağrılıyor
+                                  onQrSuccess: () => getData(),
                                 ),
                               ),
                             );
@@ -282,10 +283,8 @@ class _QRViewExampleState extends State<QRViewExample> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
-                  if (responseText != null)
+                  if (responseText != null && responseText!.isNotEmpty)
                     Text(responseText!)
-                  else
-                    const Text('Bir kod okutun'),
                 ],
               ),
             ),
@@ -326,11 +325,36 @@ class _QRViewExampleState extends State<QRViewExample> {
       return;
     }
 
-    try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      final url = Uri.parse('http://app.kongrepad.com/api/v1/score-game/0/point');
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final url = Uri.parse('http://app.kongrepad.com/api/v1/score-game/0/point');
 
+    // Daha önce okutulmuş QR kodlarını SharedPreferences'ten al
+    List<String>? scannedCodes = prefs.getStringList('scannedCodes') ?? [];
+
+    if (scannedCodes.contains(code)) {
+      // Eğer QR kod daha önce okutulmuşsa uyarı göster
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: const Text(
+              'Bu kodu daha önce okuttunuz!',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          );
+        },
+      );
+
+      // Popup'ı 2 saniye sonra kapat
+      Future.delayed(const Duration(seconds: 2), () {
+        Navigator.of(context).pop();
+        controller?.resumeCamera();
+      });
+      return;
+    }
+
+    try {
       final response = await http.post(
         url,
         headers: {
@@ -340,24 +364,40 @@ class _QRViewExampleState extends State<QRViewExample> {
         body: jsonEncode(<String, String>{'code': code}),
       );
 
-      setState(() {
-        responseText = response.statusCode == 200
-            ? 'Kod başarıyla işlendi!'
-            : 'Yanlış QR kod girdiniz.';
-      });
-
       if (response.statusCode == 200) {
-        widget.onQrSuccess(); // Başarılı ise ana sayfada getData() çağrılıyor
+        widget.onQrSuccess();
+
+        // QR kod başarıyla okutulursa kodu SharedPreferences'e kaydet
+        scannedCodes.add(code);
+        prefs.setStringList('scannedCodes', scannedCodes);
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: const Text(
+                'İşlem Başarılı!',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            );
+          },
+        );
+
+        // Popup ve QR ekranını 2 saniye sonra kapat
+        Future.delayed(const Duration(seconds: 2), () {
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+        });
+      } else {
+        setState(() {
+          responseText = 'Yanlış QR kod girdiniz.';
+        });
       }
     } catch (e) {
       setState(() {
         responseText = 'Bir hata oluştu: ${e.toString()}';
       });
     }
-
-    Future.delayed(const Duration(seconds: 2), () {
-      controller?.resumeCamera();
-    });
   }
 
   @override

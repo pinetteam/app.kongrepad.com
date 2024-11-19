@@ -2,11 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:kongrepad/AppConstants.dart';
-import 'package:kongrepad/AskQuestionView.dart';
+import 'package:kongrepad/views/AskQuestionView.dart';
 import 'package:kongrepad/Models/Document.dart';
 import 'package:kongrepad/Models/Participant.dart';
 import 'package:kongrepad/Models/Session.dart';
+import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:http/http.dart' as http;

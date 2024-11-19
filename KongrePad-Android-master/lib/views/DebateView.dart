@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:kongrepad/AppConstants.dart';
 import 'package:http/http.dart' as http;
 import 'package:kongrepad/Models/Debate.dart';
+import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
@@ -211,8 +211,13 @@ class _DebateViewState extends State<DebateView> {
                                 ),
                               ),
                             ),
-                            onPressed: () {
-                              _sendAnswer(1, team.id!); // İlgili `answerId` ve `team.id` gönderiliyor
+                            onPressed: () async {
+                              final result = await _checkPreviousAnswer();
+                              if (result) {
+                                _showDialog('Hata', 'Bu debate için zaten oy verdiniz.');
+                              } else {
+                                _sendAnswer(1, team.id!); // İlgili `answerId` ve `team.id` gönderiliyor
+                              }
                             },
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -245,6 +250,16 @@ class _DebateViewState extends State<DebateView> {
     );
   }
 
+  Future<bool> _checkPreviousAnswer() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final participantId = prefs.getInt('participant_id');
+    final debateId = debate?.id;
+
+    // Önceden oy verilen debate ID'lerini kontrol et
+    List<String>? answeredDebates = prefs.getStringList('answeredDebates') ?? [];
+    return answeredDebates.contains('$participantId-$debateId');
+  }
+
   Future<void> _sendAnswer(int answerId, int teamId) async {
     setState(() {
       _sending = true;
@@ -255,12 +270,7 @@ class _DebateViewState extends State<DebateView> {
     final participantId = prefs.getInt('participant_id');
     final debateId = debate?.id;
 
-    print("Debate ID: $debateId");
-    print("Token: $token");
-    print("Participant ID: $participantId");
-
     if (token == null || participantId == null || debateId == null) {
-      print("Error: Token, participant_id, or debate_id is null. Redirecting to login.");
       await _showDialog(
           'Hata',
           "Token, katılımcı veya debate bilgisi bulunamadı. Lütfen tekrar giriş yapın."
@@ -279,9 +289,6 @@ class _DebateViewState extends State<DebateView> {
       'debate_id': debateId,
     });
 
-    print("Sending vote to URL: $url");
-    print("Request body: $body");
-
     try {
       final response = await http.post(
         url,
@@ -292,31 +299,26 @@ class _DebateViewState extends State<DebateView> {
         body: body,
       );
 
-      print("Response status: ${response.statusCode}");
-      print("Response body: ${response.body}");
-
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status'] == true) {
-          print("Vote submitted successfully.");
           await _showDialog('Başarılı', "Oyunuz başarıyla gönderildi.");
+
+          // Oy başarıyla gönderildiyse debate ID'sini kaydet
+          List<String>? answeredDebates = prefs.getStringList('answeredDebates') ?? [];
+          answeredDebates.add('$participantId-$debateId');
+          prefs.setStringList('answeredDebates', answeredDebates);
+
           Navigator.of(context).pop(); // işlem başarılı olursa sayfayı kapat
         } else {
-          print("Failed to submit vote. Response status is false.");
-          await _showDialog('Hata', "Oylama gönderilemedi. Tekrar deneyin.");
+          await _showDialog('Hata', "Oylama gönderilemedi.");
         }
       } else if (response.statusCode == 401) {
-        print("Unauthorized: Invalid token.");
         await _showDialog('Yetkisiz Erişim', "Lütfen tekrar giriş yapın.");
-      } else if (response.statusCode == 400) {
-        print("Bad Request: ${response.body}");
-        await _showDialog('Geçersiz İstek', "Verilerinizi kontrol edin.");
       } else {
-        print("Unexpected error: ${response.statusCode}");
         await _showDialog('Hata', "Oylama gönderilirken bir hata oluştu.");
       }
     } catch (error) {
-      print('Error sending vote: $error');
       await _showDialog('Hata', "Oylama gönderilemedi: $error");
     } finally {
       setState(() {

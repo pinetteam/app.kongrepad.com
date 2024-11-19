@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:kongrepad/AppConstants.dart';
 import 'package:kongrepad/Models/VirtualStand.dart';
+import 'package:kongrepad/utils/app_constants.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class VirtualStandView extends StatefulWidget {

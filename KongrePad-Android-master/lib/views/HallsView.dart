@@ -2,13 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:kongrepad/AppConstants.dart';
-import 'package:kongrepad/AskQuestionView.dart';
+import 'package:kongrepad/views/AskQuestionView.dart';
 import 'package:kongrepad/Models/Hall.dart';
 import 'package:http/http.dart' as http;
-import 'package:kongrepad/ProgramDaysView.dart';
-import 'package:kongrepad/SessionView.dart';
+import 'package:kongrepad/views/ProgramDaysView.dart';
+import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'SessionView.dart';
 
 class HallsView extends StatefulWidget {
   const HallsView({super.key, required this.type});

@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:kongrepad/AppConstants.dart';
 import 'package:http/http.dart' as http;
 import 'package:kongrepad/Models/Keypad.dart';
+import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
-import 'PusherService.dart';
 
 class KeypadView extends StatefulWidget {
   const KeypadView({super.key, required this.hallId});
@@ -34,7 +33,12 @@ class _KeypadViewState extends State<KeypadView> {
     getData();
     _subscribeToPusher();
   }
-
+  @override
+  void dispose() {
+    // KeypadView kapandığında 'keypad-updates' kanalından aboneliği kaldırır
+    PusherService().unsubscribeFromChannel('keypad-updates');
+    super.dispose();
+    }
 
   Future<void> getData() async {
     print('Starting getData function for hallId: $hallId');
@@ -240,9 +244,12 @@ class _KeypadViewState extends State<KeypadView> {
   Future<void> _sendAnswer(int answerId) async {
     setState(() {
       _sending = true;
+      print('Keypad ID: ${keypad?.id}');
     });
 
+    // Eğer keypad ID null veya 0 ise, bu aşamada bir sorun var demektir.
     if (keypad?.id == null || keypad?.id == 0) {
+      print('Error: Keypad ID null or invalid!');
       _showDialog('Hata', 'Keypad ID geçersiz. Lütfen tekrar deneyin.');
       setState(() {
         _sending = false;
@@ -250,51 +257,64 @@ class _KeypadViewState extends State<KeypadView> {
       return;
     }
 
-    final url = Uri.parse('https://app.kongrepad.com/api/v1/keypad/${keypad?.id}/keypad-vote');
+    print('Sending answerId: $answerId for keypadId: ${keypad?.id}');
+
+    // Eğer keypad ID'nin doğru bir değer olduğundan eminsek URL'yi dinamik olarak oluşturuyoruz
+    final url = Uri.parse(
+        'https://app.kongrepad.com/api/v1/keypad/${keypad?.id}/keypad-vote');
+    print('POST URL: $url'); // URL'yi kontrol et
+
+    // İstek gövdesini oluşturuyoruz
     final body = jsonEncode({
       'option': answerId,
-      'participant_id': 123, // Gerçek participant ID ile değiştirin
-      'keypad_id': keypad?.id,
+      'participant_id': 123, // Geçici olarak participant_id ekliyoruz (gerçek değerle değiştirin)
+      'keypad_id': keypad?.id, // Keypad ID'yi ekliyoruz
     });
+    print('POST Body: $body'); // Gönderilen JSON'u logluyoruz
 
+    // Tokeni alıyoruz
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
+    print('Token: $token'); // Token'i kontrol et
 
     try {
+      print('Posting vote to API...');
       final response = await http.post(
         url,
         headers: {
-          'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $token', // Authorization header'ı kontrol et
           'Content-Type': 'application/json',
         },
         body: body,
       );
 
+      // HTTP yanıtını logluyoruz
+      print('Vote response status: ${response.statusCode}');
+      print('Vote response body: ${response.body}');
+      print('Keypad ID: ${keypad?.id}');
+
+      // Yanıt durumunu kontrol ediyoruz
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status']) {
+          print('Vote submitted successfully.');
           await _showDialog('Başarılı', 'Tebrikler, oy başarıyla gönderildi.');
-          // Oy başarıyla gönderildiğinde kanaldan çık
-          if (keypad?.id != null) {
-            String channelName = 'keypad-${keypad!.id}';
-            PusherService().unsubscribeFromChannel(channelName);
-            print('Unsubscribed from channel: $channelName');
-          }
-
-          Navigator.of(context).pop(); // Oy sonrası ekranı kapat
+          Navigator.of(context).pop(); // Dialog kapandıktan sonra sayfayı kapat
         } else {
+          print('Vote submission failed.');
           _showDialog('Başarısız', 'Daha önceden yanıt verdiniz.');
-
         }
       } else {
+        print('Vote submission failed with status code: ${response.statusCode}');
         _showDialog('Hata', 'Oy gönderimi başarısız. Lütfen tekrar deneyin.');
       }
     } catch (error) {
+      print('Error sending vote: $error');
       _showDialog('Hata', 'Oy gönderilirken bir hata oluştu.');
     } finally {
       setState(() {
         _sending = false;
-        });
+      });
     }
   }
 

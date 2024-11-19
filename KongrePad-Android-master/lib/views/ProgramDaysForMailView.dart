@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
-import 'package:kongrepad/AlertService.dart';
-import 'package:kongrepad/AppConstants.dart';
 import 'package:kongrepad/Models/Program.dart';
-import 'package:kongrepad/ProgramMailView.dart';
+import 'package:kongrepad/views/ProgramMailView.dart';
+import 'package:kongrepad/services/alert_service.dart';
+import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Translation maps for day and month names

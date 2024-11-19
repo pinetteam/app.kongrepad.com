@@ -2,15 +2,13 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:kongrepad/AlertService.dart';
-import 'package:kongrepad/AppConstants.dart';
 import 'package:http/http.dart' as http;
 import 'package:kongrepad/Models/Hall.dart';
 import 'package:kongrepad/Models/Program.dart';
+import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
-// Translation maps for day and month names
 Map<String, String> dayTranslations = {
   'Monday': 'Pazartesi',
   'Tuesday': 'Salı',
@@ -39,14 +37,12 @@ Map<String, String> monthTranslations = {
 String translateDateToTurkish(String englishDate) {
   String translatedDate = englishDate;
 
-  // Translate day names
   dayTranslations.forEach((english, turkish) {
     if (englishDate.contains(english)) {
       translatedDate = translatedDate.replaceAll(english, turkish);
     }
   });
 
-  // Translate month names
   monthTranslations.forEach((english, turkish) {
     if (englishDate.contains(english)) {
       translatedDate = translatedDate.replaceAll(english, turkish);
@@ -56,7 +52,6 @@ String translateDateToTurkish(String englishDate) {
   return translatedDate;
 }
 
-// Calculate the difference between two time strings
 double calculateTimeDifference(String start, String end) {
   DateFormat format = DateFormat("HH:mm");
   DateTime startTime = format.parse(start);
@@ -78,7 +73,7 @@ class _ProgramMailViewState extends State<ProgramMailView> {
   ProgramDay? programDay;
   Hall? hall;
   final int hallId;
-  Set<int> documents = {}; // Seçilen belgeler burada saklanır
+  Set<int> documents = {};
   bool _sending = false;
   bool _loading = true;
 
@@ -87,6 +82,12 @@ class _ProgramMailViewState extends State<ProgramMailView> {
   Future<void> getData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
+
+    // SharedPreferences'ten daha önce seçilmiş belgeleri yükle
+    List<String>? savedDocuments = prefs.getStringList('selectedDocuments');
+    if (savedDocuments != null) {
+      documents = savedDocuments.map((e) => int.parse(e)).toSet();
+    }
 
     try {
       final url = Uri.parse('https://app.kongrepad.com/api/v1/hall/$hallId');
@@ -106,8 +107,13 @@ class _ProgramMailViewState extends State<ProgramMailView> {
         });
       }
     } catch (e) {
-      print('Error fetching data: $e'); // LOG: Veri çekme hatası
+      print('Error fetching data: $e');
     }
+  }
+
+  Future<void> _saveSelectionsToPreferences() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('selectedDocuments', documents.map((e) => e.toString()).toList());
   }
 
   @override
@@ -135,7 +141,6 @@ class _ProgramMailViewState extends State<ProgramMailView> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // Üst kısımdaki başlık
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: const BoxDecoration(
@@ -167,13 +172,12 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                         "Mail Gönder",
                         style: TextStyle(fontSize: 25, color: Colors.white),
                       ),
-                      const SizedBox(width: 55), // Ortalamayı sağlamak için.
+                      const SizedBox(width: 55),
                     ],
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.01),
 
-                // Ana salon ve program günü kısmı
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Container(
@@ -190,7 +194,7 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                           style: const TextStyle(fontSize: 23, color: Colors.black),
                         ),
                         Text(
-                          translateDateToTurkish(programDay!.day.toString()), // Gün bilgisi Türkçeye çevriliyor
+                          translateDateToTurkish(programDay!.day.toString()),
                           style: const TextStyle(fontSize: 20, color: Colors.black),
                         ),
                       ],
@@ -198,15 +202,12 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                   ),
                 ),
 
-                // Program listesi (Scrollable yapı)
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: programDay?.programs?.length ?? 0,
                   itemBuilder: (context, index) {
                     final program = programDay!.programs![index];
-
-                    // Calculate time difference for the height of each program
                     double heightFactor = calculateTimeDifference(program.startAt!, program.finishAt!);
 
                     return Padding(
@@ -217,7 +218,6 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // Zaman ve çizgi bölümü
                                 Container(
                                   width: screenWidth * 0.25,
                                   decoration: BoxDecoration(
@@ -249,7 +249,6 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                                 ),
                                 const SizedBox(width: 10),
 
-                                // Sağ kutucuk genişliği ve içerikler
                                 Flexible(
                                   child: Container(
                                     decoration: BoxDecoration(
@@ -289,17 +288,21 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                                             ),
                                           ),
 
-                                        // Oturum belgeleri (checkbox)
                                         if (program.sessions!.isNotEmpty)
                                           Padding(
                                             padding: const EdgeInsets.only(top: 8.0),
                                             child: Column(
                                               children: program.sessions!.map((session) {
+                                                bool isDisabled = session.isDocumentRequested ?? false;
+                                                bool canShare = session.documentSharingViaEmail ?? false;
+
                                                 return Container(
                                                   decoration: BoxDecoration(
                                                     border: Border.all(color: Colors.black),
                                                     borderRadius: BorderRadius.circular(8),
-                                                    color: Colors.white,
+                                                    color: isDisabled
+                                                        ? Colors.grey.shade300
+                                                        : Colors.white,
                                                   ),
                                                   child: CheckboxListTile(
                                                     title: Text(
@@ -311,7 +314,9 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                                                       overflow: TextOverflow.ellipsis,
                                                     ),
                                                     value: documents.contains(session.documentId),
-                                                    onChanged: (bool? selected) {
+                                                    onChanged: (isDisabled || !canShare)
+                                                        ? null
+                                                        : (bool? selected) {
                                                       setState(() {
                                                         if (selected == true) {
                                                           documents.add(session.documentId!);
@@ -319,7 +324,12 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                                                           documents.remove(session.documentId!);
                                                         }
                                                       });
+                                                      _saveSelectionsToPreferences();
                                                     },
+                                                    activeColor: isDisabled
+                                                        ? Colors.grey
+                                                        : AppConstants.hallsButtonBlue,
+                                                    checkColor: Colors.white,
                                                   ),
                                                 );
                                               }).toList(),
@@ -338,7 +348,6 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                   },
                 ),
 
-                // Mail Gönder Butonu
                 Container(
                   width: screenWidth,
                   height: screenHeight * 0.1,
@@ -350,11 +359,7 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppConstants.programBackgroundYellow,
                         ),
-                        onPressed: _sending
-                            ? null
-                            : () {
-                          _sendMail();
-                        },
+                        onPressed: _sending ? null : () => _sendMail(),
                         child: _sending
                             ? CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -392,20 +397,13 @@ class _ProgramMailViewState extends State<ProgramMailView> {
       _sending = true;
     });
 
-    print('Mail Gönderme Başladı'); // LOG: Mail gönderme işlemi başladı
-
     final url = Uri.parse('https://app.kongrepad.com/api/v1/mail');
-    print('URL: $url'); // LOG: URL'yi yazdır
-
     final body = jsonEncode({
       'documents': "[${documents.map((int e) => e.toString()).join(",")}]",
     });
 
-    print('İstek Gövdesi: $body'); // LOG: İstek gövdesi yazdır
-
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    print('Token: $token'); // LOG: Token yazdır
 
     try {
       final response = await http.post(
@@ -417,11 +415,7 @@ class _ProgramMailViewState extends State<ProgramMailView> {
         body: body,
       );
 
-      print('Yanıt Durum Kodu: ${response.statusCode}'); // LOG: HTTP durum kodu
-      print('Yanıt Gövdesi: ${response.body}'); // LOG: Yanıt gövdesi
-
       final jsonResponse = jsonDecode(response.body);
-      print('Çözülmüş Yanıt: $jsonResponse'); // LOG: JSON yanıtı
 
       if (jsonResponse['status']) {
         await _showDialog(
@@ -429,11 +423,9 @@ class _ProgramMailViewState extends State<ProgramMailView> {
           "Paylaşıma izin verilen sunumlardan talep ettikleriniz kongreden sonra tarafınıza mail olarak gönderilecektir.",
         );
       } else {
-        print('Hata Mesajı: ${jsonResponse['message']}'); // LOG: Hata mesajı
         await _showDialog('Hata', 'Bir hata meydana geldi.');
       }
     } catch (e) {
-      print('Mail Gönderme Hatası: $e'); // LOG: Hata durumunu yazdır
       await _showDialog('Hata', 'Mail gönderilirken bir hata oluştu.');
     } finally {
       setState(() {
@@ -442,7 +434,6 @@ class _ProgramMailViewState extends State<ProgramMailView> {
     }
   }
 
-  // Bu fonksiyon AlertDialog göstermek için kullanılıyor
   Future<void> _showDialog(String title, String message) async {
     return showDialog(
       context: context,
@@ -454,7 +445,7 @@ class _ProgramMailViewState extends State<ProgramMailView> {
             TextButton(
               child: const Text("Tamam"),
               onPressed: () {
-                Navigator.of(context).pop(); // Dialog'u kapat
+                Navigator.of(context).pop();
               },
             ),
           ],
