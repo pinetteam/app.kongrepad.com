@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:pusher_beams/pusher_beams.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'MainPageView.dart';
 import '../services/alert_service.dart';
@@ -28,7 +29,7 @@ class _LoginViewState extends State<LoginView> {
   }
 
   @override
-  void initState() {
+  void initState()  {
     super.initState();
     _checkLoginStatus();
   }

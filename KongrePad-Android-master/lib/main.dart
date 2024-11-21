@@ -1,28 +1,21 @@
-
 import 'package:firebase_core/firebase_core.dart';
-
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:kongrepad/utils/app_constants.dart';
-
 import 'package:pusher_beams/pusher_beams.dart';
-
-
 import 'views/LoginView.dart';
 
 void main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
   PusherBeams beamsClient = PusherBeams.instance;
+  beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');
+  beamsClient.addDeviceInterest('debug-meeting-3-attendee');
 
-  await beamsClient.start('8dedc4bd-d0d1-4d83-825f-071ab329a328');  // Pusher Beams Instance ID'nizi buraya ekleyin
- // await beamsClient.addDeviceInterest('debug-meeting_2');  // Cihazın abone olacağı "interest" ekleyin
-
-
-  runApp(const MyApp());
-
+  runApp(MyApp());
 }
+
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -39,7 +32,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => LoginView(),
       },
-      home:  Scaffold(body: LoginView()),
+      home: Scaffold(body: LoginView()),
     );
   }
 }

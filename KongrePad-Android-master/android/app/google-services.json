@@ -1,20 +1,21 @@
 {
   "project_info": {
-    "project_number": "338957093363",
-    "project_id": "kongrepadandroid",
-    "storage_bucket": "kongrepadandroid.appspot.com"
+    "project_number": "214936672480",
+    "project_id": "kongrepad1",
+    "storage_bucket": "kongrepad1.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:338957093363:android:b9a84dd7094af09ff82a86",
+        "mobilesdk_app_id": "1:214936672480:android:949966285171475c29d885",
         "android_client_info": {
-          "package_name": "com.pinet.kongrepad"        }
+          "package_name": "tr.com.pinet.kongrepad"
+        }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDjBuFrz8QBC6hSvKYAY1wawg38lYSA96w"
+          "current_key": "AIzaSyBDpp5I_D0CcRNvZ_KAfu5yLc0QezOlDX4"
         }
       ],
       "services": {

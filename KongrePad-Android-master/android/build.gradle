@@ -34,8 +34,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.1.0'  // Bu zaten mevcut olabilir
-        classpath 'com.google.gms:google-services:4.3.8'  // Firebase için bu satırı ekle
-    }
+        classpath 'com.google.gms:google-services:4.3.15'    }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0"
     }

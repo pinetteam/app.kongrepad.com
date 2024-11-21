@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kongrepad/views/LoginView.dart';
 import 'package:kongrepad/views/lower_half_ellipse.dart';
+import 'package:pusher_beams/pusher_beams.dart';
 import '../../services/auth_service.dart';
 import '../../services/pusher_service.dart';
 import '../../services/alert_service.dart';
@@ -21,6 +22,7 @@ import 'ScoreGameView.dart';
 import 'SessionView.dart';
 import 'SurveysView.dart';
 import 'VirtualStandView.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 
 class MainPageView extends StatefulWidget {
@@ -38,11 +40,43 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
   List<VirtualStand>? virtualStands;
   bool _loading = true;
 
+
+  // Fetch the FCM token
+  Future<String?> getFCMToken() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    String? token = await messaging.getToken();
+    print("FCM Token: $token");  // Token'ı konsola yazdırma
+    return token;
+  }
+  // Setup Pusher Beams and get FCM Token
+  Future<void> setupPusherBeams() async {
+    PusherBeams beamsClient = PusherBeams.instance;
+
+    // Start Pusher Beams with Instance ID
+    await beamsClient.start('8dedc4bd-d0d1-4d83-825f-071ab329a328');  // Pusher Beams Instance ID
+
+    // Subscribe the device to an interest
+  //  await beamsClient.addDeviceInterest('debug-meeting-3-attendee');
+
+    // Get FCM token
+    String? token = await getFCMToken();
+    if (token != null) {
+      print("FCM Token received: $token");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     getData();
+    //setupPusherBeams();
+   // getFCMToken();
+    // PusherBeams başlatma
+    PusherBeams beamsClient = PusherBeams.instance;
+    beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');  // Pusher Beams Instance ID
+    beamsClient.addDeviceInterest('meeting-3-attendee');
+
   }
 
   Future<void> getData() async {
@@ -54,6 +88,9 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
       );
       return;
     }
+
+
+
 
     // Verileri çeken servisleri kullanın
     meeting = await AuthService().getMeeting();
@@ -68,6 +105,9 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
     } else {
       // `id` ve `type` kesinlikle null değilse `subscribeToPusher` çağrısı yapılır
       await PusherService().subscribeToPusher(meeting!.id!, participant!.type.toString());
+      print(meeting?.id);
+      print(participant?.type);
+
     }
 
 
