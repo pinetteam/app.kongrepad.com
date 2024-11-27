@@ -64,15 +64,21 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
       print("FCM Token received: $token");
     }
   }
+  void _subscribeToPusher() async {
+    if (meeting != null && participant != null) {
+      PusherService pusherService = PusherService();
+      await pusherService.subscribeToPusher(meeting!.id!, participant!.type!, context);
+    } else {
+      print("Meeting or participant is null. Cannot subscribe to Pusher.");
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     getData();
-    //setupPusherBeams();
-   // getFCMToken();
-    // PusherBeams başlatma
+    _subscribeToPusher();
     PusherBeams beamsClient = PusherBeams.instance;
     beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');  // Pusher Beams Instance ID
     beamsClient.addDeviceInterest('meeting-3-attendee');
@@ -89,9 +95,6 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
       return;
     }
 
-
-
-
     // Verileri çeken servisleri kullanın
     meeting = await AuthService().getMeeting();
     participant = await AuthService().getParticipant();
@@ -104,9 +107,14 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
       );
     } else {
       // `id` ve `type` kesinlikle null değilse `subscribeToPusher` çağrısı yapılır
-      await PusherService().subscribeToPusher(meeting!.id!, participant!.type.toString());
+      await PusherService().subscribeToPusher(meeting!.id!, participant!.type.toString(), context);
       print(meeting?.id);
       print(participant?.type);
+      print(participant?.id);
+      print(meeting?.sessionFirstHallId);
+      print(meeting?.mailFirstHallId);
+
+
 
     }
 

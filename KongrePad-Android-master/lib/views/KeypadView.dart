@@ -21,7 +21,7 @@ class _KeypadViewState extends State<KeypadView> {
   Keypad? keypad;
   bool _sending = false;
   bool _loading = true;
-  String? questionText; // Gelen soruyu tutmak için
+  String? questionText;
 
   _KeypadViewState(this.hallId);
 
