@@ -26,7 +26,8 @@ class _DebateViewState extends State<DebateView> {
   Future<void> getData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    print("Token: $token");
+
+    print("Debug: Token fetched from SharedPreferences: $token");
 
     if (token == null) {
       print("Error: Token is null. Redirecting to login.");
@@ -270,11 +271,17 @@ class _DebateViewState extends State<DebateView> {
     final participantId = prefs.getInt('participant_id');
     final debateId = debate?.id;
 
+    print("Debug: Token: $token");
+    print("Debug: Participant ID: $participantId");
+    print("Debug: Debate ID: $debateId");
+
     if (token == null || participantId == null || debateId == null) {
       await _showDialog(
           'Hata',
           "Token, katılımcı veya debate bilgisi bulunamadı. Lütfen tekrar giriş yapın."
       );
+
+      print("Error: Missing token, participant ID, or debate ID.");
       Navigator.pushReplacementNamed(context, '/login');
       setState(() {
         _sending = false;
@@ -289,6 +296,8 @@ class _DebateViewState extends State<DebateView> {
       'debate_id': debateId,
     });
 
+    print("Sending POST request to $url with body: $body");
+
     try {
       final response = await http.post(
         url,
@@ -298,6 +307,9 @@ class _DebateViewState extends State<DebateView> {
         },
         body: body,
       );
+
+      print("Response status: ${response.statusCode}");
+      print("Response body: ${response.body}");
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -309,16 +321,18 @@ class _DebateViewState extends State<DebateView> {
           answeredDebates.add('$participantId-$debateId');
           prefs.setStringList('answeredDebates', answeredDebates);
 
-          Navigator.of(context).pop(); // işlem başarılı olursa sayfayı kapat
+          Navigator.of(context).pop(); // İşlem başarılı olursa sayfayı kapat
         } else {
           await _showDialog('Hata', "Oylama gönderilemedi.");
         }
       } else if (response.statusCode == 401) {
-        await _showDialog('Yetkisiz Erişim', "Lütfen tekrar giriş yapın.");
+        await _showDialog('Yetkisiz Erişim', "Token geçersiz veya süresi dolmuş. Lütfen tekrar giriş yapın.");
+        Navigator.pushReplacementNamed(context, '/login');
       } else {
-        await _showDialog('Hata', "Oylama gönderilirken bir hata oluştu.");
+        await _showDialog('Hata', "Oylama gönderilirken bir hata oluştu. Kod: ${response.statusCode}");
       }
     } catch (error) {
+      print("Error while sending answer: $error");
       await _showDialog('Hata', "Oylama gönderilemedi: $error");
     } finally {
       setState(() {

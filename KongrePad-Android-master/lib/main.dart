@@ -12,7 +12,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   PusherBeams beamsClient = PusherBeams.instance;
-  beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');
+  beamsClient.start('b5ebe3c-8106-454b-b4c7-b7c10a9320cf8');
   beamsClient.addDeviceInterest('debug-meeting-3-attendee');
 
   runApp(MyApp());
@@ -26,8 +26,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: navigatorKey, // Global Key ataması
-      navigatorObservers: [routeObserver], // Buraya ekliyoruz
+      navigatorKey: navigatorKey,
+      navigatorObservers: [routeObserver],
 
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

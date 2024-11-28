@@ -105,7 +105,7 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
     getData();
     _subscribeToPusher();
     PusherBeams beamsClient = PusherBeams.instance;
-    beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');  // Pusher Beams Instance ID
+    beamsClient.start('b5ebe3c-8106-454b-b4c7-b7c10a9320cf8');  // Pusher Beams Instance ID
     beamsClient.addDeviceInterest('meeting-3-attendee');
 
   }
@@ -127,7 +127,10 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
 
   Future<void> getData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Eğer token yoksa giriş ekranına yönlendir
     if (prefs.getString('token') == null) {
+      print("Token bulunamadı, LoginView'e yönlendiriliyor.");
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginView()),
@@ -136,10 +139,17 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
     }
 
     try {
+      // Token'ı al
+      String? token = await AuthService().getToken();
+      await prefs.setString('token', token!);
+      print("Token başarıyla kaydedildi: $token");
+
+      // Kullanıcı bilgilerini al
       meeting = await AuthService().getMeeting();
       participant = await AuthService().getParticipant();
 
       if (meeting == null || meeting!.id == null || participant == null || participant!.type == null) {
+        print("Meeting veya Participant bilgileri eksik. LoginView'e yönlendiriliyor.");
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginView()),
@@ -147,7 +157,15 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
         return;
       }
 
-      // Pusher abonelik işlemi
+      // Participant ID'yi kaydet
+      if (participant!.id != null) {
+        await AuthService().saveParticipantId(participant!.id!);
+        print("Participant ID kaydedildi: ${participant!.id}");
+      } else {
+        print("Error: Participant ID eksik.");
+      }
+
+      // Pusher'a abone ol
       await PusherService().subscribeToPusher(meeting!.id!, context);
 
       print("Meeting ID: ${meeting?.id}");
@@ -164,6 +182,8 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
       });
     }
   }
+
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;

@@ -66,7 +66,6 @@ class _AnnouncementsViewState extends State<AnnouncementsView> {
     });
   }
 
-  // API'den duyuruları almak için fonksiyon
   Future<void> getData() async {
     print('getData: Başladı');
     final SharedPreferences prefs = await SharedPreferences.getInstance();
