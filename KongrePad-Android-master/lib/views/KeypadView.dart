@@ -207,7 +207,7 @@ class _KeypadViewState extends State<KeypadView> {
                         padding: const EdgeInsets.all(8.0),
                         child: SizedBox(
                           width: screenWidth * 1,
-                          height: screenHeight*0.09,
+                          height: screenHeight*0.10,
                           child: ElevatedButton(
                               onPressed: () {
                                 print('Option selected: ${option.option} (ID: ${option.id})');
@@ -216,9 +216,11 @@ class _KeypadViewState extends State<KeypadView> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    option.option.toString(),
-                                    style: const TextStyle(fontSize: 19),
+                                  Expanded(
+                                    child: Text(
+                                      option.option.toString(),
+                                      style: const TextStyle(fontSize: 18),
+                                    ),
                                   ),
                                 ],
                               )),

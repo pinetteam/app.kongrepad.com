@@ -2,8 +2,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:kongrepad/utils/app_constants.dart';
+import 'package:kongrepad/views/MainPageView.dart';
 import 'package:pusher_beams/pusher_beams.dart';
 import 'views/LoginView.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +26,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // Global Key ataması
+      navigatorObservers: [routeObserver], // Buraya ekliyoruz
+
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: AppConstants.backgroundBlue,

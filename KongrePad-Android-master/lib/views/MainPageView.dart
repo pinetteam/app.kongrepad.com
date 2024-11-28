@@ -24,6 +24,7 @@ import 'SurveysView.dart';
 import 'VirtualStandView.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 class MainPageView extends StatefulWidget {
   const MainPageView({super.key, required this.title});
@@ -32,6 +33,7 @@ class MainPageView extends StatefulWidget {
 
   @override
   State<MainPageView> createState() => _MainPageViewState();
+
 }
 
 class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver {
@@ -67,11 +69,34 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
   void _subscribeToPusher() async {
     if (meeting != null && participant != null) {
       PusherService pusherService = PusherService();
-      await pusherService.subscribeToPusher(meeting!.id!, participant!.type!, context);
+      await pusherService.subscribeToPusher(meeting!.id!, context);
     } else {
       print("Meeting or participant is null. Cannot subscribe to Pusher.");
     }
   }
+ /* @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ModalRoute'un PageRoute olup olmadığını kontrol edin
+    final ModalRoute? modalRoute = ModalRoute.of(context);
+    if (modalRoute is PageRoute) {
+      routeObserver.subscribe(this as RouteAware, modalRoute);
+    }
+  }
+ */
+
+ /* @override
+  void didPopNext() {
+   // super.didPopNext();
+    // Geri döndüğümüzde kanalı kontrol et ve gerekiyorsa yeniden bağlan
+    String channelName = 'meeting-$meeting.id';
+    PusherService().getChannel(channelName).then((channel) {
+      if (channel == null) {
+        PusherService().subscribeToPusher(meeting!.id, context);
+      }
+    });
+  } */
+
 
   @override
   void initState() {
@@ -84,6 +109,21 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
     beamsClient.addDeviceInterest('meeting-3-attendee');
 
   }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (meeting?.id != null) {
+        print("Resuming app, re-subscribing to Pusher.");
+        PusherService().subscribeToPusher(meeting!.id!, context);
+      }
+    }
+  }
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    PusherService().disconnectPusher();
+    super.dispose();
+  }
 
   Future<void> getData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -95,35 +135,35 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
       return;
     }
 
-    // Verileri çeken servisleri kullanın
-    meeting = await AuthService().getMeeting();
-    participant = await AuthService().getParticipant();
-    virtualStands = await AuthService().getVirtualStands();
+    try {
+      meeting = await AuthService().getMeeting();
+      participant = await AuthService().getParticipant();
 
-    if (meeting == null || meeting!.id == null || participant == null || participant!.type == null) {
+      if (meeting == null || meeting!.id == null || participant == null || participant!.type == null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginView()),
+        );
+        return;
+      }
+
+      // Pusher abonelik işlemi
+      await PusherService().subscribeToPusher(meeting!.id!, context);
+
+      print("Meeting ID: ${meeting?.id}");
+      print("Participant Type: ${participant?.type}");
+    } catch (e) {
+      print("Error in getData: $e");
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginView()),
       );
-    } else {
-      // `id` ve `type` kesinlikle null değilse `subscribeToPusher` çağrısı yapılır
-      await PusherService().subscribeToPusher(meeting!.id!, participant!.type.toString(), context);
-      print(meeting?.id);
-      print(participant?.type);
-      print(participant?.id);
-      print(meeting?.sessionFirstHallId);
-      print(meeting?.mailFirstHallId);
-
-
-
+    } finally {
+      setState(() {
+        _loading = false;
+      });
     }
-
-
-    setState(() {
-      _loading = false;
-    });
   }
-
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
