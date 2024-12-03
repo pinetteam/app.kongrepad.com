@@ -12,7 +12,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   PusherBeams beamsClient = PusherBeams.instance;
-  beamsClient.start('b5ebe3c-8106-454b-b4c7-b7c10a9320cf8');
+  beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');
   beamsClient.addDeviceInterest('debug-meeting-3-attendee');
 
   runApp(MyApp());
@@ -37,6 +37,8 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         '/login': (context) => LoginView(),
+        '/main': (context) => MainPageView(title: '',),
+
       },
       home: Scaffold(body: LoginView()),
     );

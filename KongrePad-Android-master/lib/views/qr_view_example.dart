@@ -39,30 +39,53 @@ class _QRViewExampleState extends State<QRViewExample> {
       this.controller = controller;
     });
     controller.scannedDataStream.listen((scanData) async {
-      setState(() {
-        result = scanData;
-      });
-      if (result != null) {
-        await controller.pauseCamera();
-        _login(result!.code!);
+      try {
+        setState(() {
+          result = scanData;
+        });
+        if (result != null) {
+          await controller.pauseCamera();
+          print('Taranan QR kod: ${result!.code}');
+          await _login(result!.code!);
+        }
+      } catch (e) {
+        print('QR tarama sırasında hata: $e');
+        await controller.resumeCamera();
       }
     });
   }
 
   Future<void> _login(String code) async {
-    final response = await http.post(
-      Uri.parse('http://app.kongrepad.com/api/v1/auth/login/participant'),
-      headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
-      body: jsonEncode(<String, String>{'username': code}),
-    );
+    try {
+      print('API çağrısı başlatılıyor...');
+      final response = await http.post(
+        Uri.parse('http://app.kongrepad.com/api/v1/auth/login/participant'),
+        headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode(<String, String>{'username': code}),
+      );
 
-    final responseBody = jsonDecode(response.body);
-    if (responseBody['token'] != null) {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', responseBody['token']);
-      Navigator.pushNamed(context, '/main');
-    } else {
-      AlertService().showAlertDialog(context, title: 'Hata', content: 'Yanlış QR kod girdiniz!');
+      print('API yanıtı alındı: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        print('API yanıtı içeriği: $responseBody');
+
+        if (responseBody['token'] != null) {
+          final SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', responseBody['token']);
+          Navigator.pushNamed(context, '/main');
+        } else {
+          print('Token bulunamadı!');
+          AlertService().showAlertDialog(context, title: 'Hata', content: 'Yanlış QR kod girdiniz!');
+          await controller?.resumeCamera();
+        }
+      } else {
+        print('API hata kodu: ${response.statusCode}');
+        AlertService().showAlertDialog(context, title: 'Hata', content: 'Sunucuya bağlanılamadı!');
+        await controller?.resumeCamera();
+      }
+    } catch (e) {
+      print('API çağrısı sırasında hata: $e');
+      AlertService().showAlertDialog(context, title: 'Hata', content: 'Bir hata oluştu: $e');
       await controller?.resumeCamera();
     }
   }

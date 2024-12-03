@@ -53,8 +53,8 @@ android {
         applicationId "tr.com.pinet.kongrepad"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
-        versionCode 13  // Versiyon kodunu her güncellemede artırın.
-        versionName "1.1.2"  // Versiyon adını istediğiniz gibi belirleyin.
+        versionCode 14  // Versiyon kodunu her güncellemede artırın.
+        versionName "1.1.3"  // Versiyon adını istediğiniz gibi belirleyin.
     }
     signingConfigs {
         release {

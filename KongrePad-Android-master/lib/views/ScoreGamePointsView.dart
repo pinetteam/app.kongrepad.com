@@ -132,7 +132,6 @@ class _ScoreGamePointsViewState extends State<ScoreGamePointsView> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // İlk Container: Kullanıcının aldığı puan
                         Container(
                           width: screenWidth * 0.2,
                           decoration: BoxDecoration(

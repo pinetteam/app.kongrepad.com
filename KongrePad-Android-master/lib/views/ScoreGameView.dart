@@ -16,9 +16,9 @@ class ScoreGameView extends StatefulWidget {
   @override
   State<ScoreGameView> createState() => _ScoreGameViewState();
 }
-
+ScoreGame? scoreGame;
 class _ScoreGameViewState extends State<ScoreGameView> {
-  ScoreGame? scoreGame;
+
   bool _loading = true;
 
   Future<void> getData() async {
@@ -39,8 +39,13 @@ class _ScoreGameViewState extends State<ScoreGameView> {
         final scoreGameJson = ScoreGameJSON.fromJson(jsonData);
         setState(() {
           scoreGame = scoreGameJson.data;
-          _loading = false;
+          _loading = false; // UI'nin güncellenmesi için _loading'i değiştir
         });
+        debugPrint("API Response: ${response.body}");
+
+        print("User Total Point: ${scoreGame?.userTotalPoint}");
+        debugPrint("API Response: ${response.body}");
+
       }
     } catch (e) {
       print('Error: $e');
@@ -51,6 +56,8 @@ class _ScoreGameViewState extends State<ScoreGameView> {
   initState() {
     super.initState();
     getData();
+    print("User Total Point: ${scoreGame?.userTotalPoint}");
+
   }
 
   @override
@@ -94,7 +101,8 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                           width: screenHeight * 0.05,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white, // Circular background color
+                            color:
+                            Colors.white, // Circular background color
                           ),
                           child: Icon(
                             Icons.chevron_left,
@@ -106,7 +114,8 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                       const Center(
                         child: Text(
                           "Puan Topla",
-                          style: TextStyle(fontSize: 25, color: Colors.white),
+                          style: TextStyle(
+                              fontSize: 25, color: Colors.white),
                         ),
                       ),
                     ],
@@ -124,7 +133,8 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                   ),
                 ),
               ),
-              Text("${scoreGame?.userTotalPoint} puan",
+              Text(
+                  "${scoreGame?.userTotalPoint ?? 0} puan",
                   style: TextStyle(
                       color: AppConstants.scoreGameGreen,
                       fontSize: 35,
@@ -141,7 +151,8 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                     padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
                       const EdgeInsets.all(12),
                     ),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: MaterialStateProperty.all<
+                        RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -151,7 +162,8 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const ScoreGamePointsView()),
+                          builder: (context) =>
+                          const ScoreGamePointsView()),
                     );
                   },
                   child: Row(
@@ -194,11 +206,14 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                         backgroundColor: MaterialStateProperty.all<Color>(
                             AppConstants.scoreGameGreen),
                         foregroundColor:
-                        MaterialStateProperty.all<Color>(Colors.white),
-                        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                        MaterialStateProperty.all<Color>(
+                            Colors.white),
+                        padding:
+                        MaterialStateProperty.all<EdgeInsetsGeometry>(
                           const EdgeInsets.all(12),
                         ),
-                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        shape: MaterialStateProperty.all<
+                            RoundedRectangleBorder>(
                           RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -214,7 +229,14 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                                 width: screenWidth * 0.9,
                                 height: screenHeight * 0.9,
                                 child: QRViewExample(
-                                  onQrSuccess: () => getData(),
+                                  onQrSuccess: (addedPoints) {
+                                    setState(() {
+                                      scoreGame?.userTotalPoint =
+                                          (scoreGame?.userTotalPoint ??
+                                              0) +
+                                              addedPoints;
+                                    });
+                                  },
                                 ),
                               ),
                             );
@@ -247,7 +269,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
 }
 
 class QRViewExample extends StatefulWidget {
-  final VoidCallback onQrSuccess;
+  final Function(int) onQrSuccess;
 
   const QRViewExample({Key? key, required this.onQrSuccess}) : super(key: key);
 
@@ -329,24 +351,20 @@ class _QRViewExampleState extends State<QRViewExample> {
     final token = prefs.getString('token');
     final url = Uri.parse('http://app.kongrepad.com/api/v1/score-game/0/point');
 
-    // Daha önce okutulmuş QR kodlarını SharedPreferences'ten al
+    // Daha önce okutulmuş QR kodlarını al
     List<String>? scannedCodes = prefs.getStringList('scannedCodes') ?? [];
 
     if (scannedCodes.contains(code)) {
-      // Eğer QR kod daha önce okutulmuşsa uyarı göster
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            content: const Text(
-              'Bu kodu daha önce okuttunuz!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            content: const Text('Bu kodu daha önce okuttunuz!'),
           );
         },
       );
 
-      // Popup'ı 2 saniye sonra kapat
+      // QR tarama ekranını 2 saniye sonra aç
       Future.delayed(const Duration(seconds: 2), () {
         Navigator.of(context).pop();
         controller?.resumeCamera();
@@ -365,9 +383,16 @@ class _QRViewExampleState extends State<QRViewExample> {
       );
 
       if (response.statusCode == 200) {
-        widget.onQrSuccess();
+        final responseData = jsonDecode(response.body);
+        int addedPoints = responseData['addedPoints'] ?? 0;
 
-        // QR kod başarıyla okutulursa kodu SharedPreferences'e kaydet
+        // Puanları güncelle ve setState çağır
+        setState(() {
+          scoreGame?.userTotalPoint =
+              (scoreGame?.userTotalPoint ?? 0) + addedPoints;
+        });
+
+        // Taratılan kodu listeye ekle ve kaydet
         scannedCodes.add(code);
         prefs.setStringList('scannedCodes', scannedCodes);
 
@@ -375,15 +400,14 @@ class _QRViewExampleState extends State<QRViewExample> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              content: const Text(
-                'İşlem Başarılı!',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              content: Text(
+                'Başarılı! $addedPoints puan eklendi. Toplam puan: ${scoreGame?.userTotalPoint}.',
               ),
             );
           },
         );
 
-        // Popup ve QR ekranını 2 saniye sonra kapat
+        // Popup'ı kapat ve QR ekranını yeniden başlat
         Future.delayed(const Duration(seconds: 2), () {
           Navigator.of(context).pop();
           Navigator.of(context).pop();
@@ -395,10 +419,12 @@ class _QRViewExampleState extends State<QRViewExample> {
       }
     } catch (e) {
       setState(() {
-        responseText = 'Bir hata oluştu: ${e.toString()}';
+        responseText = 'Bir hata oluştu: $e';
       });
     }
   }
+
+
 
   @override
   void dispose() {

@@ -55,10 +55,10 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
     PusherBeams beamsClient = PusherBeams.instance;
 
     // Start Pusher Beams with Instance ID
-    await beamsClient.start('8dedc4bd-d0d1-4d83-825f-071ab329a328');  // Pusher Beams Instance ID
+    await beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');  // Pusher Beams Instance ID
+  await  beamsClient.addDeviceInterest('debug-meeting-3-attendee');
 
-    // Subscribe the device to an interest
-  //  await beamsClient.addDeviceInterest('debug-meeting-3-attendee');
+
 
     // Get FCM token
     String? token = await getFCMToken();
@@ -74,28 +74,6 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
       print("Meeting or participant is null. Cannot subscribe to Pusher.");
     }
   }
- /* @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // ModalRoute'un PageRoute olup olmadığını kontrol edin
-    final ModalRoute? modalRoute = ModalRoute.of(context);
-    if (modalRoute is PageRoute) {
-      routeObserver.subscribe(this as RouteAware, modalRoute);
-    }
-  }
- */
-
- /* @override
-  void didPopNext() {
-   // super.didPopNext();
-    // Geri döndüğümüzde kanalı kontrol et ve gerekiyorsa yeniden bağlan
-    String channelName = 'meeting-$meeting.id';
-    PusherService().getChannel(channelName).then((channel) {
-      if (channel == null) {
-        PusherService().subscribeToPusher(meeting!.id, context);
-      }
-    });
-  } */
 
 
   @override
@@ -104,9 +82,7 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
     WidgetsBinding.instance.addObserver(this);
     getData();
     _subscribeToPusher();
-    PusherBeams beamsClient = PusherBeams.instance;
-    beamsClient.start('b5ebe3c-8106-454b-b4c7-b7c10a9320cf8');  // Pusher Beams Instance ID
-    beamsClient.addDeviceInterest('meeting-3-attendee');
+    setupPusherBeams();
 
   }
   @override
@@ -156,6 +132,9 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
         );
         return;
       }
+
+      // Virtual stands verilerini al
+      virtualStands = await AuthService().getVirtualStands();
 
       // Participant ID'yi kaydet
       if (participant!.id != null) {
