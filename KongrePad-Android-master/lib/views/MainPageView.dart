@@ -23,6 +23,7 @@ import 'SessionView.dart';
 import 'SurveysView.dart';
 import 'VirtualStandView.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../utils/notification_helper.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -50,15 +51,20 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
     print("FCM Token: $token");  // Token'ı konsola yazdırma
     return token;
   }
-  // Setup Pusher Beams and get FCM Token
-  Future<void> setupPusherBeams() async {
+  Future<void> setupPusherBeams(Meeting meeting, Participant participant) async {
     PusherBeams beamsClient = PusherBeams.instance;
 
     // Start Pusher Beams with Instance ID
     await beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');  // Pusher Beams Instance ID
-  await  beamsClient.addDeviceInterest('debug-meeting-3-attendee');
 
-
+    // Dinamik interest oluştur
+    if (meeting.id != null && participant.type != null && participant.id != null) {
+      String interest = 'meeting-${meeting.id}-${participant.type}-${participant.id}';
+      await beamsClient.addDeviceInterest(interest);
+      print("Added dynamic interest: $interest");
+    } else {
+      print("Meeting or Participant data is missing, cannot create interest.");
+    }
 
     // Get FCM token
     String? token = await getFCMToken();
@@ -66,6 +72,7 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
       print("FCM Token received: $token");
     }
   }
+
   void _subscribeToPusher() async {
     if (meeting != null && participant != null) {
       PusherService pusherService = PusherService();
@@ -82,7 +89,9 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
     WidgetsBinding.instance.addObserver(this);
     getData();
     _subscribeToPusher();
-    setupPusherBeams();
+    checkNotificationPermission(context); // Bildirim izinlerini kontrol eder.
+
+    //setupPusherBeams();
 
   }
   @override
@@ -143,6 +152,7 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
       } else {
         print("Error: Participant ID eksik.");
       }
+      await setupPusherBeams(meeting!, participant!);
 
       // Pusher'a abone ol
       await PusherService().subscribeToPusher(meeting!.id!, context);
