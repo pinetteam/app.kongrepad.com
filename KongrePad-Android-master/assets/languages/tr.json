@@ -1,0 +1,16 @@
+{
+  "hello": "Merhaba",
+  "login": "Giriş Yap",
+  "welcome_message": "Uygulamamıza hoş geldiniz!",
+  "select_language": "Dil seçiniz",
+  "show_qr": "Kare Kod Göster",
+  "qr_instructions": "Giriş butonuna bastıktan sonra yaka kartınızda bulunan kare kodu kameraya gösteriniz.",
+  "kvkk_acceptance": "Uygulamaya giriş yaparak 6698 sayılı KVKK'yı kabul ediyorum.",
+  "privacy_policy_title": "KİŞİSEL VERİLERİN KORUNMASI AYDINLATMA METNİ ve TİCARİ ELEKTRONİK İLETİ MUVAFAKATNAMESİ",
+  "privacy_policy_content": "6698 sayılı Kişisel Verilerin Korunması Kanunu (Kanun) uyarınca, kişisel verileriniz veri sorumlusu olarak D Event Turizm Organizasyon Hizmetleri Limited Şirketi tarafından işlenmektedir.",
+  "ok": "Tamam",
+  "login_with_code": "Kod ile Giriş",
+  "language_selection": "Dil Seçimi",
+  "english": "İngilizce",
+  "turkish": "Türkçe"
+}

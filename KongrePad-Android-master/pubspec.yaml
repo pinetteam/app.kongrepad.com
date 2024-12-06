@@ -28,8 +28,12 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  meta: ^1.11.0
+
   win32: ^5.5.0
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
 
 
@@ -41,16 +45,20 @@ dependencies:
   qr_code_scanner: ^1.0.1
   http: ^1.2.1
   shared_preferences: ^2.2.0
-  syncfusion_flutter_pdfviewer: 23.1.39
-  pusher_beams: ^1.0.0
+  syncfusion_flutter_pdfviewer: ^24.1.46
+  pusher_beams: ^1.0.1
   pusher_channels_flutter: ^2.1.1
-
   firebase_core: ^3.6.0
   firebase_messaging: ^15.1.3
   font_awesome_flutter: ^10.7.0
   flutter_launcher_icons: ^0.14.1
   app_settings: ^4.1.1
+  intl: '>=0.18.0 <0.20.0'
+  uuid: ^4.0.0
+dependency_overrides:
+  uuid: ^4.0.0
 
+#  flutter_localization: ^0.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -96,6 +104,10 @@ flutter:
     - assets/icon/questionmark.svg
     - assets/icon/book.fill.svg
     - assets/dogaya_can_ver.svg
+    - assets/languages/en.json
+    - assets/languages/tr.json
+    - assets/icon/turkey.png
+    - assets/icon/uk.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

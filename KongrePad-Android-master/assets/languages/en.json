@@ -1,0 +1,16 @@
+{
+  "hello": "Hello",
+  "login": "Login",
+  "welcome_message": "Welcome to our app!",
+  "select_language": "Select your language",
+  "show_qr": "Show QR Code",
+  "qr_instructions": "After clicking the login button, show the QR code on your badge to the camera.",
+  "kvkk_acceptance": "By logging into the application, I accept the KVKK (Law on the Protection of Personal Data).",
+  "privacy_policy_title": "PERSONAL DATA PROTECTION LIGHTING TEXT and COMMERCIAL ELECTRONIC COMMUNICATION CONSENT",
+  "privacy_policy_content": "In accordance with the Law No. 6698 on the Protection of Personal Data (Law), your personal data is processed by D Event Tourism Organization Services Limited Company as the data controller.",
+  "ok": "OK",
+  "login_with_code": "Login with Code",
+  "language_selection": "Language Selection",
+  "english": "English",
+  "turkish": "Turkish"
+}
