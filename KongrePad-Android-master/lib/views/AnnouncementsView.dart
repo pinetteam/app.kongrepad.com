@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pusher_beams/pusher_beams.dart';
 
 import '../Models/Announcement.dart';
+import '../l10n/app_localizations.dart';
 
 class AnnouncementsView extends StatefulWidget {
   const AnnouncementsView({super.key});
@@ -160,11 +161,11 @@ class _AnnouncementsViewState extends State<AnnouncementsView> {
                           ),
                         ),
                       ),
-                      const Row(
+                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Bildirimler",
+                           AppLocalizations.of(context).translate('announcements'),
                             style: TextStyle(fontSize: 25, color: Colors.white),
                           )
                         ],

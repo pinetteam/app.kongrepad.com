@@ -35,15 +35,21 @@ class _LoginViewState extends State<LoginView> {
     _checkLoginStatus();
   }
 
-  void _updateLanguage(Locale locale) {
-    setState(() {
-      MyApp.setLocale(context, locale);
-    });
+  void _updateLanguage(Locale locale) async {
+    // Dil değişikliğini uygulama seviyesinde güncelle
+    MyApp.setLocale(context, locale);
+
+    // Dil tercihini SharedPreferences ile kaydet
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('languageCode', locale.languageCode);
+
+    // Kullanıcıya dilin değiştiğini göster
     String language = locale.languageCode == 'tr' ? 'Türkçe' : 'English';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Language set to $language')),
     );
   }
+
 
   void _showPopup(BuildContext context) {
     showDialog(

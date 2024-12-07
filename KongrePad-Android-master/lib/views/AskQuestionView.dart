@@ -7,6 +7,8 @@ import 'package:kongrepad/Models/Session.dart';
 import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_localizations.dart';
+
 class AskQuestionView extends StatefulWidget {
   final int hallId;
 
@@ -93,11 +95,12 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                                 ),
                               ),
                             ),
-                            const Row(
+                             Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "Soru sor",
+                                    AppLocalizations.of(context)
+                                        .translate('ask_question'),
                                     style: TextStyle(
                                         fontSize: 25, color: Colors.white),
                                   )
@@ -118,7 +121,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                                 padding: EdgeInsets.all(8),
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  'Oturum',
+                                  AppLocalizations.of(context)
+                                      .translate('session'),
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 20),
@@ -138,8 +142,9 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                               Container(
                                 padding: EdgeInsets.all(8),
                                 alignment: Alignment.centerLeft,
-                                child: const Text(
-                                  'Konuşmacı',
+                                child:  Text(
+                                  AppLocalizations.of(context)
+                                      .translate('speaker'),
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,
@@ -181,8 +186,9 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                                         height: screenHeight * 0.3,
                                         child: TextField(
                                           maxLength: 255,
-                                          decoration: const InputDecoration(
-                                            hintText: 'Soru sor',
+                                          decoration:  InputDecoration(
+                                            hintText:  AppLocalizations.of(context)
+                                                .translate('ask_question'),
                                             border: InputBorder.none,
                                             counterText: "",
                                           ),
@@ -213,7 +219,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                                           Expanded(
                                             child: CheckboxListTile(
                                               title: Text(
-                                                'İsmimi gizle',
+                                                AppLocalizations.of(context)
+                                                    .translate('hide_my_name'),
                                                 style: TextStyle(
                                                     color:
                                                     Colors.black),
@@ -276,7 +283,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                                         Color>(
                                         Colors.white),
                                   )
-                                      : Text('Gönder'),
+                                      : Text( AppLocalizations.of(context)
+                                      .translate('send'),),
                                 ),
                               ),
                             ],
@@ -287,14 +295,15 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                         : Padding(
                       padding: EdgeInsets.only(top: 20),
                           child: Text(
-                                                'Bu Oturumda Soru alınmamaktadır',
+                            AppLocalizations.of(context).translate('no_questions_allowed'),
                                                 style: TextStyle(color: Colors.white, fontSize: 20),
                                               ),
                         )
                         : Padding(
                       padding: EdgeInsets.only(top: 20),
                           child: Text(
-                                                'Oturum henüz başlamamıştır!',
+              AppLocalizations.of(context).translate('session_not_started'),
+
                                                 style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

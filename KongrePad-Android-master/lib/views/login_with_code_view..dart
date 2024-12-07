@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n/app_localizations.dart';
 import 'MainPageView.dart';
 import '../services/alert_service.dart';
 import '../utils/app_constants.dart';
@@ -38,8 +39,8 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
       );    } else {
       AlertService().showAlertDialog(
         context,
-        title: 'Hata',
-        content: 'Yanlış kod girdiniz!',
+        title: AppLocalizations.of(context).translate('error_title'),
+        content: AppLocalizations.of(context).translate('error_message'),
       );
     }
   }
@@ -54,9 +55,9 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
             TextField(
               controller: _controller,
               decoration: InputDecoration(
-                filled: true, // Arka plan rengini etkinleştirir
-                fillColor: Colors.white, // Arka plan rengini beyaz yapar
-                hintText: 'Lütfen Kodunuzu buraya giriniz',
+                filled: true,
+                fillColor: Colors.white,
+                hintText: AppLocalizations.of(context).translate('enter_code'),
                 hintStyle: TextStyle(color: Colors.grey),
                 focusedBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Colors.orange),
@@ -81,7 +82,7 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
                 ),
               ),
               onPressed: _submit,
-              child: const Text('Giriş Yap'),
+              child:  Text(AppLocalizations.of(context).translate('login')),
             ),
           ],
         ),

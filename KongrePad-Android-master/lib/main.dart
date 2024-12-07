@@ -17,8 +17,9 @@ void main() async {
   PusherBeams beamsClient = PusherBeams.instance;
   beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');
 
+  // SharedPreferences ile dil kodunu kontrol et
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? languageCode = prefs.getString('languageCode') ?? 'en';
+  String? languageCode = prefs.getString('languageCode') ?? 'en'; // Varsayılan olarak İngilizce
 
   runApp(MyApp(locale: Locale(languageCode)));
 }
@@ -28,9 +29,14 @@ class MyApp extends StatefulWidget {
 
   const MyApp({Key? key, required this.locale}) : super(key: key);
 
-  static void setLocale(BuildContext context, Locale newLocale) {
+  static void setLocale(BuildContext context, Locale newLocale) async {
     _MyAppState? state = context.findAncestorStateOfType<_MyAppState>();
-    state?.setLocale(newLocale);
+    if (state != null) {
+      // Dil tercihlerini kaydet
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('languageCode', newLocale.languageCode);
+      state.setLocale(newLocale);
+    }
   }
 
   @override
@@ -56,7 +62,6 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
-      navigatorObservers: [routeObserver],
       debugShowCheckedModeBanner: false,
       locale: _locale,
       supportedLocales: const [
@@ -64,7 +69,7 @@ class _MyAppState extends State<MyApp> {
         Locale('tr', ''),
       ],
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        AppLocalizations.delegate, // AppLocalizations için
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
@@ -74,10 +79,10 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       routes: {
-        '/login': (context) => LoginView(),
-        '/main': (context) => MainPageView(title: ''),
+        '/login': (context) => const LoginView(),
+        '/main': (context) => const MainPageView(title: ''),
       },
-      home: const LoginView(),
+      home: const LoginView(), // Başlangıç sayfası
     );
   }
 }

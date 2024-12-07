@@ -9,6 +9,7 @@ import '../../services/pusher_service.dart';
 import '../../services/alert_service.dart';
 import '../../utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n/app_localizations.dart';
 import 'AnnouncementsView.dart';
 import 'AskQuestionView.dart';
 import 'HallsView.dart';
@@ -331,9 +332,9 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
                                   color: Colors.white,
                                   height: screenHeight * 0.06,
                                 ),
-                                const Text(
-                                  'Sunum izle',
-                                  style: TextStyle(fontSize: 20),
+                                 Text(AppLocalizations.of(context)
+                                        .translate('watch_presentation'),
+                                  style: TextStyle(fontSize: 18),
                                 ),
                               ],
                             )),
@@ -399,8 +400,9 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
                                   color: Colors.white,
                                   height: screenHeight * 0.06,
                                 ),
-                                const Text(
-                                  'Soru Sor',
+                                 Text(
+                                  AppLocalizations.of(context)
+                                      .translate('ask_question'),
                                   style: TextStyle(fontSize: 20),
                                 ),
                               ],
@@ -473,8 +475,9 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
                         SizedBox(
                           height: 5,
                         ),
-                        const Text(
-                          'Bilimsel Program',
+                         Text(
+                          AppLocalizations.of(context)
+                              .translate('scientific_program'),
                           style: TextStyle(fontSize: 16),
                         ),
                       ],
@@ -503,13 +506,15 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
                       ),
                     ),
                     onPressed: () {
-                      if (participant?.type! != "attendee") {
-                        AlertService().showAlertDialog(
-                          context,
-                          title: 'Uyarı',
-                          content: 'Mail gönderme izniniz yok!',
-                        );
-                      } else if (meeting?.mailHallCount == 1) {
+    if (participant?.type! != "attendee") {
+    AlertService().showAlertDialog(
+    context,
+    title: AppLocalizations.of(context).translate('warning'),
+    content: AppLocalizations.of(context).translate('no_permission_mail'),
+    );
+    }
+
+    else if (meeting?.mailHallCount == 1) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -541,8 +546,9 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
                           color: Colors.white,
                           height: screenHeight * 0.06,
                         ),
-                        const Text(
-                          'Mail gönder',
+                         Text(
+                          AppLocalizations.of(context)
+                              .translate('send_mail'),
                           style: TextStyle(fontSize: 20),
                         ),
                       ],
@@ -590,8 +596,9 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
                           color: Colors.white,
                           height: screenHeight * 0.06,
                         ),
-                        const Text(
-                          'Anketler',
+                         Text(
+                          AppLocalizations.of(context)
+                              .translate('surveys'),
                           style: TextStyle(fontSize: 20),
                         ),
                       ],
@@ -626,18 +633,18 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
                             builder: (context) => const ScoreGameView()),
                       );
                     },
-                    child: const Column(
+                    child:  Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Center(
                           child: Icon(
-                            FontAwesomeIcons.qrcode,  // QR kod ikonu
-                            size: 60,                 // İkon boyutu
-                            color: Colors.white,       // İkon rengi
+                            FontAwesomeIcons.qrcode,
+                            size: 60,
+                            color: Colors.white,
                           ),
                         ),
-                        const Text(
-                          'QR okut',
+                         Text(AppLocalizations.of(context)
+                               .translate('scan_qr'),
                           style: TextStyle(fontSize: 20),
                         ),
                       ],
@@ -664,10 +671,11 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
                     if (participant?.type! != "attendee") {
                       AlertService().showAlertDialog(
                         context,
-                        title: 'Başarılı',
-                        content: "Başarıyla çıkış yaptınız!",
+                        title: AppLocalizations.of(context).translate('success'),
+                        content: AppLocalizations.of(context).translate('logout_success'),
                       );
                     }
+
                     Navigator.pop(context);
                   },
                   child: SvgPicture.asset(

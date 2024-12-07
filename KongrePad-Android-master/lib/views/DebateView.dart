@@ -6,6 +6,8 @@ import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
+import '../l10n/app_localizations.dart';
+
 class DebateView extends StatefulWidget {
   const DebateView({super.key, required this.hallId});
 
@@ -173,14 +175,14 @@ class _DebateViewState extends State<DebateView> {
                 ),
                 child: SizedBox(
                   width: screenWidth,
-                  child: const Text(
-                    "Debate",
+                  child:  Text(
+                    AppLocalizations.of(context).translate('debate'),
                     style: TextStyle(fontSize: 25, color: Colors.white),
                   ),
                 ),
               ),
-              const Text(
-                "Lütfen aşağıdaki seçeneklerden birini seçin:",
+               Text(
+                AppLocalizations.of(context).translate('please_select_option'),
                 style: TextStyle(fontSize: 18, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
@@ -215,8 +217,8 @@ class _DebateViewState extends State<DebateView> {
                             onPressed: () async {
                               final result = await _checkPreviousAnswer();
                               if (result) {
-                                _showDialog('Hata', 'Bu debate için zaten oy verdiniz.');
-                              } else {
+                                AppLocalizations.of(context).translate('error');
+                              AppLocalizations.of(context).translate('already_voted');                             } else {
                                 _sendAnswer(1, team.id!); // İlgili `answerId` ve `team.id` gönderiliyor
                               }
                             },
@@ -239,9 +241,8 @@ class _DebateViewState extends State<DebateView> {
                     }).toList(),
                   ),
                 )
-                    : const Text(
-                  'No active debate available.',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
+                    :  Text(
+                  AppLocalizations.of(context).translate('no_active_debate'),                  style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ),
             ],
@@ -277,8 +278,8 @@ class _DebateViewState extends State<DebateView> {
 
     if (token == null || participantId == null || debateId == null) {
       await _showDialog(
-          'Hata',
-          "Token, katılımcı veya debate bilgisi bulunamadı. Lütfen tekrar giriş yapın."
+        AppLocalizations.of(context).translate('error'),
+        AppLocalizations.of(context).translate('missing_info'),
       );
 
       print("Error: Missing token, participant ID, or debate ID.");
@@ -314,7 +315,8 @@ class _DebateViewState extends State<DebateView> {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status'] == true) {
-          await _showDialog('Başarılı', "Oyunuz başarıyla gönderildi.");
+          await _showDialog(AppLocalizations.of(context).translate('success'),
+            AppLocalizations.of(context).translate('vote_send_success'),);
 
           // Oy başarıyla gönderildiyse debate ID'sini kaydet
           List<String>? answeredDebates = prefs.getStringList('answeredDebates') ?? [];
@@ -323,17 +325,20 @@ class _DebateViewState extends State<DebateView> {
 
           Navigator.of(context).pop(); // İşlem başarılı olursa sayfayı kapat
         } else {
-          await _showDialog('Hata', "Oylama gönderilemedi.");
+          await _showDialog( AppLocalizations.of(context).translate('error'),
+            AppLocalizations.of(context).translate('vote_send_error'),);
         }
       } else if (response.statusCode == 401) {
-        await _showDialog('Yetkisiz Erişim', "Token geçersiz veya süresi dolmuş. Lütfen tekrar giriş yapın.");
+        await _showDialog(AppLocalizations.of(context).translate('unauthorized_access'), AppLocalizations.of(context).translate('missing_info'));
         Navigator.pushReplacementNamed(context, '/login');
       } else {
-        await _showDialog('Hata', "Oylama gönderilirken bir hata oluştu. Kod: ${response.statusCode}");
+        await _showDialog(AppLocalizations.of(context).translate('error'),
+          AppLocalizations.of(context).translate('vote_send_error'),);
       }
     } catch (error) {
       print("Error while sending answer: $error");
-      await _showDialog('Hata', "Oylama gönderilemedi: $error");
+      await _showDialog(AppLocalizations.of(context).translate('error'),
+        AppLocalizations.of(context).translate('vote_send_error'),);
     } finally {
       setState(() {
         _sending = false;
@@ -351,7 +356,8 @@ class _DebateViewState extends State<DebateView> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: const Text("Tamam"),
+              child:  Text(AppLocalizations.of(context).translate('ok'),
+                ),
               onPressed: () {
                 Navigator.of(context).pop(); // Dialog'u kapat
               },
