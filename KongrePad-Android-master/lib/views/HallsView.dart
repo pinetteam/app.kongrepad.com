@@ -9,6 +9,7 @@ import 'package:kongrepad/views/ProgramDaysView.dart';
 import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_localizations.dart';
 import 'SessionView.dart';
 
 class HallsView extends StatefulWidget {
@@ -116,12 +117,12 @@ class _HallsViewState extends State<HallsView> {
                                   ),
                                 ),
                               ),
-                              const Row(
+                               Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      "Salon Seçiniz",
-                                      style: TextStyle(
+                                      AppLocalizations.of(context)
+                                          .translate('select_hall'),                                      style: TextStyle(
                                           fontSize: 25, color: Colors.white),
                                     )
                                   ]),

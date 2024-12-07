@@ -7,6 +7,8 @@ import 'package:kongrepad/Models/Participant.dart';
 import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_localizations.dart';
+
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
 
@@ -113,8 +115,8 @@ class _ProfileViewState extends State<ProfileView> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Hesabım",
-                                  style: TextStyle(fontSize: 27, color: Colors.white),
+                                  AppLocalizations.of(context)
+                                      .translate("my_account"),                                  style: TextStyle(fontSize: 27, color: Colors.white),
                                 )
                               ]),
                         ],
@@ -294,9 +296,9 @@ class _ProfileViewState extends State<ProfileView> {
                           ),
                         ),
                       ),
-                      child: const Text(
-                        "Bilgilerinizde eksik veya hatalı bilgi var ise lütfen kayıt masası ile irtibata geçiniz.",
-                        style: TextStyle(
+                      child:  Text(
+                        AppLocalizations.of(context)
+                            .translate("contact_registration_desk"),style: TextStyle(
                           fontSize: 20,
                           color: Colors.white,
                         ),

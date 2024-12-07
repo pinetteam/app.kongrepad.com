@@ -8,46 +8,24 @@ import 'package:kongrepad/services/alert_service.dart';
 import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Translation maps for day and month names
-Map<String, String> dayTranslations = {
-  'Monday': 'Pazartesi',
-  'Tuesday': 'Salı',
-  'Wednesday': 'Çarşamba',
-  'Thursday': 'Perşembe',
-  'Friday': 'Cuma',
-  'Saturday': 'Cumartesi',
-  'Sunday': 'Pazar',
-};
+import '../l10n/app_localizations.dart';
 
-Map<String, String> monthTranslations = {
-  'January': 'Ocak',
-  'February': 'Şubat',
-  'March': 'Mart',
-  'April': 'Nisan',
-  'May': 'Mayıs',
-  'June': 'Haziran',
-  'July': 'Temmuz',
-  'August': 'Ağustos',
-  'September': 'Eylül',
-  'October': 'Ekim',
-  'November': 'Kasım',
-  'December': 'Aralık',
-};
 
-String translateDateToTurkish(String englishDate) {
+
+String translateDate(String englishDate, BuildContext context) {
   String translatedDate = englishDate;
 
-  // Translate day names
   dayTranslations.forEach((english, turkish) {
+    final translation = AppLocalizations.of(context).translate(english.toLowerCase());
     if (englishDate.contains(english)) {
-      translatedDate = translatedDate.replaceAll(english, turkish);
+      translatedDate = translatedDate.replaceAll(english, translation);
     }
   });
 
-  // Translate month names
   monthTranslations.forEach((english, turkish) {
+    final translation = AppLocalizations.of(context).translate(english.toLowerCase());
     if (englishDate.contains(english)) {
-      translatedDate = translatedDate.replaceAll(english, turkish);
+      translatedDate = translatedDate.replaceAll(english, translation);
     }
   });
 
@@ -163,12 +141,11 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                           ),
                         ),
                       ),
-                      const Row(
+                       Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "Gün Seçiniz",
-                              style: TextStyle(
+                              AppLocalizations.of(context).translate("select_day"),                              style: TextStyle(
                                   fontSize: 25, color: Colors.white),
                             )
                           ]),
@@ -184,7 +161,6 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                   width: screenWidth,
                   child: Column(
                     children: programDays?.map((day) {
-                      // Tarih çeviri fonksiyonunu burada çağırıyoruz
                       String translatedDay = translateDateToTurkish(day.day.toString());
 
                       return Padding(
@@ -240,7 +216,7 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                                   ),
                                   Flexible(
                                     child: Text(
-                                      translatedDay,  // Çevrilmiş tarihi burada gösteriyoruz
+                                      translatedDay,
                                       style:
                                       TextStyle(fontSize: 20),
                                     ),
@@ -289,9 +265,9 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                           SizedBox(
                             width: 10,
                           ),
-                          const Text(
-                            'İzin Verilen Tüm Sunumları Gönder',
-                            style: TextStyle(
+                           Text(
+                            AppLocalizations.of(context)
+                                .translate("send_all_documents"),                            style: TextStyle(
                                 fontSize: 17,
                                 color: Colors.black),
                           ),
@@ -323,9 +299,9 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
       final jsonResponse = jsonDecode(response.body);
       AlertService().showAlertDialog(
         context,
-        title: 'Başarılı',
+        title: AppLocalizations.of(context).translate("success"),
         content:
-        "İstediğiniz dökümanlar kongreden sonra size mail olarak gönderilecek",
+        AppLocalizations.of(context).translate("sending_success"),
       );
       setState(() {
         _sending = false;
@@ -333,8 +309,8 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
     }).catchError((error) {
       AlertService().showAlertDialog(
         context,
-        title: 'Hata',
-        content: "Bir hata meydana geldi!",
+        title: AppLocalizations.of(context).translate("error"),
+        content: AppLocalizations.of(context).translate("sending_error"),
       );
       setState(() {
         _sending = false;

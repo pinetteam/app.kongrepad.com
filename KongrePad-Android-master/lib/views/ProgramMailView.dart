@@ -9,6 +9,8 @@ import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
+
 Map<String, String> dayTranslations = {
   'Monday': 'Pazartesi',
   'Tuesday': 'Salı',
@@ -168,8 +170,8 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                           ),
                         ),
                       ),
-                      const Text(
-                        "Mail Gönder",
+                       Text(
+                        AppLocalizations.of(context).translate("send_mail"),
                         style: TextStyle(fontSize: 25, color: Colors.white),
                       ),
                       const SizedBox(width: 55),
@@ -270,8 +272,10 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                                         if (program.chairs!.isNotEmpty)
                                           Text(
                                             (program.chairs!.length == 1
-                                                ? "Moderatör: "
-                                                : "Moderatörler: ") +
+                                                ?  AppLocalizations.of(context)
+                                                .translate("moderator")
+                                                : AppLocalizations.of(context)
+                                                .translate("moderators")) +
                                                 program.chairs!.map((chair) => chair.fullName).join(', '),
                                             style: const TextStyle(fontSize: 16, color: CupertinoColors.black),
                                             maxLines: 1,
@@ -374,9 +378,9 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                               height: screenHeight * 0.02,
                             ),
                             const SizedBox(width: 10),
-                            const Text(
-                              'Gönder',
-                              style: TextStyle(fontSize: 20, color: Colors.black),
+                             Text(
+                              AppLocalizations.of(context)
+                                  .translate("send"),  style: TextStyle(fontSize: 20, color: Colors.black),
                             ),
                           ],
                         ),
@@ -419,14 +423,16 @@ class _ProgramMailViewState extends State<ProgramMailView> {
 
       if (jsonResponse['status']) {
         await _showDialog(
-          'Başarılı',
-          "Paylaşıma izin verilen sunumlardan talep ettikleriniz kongreden sonra tarafınıza mail olarak gönderilecektir.",
+          AppLocalizations.of(context).translate("successful"),
+          AppLocalizations.of(context).translate("mail_sending_success"),
         );
       } else {
-        await _showDialog('Hata', 'Bir hata meydana geldi.');
+        await _showDialog( AppLocalizations.of(context).translate("error"),
+          AppLocalizations.of(context).translate("mail_sending_error"),);
       }
     } catch (e) {
-      await _showDialog('Hata', 'Mail gönderilirken bir hata oluştu.');
+      await _showDialog(  AppLocalizations.of(context).translate("error"),
+        AppLocalizations.of(context).translate("mail_sending_error"),);
     } finally {
       setState(() {
         _sending = false;
@@ -443,7 +449,8 @@ class _ProgramMailViewState extends State<ProgramMailView> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: const Text("Tamam"),
+              child:  Text(  AppLocalizations.of(context).translate("ok"),
+                ),
               onPressed: () {
                 Navigator.of(context).pop();
               },

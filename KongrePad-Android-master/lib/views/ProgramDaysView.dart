@@ -7,52 +7,27 @@ import 'package:kongrepad/views/ProgramView.dart';
 import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Translation maps for day and month names
-Map<String, String> dayTranslations = {
-  'Monday': 'Pazartesi',
-  'Tuesday': 'Salı',
-  'Wednesday': 'Çarşamba',
-  'Thursday': 'Perşembe',
-  'Friday': 'Cuma',
-  'Saturday': 'Cumartesi',
-  'Sunday': 'Pazar',
-};
-
-Map<String, String> monthTranslations = {
-  'January': 'Ocak',
-  'February': 'Şubat',
-  'March': 'Mart',
-  'April': 'Nisan',
-  'May': 'Mayıs',
-  'June': 'Haziran',
-  'July': 'Temmuz',
-  'August': 'Ağustos',
-  'September': 'Eylül',
-  'October': 'Ekim',
-  'November': 'Kasım',
-  'December': 'Aralık',
-};
-
-String translateDateToTurkish(String englishDate) {
+import '../l10n/app_localizations.dart';
+String translateDate(String englishDate, BuildContext context) {
   String translatedDate = englishDate;
 
-  // Translate day names
-  dayTranslations.forEach((english, turkish) {
+  dayTranslations.forEach((english, _) {
+    final translation = AppLocalizations.of(context).translate(english.toLowerCase());
     if (englishDate.contains(english)) {
-      translatedDate = translatedDate.replaceAll(english, turkish);
+      translatedDate = translatedDate.replaceAll(english, translation);
     }
   });
 
   // Translate month names
-  monthTranslations.forEach((english, turkish) {
+  monthTranslations.forEach((english, _) {
+    final translation = AppLocalizations.of(context).translate(english.toLowerCase());
     if (englishDate.contains(english)) {
-      translatedDate = translatedDate.replaceAll(english, turkish);
+      translatedDate = translatedDate.replaceAll(english, translation);
     }
   });
 
   return translatedDate;
 }
-
 class ProgramDaysView extends StatefulWidget {
   const ProgramDaysView({super.key, required this.hallId});
 
@@ -160,11 +135,11 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
                             ),
                           ),
                         ),
-                        const Row(
+                         Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Gün Seçiniz",
+                                AppLocalizations.of(context).translate("select_day"),
                                 style: TextStyle(
                                     fontSize: 25, color: Colors.white),
                               )

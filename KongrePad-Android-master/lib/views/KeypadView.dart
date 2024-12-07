@@ -6,6 +6,8 @@ import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
+import '../l10n/app_localizations.dart';
+
 
 class KeypadView extends StatefulWidget {
   const KeypadView({super.key, required this.hallId});
@@ -179,11 +181,10 @@ class _KeypadViewState extends State<KeypadView> {
                   ),
                 ),
                 child: Text(
-                  "Lütfen size en uygun yanıtı seçiniz.",
-                  style: const TextStyle(fontSize: 22, color: Colors.white),
+                    AppLocalizations.of(context)
+                        .translate("please_select_answer"),style:  TextStyle(fontSize: 22, color: Colors.white),
                 ),
               ),
-              // Soru metnini buraya ekliyoruz
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
@@ -235,7 +236,7 @@ class _KeypadViewState extends State<KeypadView> {
         )
             : Center(
           child: Text(
-            "No active keypad found.",
+            AppLocalizations.of(context).translate("no_active_keypad"),
             style: const TextStyle(fontSize: 20, color: Colors.white),
           ),
         ),
@@ -300,24 +301,37 @@ class _KeypadViewState extends State<KeypadView> {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status']) {
           print('Vote submitted successfully.');
-          await _showDialog('Başarılı', 'Tebrikler, oy başarıyla gönderildi.');
+          await _showDialog(
+            AppLocalizations.of(context).translate('success'),
+            AppLocalizations.of(context).translate('submit_vote_success'),
+          );
           Navigator.of(context).pop(); // Dialog kapandıktan sonra sayfayı kapat
         } else {
           print('Vote submission failed.');
-          _showDialog('Başarısız', 'Daha önceden yanıt verdiniz.');
+          _showDialog(
+            AppLocalizations.of(context).translate('error'),
+            AppLocalizations.of(context).translate('already_voted'),
+          );
         }
       } else {
         print('Vote submission failed with status code: ${response.statusCode}');
-        _showDialog('Hata', 'Oy gönderimi başarısız. Lütfen tekrar deneyin.');
+        _showDialog(
+          AppLocalizations.of(context).translate('error'),
+          AppLocalizations.of(context).translate('vote_submission_failed'),
+        );
       }
     } catch (error) {
       print('Error sending vote: $error');
-      _showDialog('Hata', 'Oy gönderilirken bir hata oluştu.');
+      _showDialog(
+        AppLocalizations.of(context).translate('error'),
+        AppLocalizations.of(context).translate('vote_submission_error'),
+      );
     } finally {
       setState(() {
         _sending = false;
       });
     }
+
   }
 
   // Bu fonksiyon AlertDialog göstermek için kullanılıyor
@@ -330,9 +344,9 @@ class _KeypadViewState extends State<KeypadView> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: const Text("Tamam"),
+              child:  Text(AppLocalizations.of(context).translate("ok")),
               onPressed: () {
-                Navigator.of(context).pop(); // Dialog'u kapat
+                Navigator.of(context).pop();
               },
             ),
           ],
