@@ -8,6 +8,7 @@ import 'package:kongrepad/services/alert_service.dart';
 import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_localizations.dart';
 import 'SurveysView.dart';
 
 class SurveyView extends StatefulWidget {
@@ -253,8 +254,10 @@ class _SurveyViewState extends State<SurveyView> {
                     )
                         : Text(
                       isEditable
-                          ? 'Cevapları Gönder'
-                          : 'Bu anketi zaten cevapladınız',  // Change button text if not editable
+                          ? AppLocalizations.of(context)
+                          .translate('send_answers')
+                          : AppLocalizations.of(context)
+                          .translate('already_answered'),  // Change button text if not editable
                       style: const TextStyle(fontSize: 20, color: Colors.white),
                     ),
                   ),
@@ -273,8 +276,10 @@ class _SurveyViewState extends State<SurveyView> {
     if (answers.length != questions?.length) {
       AlertService().showAlertDialog(
         context,
-        title: 'Uyarı',
-        content: 'Tüm soruları cevaplamanız gerekiyor.',
+        title: AppLocalizations.of(context)
+            .translate('warning'),
+        content: AppLocalizations.of(context)
+            .translate('answers_required'),
       );
       setState(() {
         _sending = false;
@@ -305,8 +310,10 @@ class _SurveyViewState extends State<SurveyView> {
 
         AlertService().showAlertDialog(
           context,
-          title: 'Başarılı',
-          content: "Teşekkürler, ankete başarıyla katıldınız!",
+          title: AppLocalizations.of(context)
+              .translate('success'),
+          content: AppLocalizations.of(context)
+              .translate('thanks_message'),
           onDismiss: () {
             Navigator.pushReplacement(
               context,
@@ -317,16 +324,20 @@ class _SurveyViewState extends State<SurveyView> {
       } else {
         AlertService().showAlertDialog(
           context,
-          title: 'Hata',
-          content: 'Bir hata meydana geldi!',
+          title: AppLocalizations.of(context)
+              .translate('error'),
+          content: AppLocalizations.of(context)
+              .translate('error_message'),
         );
       }
     } catch (error) {
       print(error);
       AlertService().showAlertDialog(
         context,
-        title: 'Hata',
-        content: 'Bir hata meydana geldi!',
+        title: AppLocalizations.of(context)
+            .translate('error'),
+        content: AppLocalizations.of(context)
+            .translate('error_message'),
       );
     } finally {
       setState(() {

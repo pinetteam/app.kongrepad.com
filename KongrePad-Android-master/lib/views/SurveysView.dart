@@ -8,6 +8,8 @@ import 'package:kongrepad/views/SurveyView.dart';
 import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_localizations.dart';
+
 class SurveysView extends StatefulWidget {
   const SurveysView({super.key});
 
@@ -113,11 +115,12 @@ class _SurveysViewState extends State<SurveysView> {
                           ),
                         ),
                       ),
-                      const Row(
+                       Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "Anketler",
+                              AppLocalizations.of(context)
+                                  .translate('surveys'),
                               style: TextStyle(
                                   fontSize: 25, color: Colors.white),
                             )

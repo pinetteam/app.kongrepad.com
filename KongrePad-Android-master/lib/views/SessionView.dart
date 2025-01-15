@@ -10,6 +10,7 @@ import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:http/http.dart' as http;
+import '../l10n/app_localizations.dart';
 
 class SessionView extends StatefulWidget {
   const SessionView({super.key, required this.hallId});
@@ -85,11 +86,12 @@ class _SessionViewState extends State<SessionView> {
                         ),
                       ),
                     ),
-                  const Row(
+                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Sunum İzle",
+                        AppLocalizations.of(context)
+                            .translate('watch_presentation'),
                         style: TextStyle(fontSize: 25, color: Colors.white),
                       ),
                     ]
@@ -147,8 +149,9 @@ class _SessionViewState extends State<SessionView> {
                           height: 75,
                         ),
                         SizedBox(width: screenWidth*0.01),
-                        const Text(
-                          'Soru Sor',
+                         Text(
+                          AppLocalizations.of(context)
+                              .translate('ask_question'),
                           style: TextStyle(fontSize: 20),
                         ),
                       ],
@@ -159,17 +162,20 @@ class _SessionViewState extends State<SessionView> {
               Container(
                 height: screenHeight*0.8,
                 alignment: Alignment.center,
-                child: session == null ? const Text(
-                  "Aktif oturum bulunamadı",
+                child: session == null ?  Text(
+                  AppLocalizations.of(context)
+                      .translate('no_active_session'),
                   style: TextStyle(fontSize: 25, color: Colors.white),
                 ) :
-                document == null ? const Text(
-                  "Aktif döküman bulunamadı",
+                document == null ?  Text(
+                  AppLocalizations.of(context)
+                      .translate('no_active_document'),
                   style: TextStyle(fontSize: 25, color: Colors.white),
                 ) : Padding(
                   padding: EdgeInsets.all(25),
-                  child: const Text(
-                    "Sunum önizlemeğe kapalıdır!",
+                  child:  Text(
+                    AppLocalizations.of(context)
+                        .translate('preview_closed'),
                     style: TextStyle(fontSize: 25, color: Colors.white),
                   ),
                 ),
