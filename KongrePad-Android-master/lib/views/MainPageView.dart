@@ -92,8 +92,6 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
     _subscribeToPusher();
     checkNotificationPermission(context); // Bildirim izinlerini kontrol eder.
 
-    //setupPusherBeams();
-
   }
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -335,6 +333,8 @@ class _MainPageViewState extends State<MainPageView> with WidgetsBindingObserver
                                  Text(AppLocalizations.of(context)
                                         .translate('watch_presentation'),
                                   style: TextStyle(fontSize: 18),
+                                   overflow: TextOverflow.ellipsis,
+                                   maxLines: 1,
                                 ),
                               ],
                             )),

@@ -8,6 +8,7 @@ import 'package:kongrepad/utils/app_constants.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_localizations.dart';
 import 'ScoreGamePointsView.dart';
 
 class ScoreGameView extends StatefulWidget {
@@ -111,9 +112,10 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                           ),
                         ),
                       ),
-                      const Center(
+                       Center(
                         child: Text(
-                          "Puan Topla",
+                            AppLocalizations.of(context)
+                                .translate('points'),
                           style: TextStyle(
                               fontSize: 25, color: Colors.white),
                         ),
@@ -134,7 +136,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                 ),
               ),
               Text(
-                  "${scoreGame?.userTotalPoint ?? 0} puan",
+                  "${scoreGame?.userTotalPoint ?? 0} ",
                   style: TextStyle(
                       color: AppConstants.scoreGameGreen,
                       fontSize: 35,
@@ -177,8 +179,9 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                       SizedBox(
                         width: screenWidth * 0.01,
                       ),
-                      const Text(
-                        'Puan Geçmişim',
+                       Text(
+                         AppLocalizations.of(context)
+                             .translate('score_history'),
                         style: TextStyle(
                           fontSize: 25,
                           color: Colors.white,
@@ -254,8 +257,9 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                           SizedBox(
                             width: screenWidth * 0.01,
                           ),
-                          const Text(
-                            'Kare Kodu Okut',
+                           Text(
+                            AppLocalizations.of(context)
+                                .translate('scan_qr_code'),
                             style: TextStyle(fontSize: 25),
                           ),
                         ],
@@ -342,7 +346,8 @@ class _QRViewExampleState extends State<QRViewExample> {
   Future<void> sendQr(String? code) async {
     if (code == null || code.isEmpty) {
       setState(() {
-        responseText = 'Geçersiz QR kod.';
+        responseText = AppLocalizations.of(context)
+            .translate('invalid_qr_code'); // "Geçersiz QR kod."
       });
       return;
     }
@@ -359,7 +364,10 @@ class _QRViewExampleState extends State<QRViewExample> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            content: const Text('Bu kodu daha önce okuttunuz!'),
+            content: Text(
+              AppLocalizations.of(context)
+                  .translate('already_scanned'), // "Bu kodu daha önce okuttunuz!"
+            ),
           );
         },
       );
@@ -400,8 +408,28 @@ class _QRViewExampleState extends State<QRViewExample> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              content: Text(
-                'Başarılı! $addedPoints puan eklendi. Toplam puan: ${scoreGame?.userTotalPoint}.',
+              content: RichText(
+                text: TextSpan(
+                  text: AppLocalizations.of(context)
+                      .translate('success_message_part1'), // "Başarılı! "
+                  style: DefaultTextStyle.of(context).style.copyWith(fontSize: 16),
+                  children: [
+                    TextSpan(
+                      text: '${addedPoints.toString()} ', // Dinamik puan
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.green),
+                    ),
+                    TextSpan(
+                      text: AppLocalizations.of(context)
+                          .translate('success_message_part2'), // "puan eklendi. Toplam puan: "
+                    ),
+                    TextSpan(
+                      text: '${scoreGame?.userTotalPoint.toString() ?? '0'}.', // Dinamik toplam puan
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.blue),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -414,15 +442,18 @@ class _QRViewExampleState extends State<QRViewExample> {
         });
       } else {
         setState(() {
-          responseText = 'Yanlış QR kod girdiniz.';
+          responseText = AppLocalizations.of(context)
+              .translate('invalid_qr_code'); // "Yanlış QR kod girdiniz."
         });
       }
     } catch (e) {
       setState(() {
-        responseText = 'Bir hata oluştu: $e';
+        responseText =
+        '${AppLocalizations.of(context).translate('error_occurred')}: $e'; // "Bir hata oluştu"
       });
     }
   }
+
 
 
 

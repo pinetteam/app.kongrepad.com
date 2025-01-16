@@ -6,6 +6,8 @@ import 'package:kongrepad/Models/ScoreGamePoint.dart';
 import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_localizations.dart';
+
 class ScoreGamePointsView extends StatefulWidget {
   const ScoreGamePointsView({super.key});
 
@@ -111,9 +113,10 @@ class _ScoreGamePointsViewState extends State<ScoreGamePointsView> {
                     ),
                   ),
                 ),
-                const Center(
+                 Center(
                   child: Text(
-                    "Puan Geçmişim",
+                    AppLocalizations.of(context)
+                        .translate('score_history'),
                     style: TextStyle(fontSize: 25, color: Colors.white),
                   ),
                 ),
