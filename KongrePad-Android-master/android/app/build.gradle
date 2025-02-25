@@ -2,7 +2,6 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
-  //  id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 def localProperties = new Properties()
@@ -33,17 +32,19 @@ if (flutterVersionName == null) {
 
 android {
     namespace "tr.com.pinet.kongrepad"
-    compileSdk flutter.compileSdkVersion
+    compileSdk 34
     ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
+   
+    tasks.withType(JavaCompile).configureEach {
+    options.release.set(17)
+}
+    
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
@@ -51,10 +52,12 @@ android {
 
     defaultConfig {
         applicationId "tr.com.pinet.kongrepad"
-        minSdkVersion flutter.minSdkVersion
-        targetSdkVersion flutter.targetSdkVersion
+        minSdkVersion 28
+        compileSdkVersion 34
+        targetSdkVersion 34
         versionCode 14  // Versiyon kodunu her güncellemede artırın.
         versionName "1.1.3"  // Versiyon adını istediğiniz gibi belirleyin.
+        multiDexEnabled true
     }
     signingConfigs {
         release {
@@ -78,6 +81,20 @@ android {
             signingConfig signingConfigs.release  // Imzalama işlemi Google Play tarafından yapılacak.
         }
     }
+
+    afterEvaluate {
+        if (tasks.findByName("mergeDebugNativeLibs") != null) {
+            tasks.named("mergeDebugNativeLibs").configure {
+                mustRunAfter("externalNativeBuildDebug")
+            }
+        }
+        if (tasks.findByName("mergeReleaseNativeLibs") != null) {
+            tasks.named("mergeReleaseNativeLibs").configure {
+                mustRunAfter("externalNativeBuildRelease")
+            }
+        }
+    }
+
 }
 
 flutter {
@@ -85,13 +102,21 @@ flutter {
 }
 
 dependencies {
-    implementation 'com.google.firebase:firebase-messaging:21.1.0'
-    implementation 'com.pusher:push-notifications-android:1.9.0'
+    implementation 'com.android.support:multidex:2.0.1' //enter the latest multidex version
+    implementation platform('com.google.firebase:firebase-bom:31.2.3')
+    implementation 'com.google.firebase:firebase-messaging:23.2.1' // 🔥 24.1.0 yerine 23.2.1 KULLAN
     implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.pusher:push-notifications-android:1.9.0'
     implementation 'org.slf4j:slf4j-android:1.7.36'
+    implementation 'com.google.errorprone:error_prone_annotations:2.9.0'
 
-    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))}
-    apply plugin: 'com.google.gms.google-services'
+}
+
+apply plugin: 'com.google.gms.google-services'
+
+configurations.all {
+    exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+}
 
    //  implementation("com.google.firebase:firebase-analytics")
      //plugin: 'com.google.gms.google-services'

@@ -17,9 +17,10 @@ class ScoreGameView extends StatefulWidget {
   @override
   State<ScoreGameView> createState() => _ScoreGameViewState();
 }
-ScoreGame? scoreGame;
-class _ScoreGameViewState extends State<ScoreGameView> {
 
+ScoreGame? scoreGame;
+
+class _ScoreGameViewState extends State<ScoreGameView> {
   bool _loading = true;
 
   Future<void> getData() async {
@@ -46,7 +47,6 @@ class _ScoreGameViewState extends State<ScoreGameView> {
 
         print("User Total Point: ${scoreGame?.userTotalPoint}");
         debugPrint("API Response: ${response.body}");
-
       }
     } catch (e) {
       print('Error: $e');
@@ -58,7 +58,6 @@ class _ScoreGameViewState extends State<ScoreGameView> {
     super.initState();
     getData();
     print("User Total Point: ${scoreGame?.userTotalPoint}");
-
   }
 
   @override
@@ -69,206 +68,204 @@ class _ScoreGameViewState extends State<ScoreGameView> {
     return Scaffold(
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
             : SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                height: screenHeight * 0.1,
-                decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.white,
-                        width: 1.0,
-                      ),
-                    ),
-                    color: AppConstants.backgroundBlue),
-                child: Container(
-                  width: screenWidth,
-                  child: Stack(
-                    alignment: Alignment.centerLeft,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          height: screenHeight * 0.05,
-                          width: screenHeight * 0.05,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color:
-                            Colors.white, // Circular background color
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      height: screenHeight * 0.1,
+                      decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.white,
+                              width: 1.0,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.chevron_left,
-                            color: AppConstants.backgroundBlue,
-                            size: screenHeight * 0.03,
-                          ),
-                        ),
-                      ),
-                       Center(
-                        child: Text(
-                            AppLocalizations.of(context)
-                                .translate('points'),
-                          style: TextStyle(
-                              fontSize: 25, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Container(
-                width: screenHeight * 0.3,
-                height: screenHeight * 0.3,
-                child: const Center(
-                  child: Icon(
-                    FontAwesomeIcons.qrcode,
-                    size: 150,
-                    color: Colors.green,
-                  ),
-                ),
-              ),
-              Text(
-                  "${scoreGame?.userTotalPoint ?? 0} ",
-                  style: TextStyle(
-                      color: AppConstants.scoreGameGreen,
-                      fontSize: 35,
-                      fontWeight: FontWeight.bold)),
-              SizedBox(
-                height: screenHeight * 0.18,
-              ),
-              ElevatedButton(
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                        AppConstants.scoreGameGreen),
-                    foregroundColor:
-                    MaterialStateProperty.all<Color>(Colors.black),
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                      const EdgeInsets.all(12),
-                    ),
-                    shape: MaterialStateProperty.all<
-                        RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                          const ScoreGamePointsView()),
-                    );
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.checklist_rtl,
-                        color: Colors.white,
-                        size: screenWidth * 0.03,
-                      ),
-                      SizedBox(
-                        width: screenWidth * 0.01,
-                      ),
-                       Text(
-                         AppLocalizations.of(context)
-                             .translate('score_history'),
-                        style: TextStyle(
-                          fontSize: 25,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  )),
-              SizedBox(
-                height: screenHeight * 0.18,
-              ),
-              Container(
-                width: screenWidth,
-                height: screenHeight * 0.1,
-                decoration: const BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: Colors.white,
-                        width: 1.0,
-                      ),
-                    ),
-                    color: AppConstants.backgroundBlue),
-                child: Center(
-                  child: ElevatedButton(
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                            AppConstants.scoreGameGreen),
-                        foregroundColor:
-                        MaterialStateProperty.all<Color>(
-                            Colors.white),
-                        padding:
-                        MaterialStateProperty.all<EdgeInsetsGeometry>(
-                          const EdgeInsets.all(12),
-                        ),
-                        shape: MaterialStateProperty.all<
-                            RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              contentPadding: EdgeInsets.zero,
-                              content: Container(
-                                width: screenWidth * 0.9,
-                                height: screenHeight * 0.9,
-                                child: QRViewExample(
-                                  onQrSuccess: (addedPoints) {
-                                    setState(() {
-                                      scoreGame?.userTotalPoint =
-                                          (scoreGame?.userTotalPoint ??
-                                              0) +
-                                              addedPoints;
-                                    });
-                                  },
+                          color: AppConstants.backgroundBlue),
+                      child: Container(
+                        width: screenWidth,
+                        child: Stack(
+                          alignment: Alignment.centerLeft,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: Container(
+                                height: screenHeight * 0.05,
+                                width: screenHeight * 0.05,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color:
+                                      Colors.white, // Circular background color
+                                ),
+                                child: Icon(
+                                  Icons.chevron_left,
+                                  color: AppConstants.backgroundBlue,
+                                  size: screenHeight * 0.03,
                                 ),
                               ),
-                            );
-                          },
-                        );
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.qr_code_scanner,
-                            color: Colors.white,
-                            size: screenWidth * 0.03,
+                            ),
+                            Center(
+                              child: Text(
+                                AppLocalizations.of(context)
+                                    .translate('points'),
+                                style: TextStyle(
+                                    fontSize: 25, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: screenHeight * 0.3,
+                      height: screenHeight * 0.3,
+                      child: const Center(
+                        child: Icon(
+                          FontAwesomeIcons.qrcode,
+                          size: 150,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ),
+                    Text("${scoreGame?.userTotalPoint ?? 0} ",
+                        style: TextStyle(
+                            color: AppConstants.scoreGameGreen,
+                            fontSize: 35,
+                            fontWeight: FontWeight.bold)),
+                    SizedBox(
+                      height: screenHeight * 0.18,
+                    ),
+                    ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStateProperty.all<Color>(
+                              AppConstants.scoreGameGreen),
+                          foregroundColor:
+                              WidgetStateProperty.all<Color>(Colors.black),
+                          padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+                            const EdgeInsets.all(12),
                           ),
-                          SizedBox(
-                            width: screenWidth * 0.01,
+                          shape:
+                              WidgetStateProperty.all<RoundedRectangleBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
-                           Text(
-                            AppLocalizations.of(context)
-                                .translate('scan_qr_code'),
-                            style: TextStyle(fontSize: 25),
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const ScoreGamePointsView()),
+                          );
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.checklist_rtl,
+                              color: Colors.white,
+                              size: screenWidth * 0.03,
+                            ),
+                            SizedBox(
+                              width: screenWidth * 0.01,
+                            ),
+                            Text(
+                              AppLocalizations.of(context)
+                                  .translate('score_history'),
+                              style: TextStyle(
+                                fontSize: 25,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        )),
+                    SizedBox(
+                      height: screenHeight * 0.18,
+                    ),
+                    Container(
+                      width: screenWidth,
+                      height: screenHeight * 0.1,
+                      decoration: const BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              color: Colors.white,
+                              width: 1.0,
+                            ),
                           ),
-                        ],
-                      )),
+                          color: AppConstants.backgroundBlue),
+                      child: Center(
+                        child: ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: WidgetStateProperty.all<Color>(
+                                  AppConstants.scoreGameGreen),
+                              foregroundColor:
+                                  WidgetStateProperty.all<Color>(Colors.white),
+                              padding:
+                                  WidgetStateProperty.all<EdgeInsetsGeometry>(
+                                const EdgeInsets.all(12),
+                              ),
+                              shape: WidgetStateProperty.all<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    contentPadding: EdgeInsets.zero,
+                                    content: Container(
+                                      width: screenWidth * 0.9,
+                                      height: screenHeight * 0.9,
+                                      child: QRViewExample(
+                                        onQrSuccess: (addedPoints) {
+                                          setState(() {
+                                            scoreGame?.userTotalPoint =
+                                                (scoreGame?.userTotalPoint ??
+                                                        0) +
+                                                    addedPoints;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.qr_code_scanner,
+                                  color: Colors.white,
+                                  size: screenWidth * 0.03,
+                                ),
+                                SizedBox(
+                                  width: screenWidth * 0.01,
+                                ),
+                                Text(
+                                  AppLocalizations.of(context)
+                                      .translate('scan_qr_code'),
+                                  style: TextStyle(fontSize: 25),
+                                ),
+                              ],
+                            )),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ));
+              ));
   }
 }
 
@@ -365,8 +362,8 @@ class _QRViewExampleState extends State<QRViewExample> {
         builder: (BuildContext context) {
           return AlertDialog(
             content: Text(
-              AppLocalizations.of(context)
-                  .translate('already_scanned'), // "Bu kodu daha önce okuttunuz!"
+              AppLocalizations.of(context).translate(
+                  'already_scanned'), // "Bu kodu daha önce okuttunuz!"
             ),
           );
         },
@@ -412,7 +409,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                 text: TextSpan(
                   text: AppLocalizations.of(context)
                       .translate('success_message_part1'), // "Başarılı! "
-                  style: DefaultTextStyle.of(context).style.copyWith(fontSize: 16),
+                  style:
+                      DefaultTextStyle.of(context).style.copyWith(fontSize: 16),
                   children: [
                     TextSpan(
                       text: '${addedPoints.toString()} ', // Dinamik puan
@@ -420,11 +418,12 @@ class _QRViewExampleState extends State<QRViewExample> {
                           fontWeight: FontWeight.bold, color: Colors.green),
                     ),
                     TextSpan(
-                      text: AppLocalizations.of(context)
-                          .translate('success_message_part2'), // "puan eklendi. Toplam puan: "
+                      text: AppLocalizations.of(context).translate(
+                          'success_message_part2'), // "puan eklendi. Toplam puan: "
                     ),
                     TextSpan(
-                      text: '${scoreGame?.userTotalPoint.toString() ?? '0'}.', // Dinamik toplam puan
+                      text:
+                          '${scoreGame?.userTotalPoint.toString() ?? '0'}.', // Dinamik toplam puan
                       style: TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.blue),
                     ),
@@ -449,13 +448,10 @@ class _QRViewExampleState extends State<QRViewExample> {
     } catch (e) {
       setState(() {
         responseText =
-        '${AppLocalizations.of(context).translate('error_occurred')}: $e'; // "Bir hata oluştu"
+            '${AppLocalizations.of(context).translate('error_occurred')}: $e'; // "Bir hata oluştu"
       });
     }
   }
-
-
-
 
   @override
   void dispose() {

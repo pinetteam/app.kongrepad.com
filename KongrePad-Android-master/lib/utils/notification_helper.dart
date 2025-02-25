@@ -3,7 +3,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:app_settings/app_settings.dart'; // AppSettings paketini dahil edin
 
 Future<void> checkNotificationPermission(BuildContext context) async {
-  NotificationSettings settings = await FirebaseMessaging.instance.getNotificationSettings();
+  NotificationSettings settings =
+      await FirebaseMessaging.instance.getNotificationSettings();
 
   if (settings.authorizationStatus == AuthorizationStatus.denied ||
       settings.authorizationStatus == AuthorizationStatus.notDetermined) {
@@ -25,7 +26,7 @@ Future<void> checkNotificationPermission(BuildContext context) async {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Önce dialogu kapat
-                AppSettings.openNotificationSettings(); // Kullanıcıyı bildirim ayarlarına yönlendir
+                AppSettings.openAppSettings(type: AppSettingsType.notification);
               },
               child: Text("İzin Ver"),
             ),

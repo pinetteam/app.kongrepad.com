@@ -32,11 +32,15 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
     if (responseBody['token'] != null) {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', responseBody['token']);
-     // Navigator.pushNamed(context, '/main');
+      // Navigator.pushNamed(context, '/main');
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => MainPageView(title: '',)), // Ana sayfa buraya
-      );    } else {
+        MaterialPageRoute(
+            builder: (context) => MainPageView(
+                  title: '',
+                )), // Ana sayfa buraya
+      );
+    } else {
       AlertService().showAlertDialog(
         context,
         title: AppLocalizations.of(context).translate('error_title'),
@@ -69,20 +73,24 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
                 ),
               ),
             ),
-           SizedBox(height: 20,),
+            SizedBox(
+              height: 20,
+            ),
             ElevatedButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(AppConstants.loginButtonOrange),
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                padding: MaterialStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.all(15)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                backgroundColor: WidgetStateProperty.all<Color>(
+                    AppConstants.loginButtonOrange),
+                foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
+                padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+                    const EdgeInsets.all(15)),
+                shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
               ),
               onPressed: _submit,
-              child:  Text(AppLocalizations.of(context).translate('login')),
+              child: Text(AppLocalizations.of(context).translate('login')),
             ),
           ],
         ),

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
-import '../main.dart';
 import '../views/DebateView.dart';
 import '../views/KeypadView.dart';
 
@@ -16,7 +15,7 @@ class PusherService {
       try {
         await _pusher.init(
           apiKey: "314fc649c9f65b8d7960", // Pusher API Key
-          cluster: "eu",                 // Cluster bilgisi
+          cluster: "eu", // Cluster bilgisi
         );
         await _pusher.connect();
         _isConnected = true;
@@ -53,7 +52,8 @@ class PusherService {
     print("Subscribed to channel: $channelName");
   }
 
-  void _handlePusherEvent(PusherEvent event, BuildContext context, int meetingId) {
+  void _handlePusherEvent(
+      PusherEvent event, BuildContext context, int meetingId) {
     if (event.eventName == "pusher:subscription_succeeded") {
       print("Subscription succeeded event ignored.");
       return;
@@ -78,7 +78,8 @@ class PusherService {
 
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => KeypadView(hallId: hallId)),
+              MaterialPageRoute(
+                  builder: (context) => KeypadView(hallId: hallId)),
             ).then((_) {
               print("Returned from KeypadView.");
               subscribeToPusher(meetingId, context); // Kanalı yenile
@@ -94,7 +95,8 @@ class PusherService {
 
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => DebateView(hallId: hallId)),
+              MaterialPageRoute(
+                  builder: (context) => DebateView(hallId: hallId)),
             ).then((_) {
               print("Returned from DebateView.");
               subscribeToPusher(meetingId, context); // Kanalı yenile

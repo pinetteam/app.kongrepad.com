@@ -38,7 +38,8 @@ class _DebateViewState extends State<DebateView> {
     }
 
     try {
-      final url = Uri.parse('http://app.kongrepad.com/api/v1/hall/$hallId/active-debate');
+      final url = Uri.parse(
+          'http://app.kongrepad.com/api/v1/hall/$hallId/active-debate');
       print("Requesting data from: $url");
       final response = await http.get(
         url,
@@ -86,8 +87,9 @@ class _DebateViewState extends State<DebateView> {
         print('Event Name: ${event.eventName}');
         print('Event Data: ${event.data}');
 
-        if (event.eventName!.startsWith('pusher:')) {
-          print('Pusher system event: ${event.eventName} received and ignored.');
+        if (event.eventName.startsWith('pusher:')) {
+          print(
+              'Pusher system event: ${event.eventName} received and ignored.');
           return;
         }
 
@@ -152,102 +154,117 @@ class _DebateViewState extends State<DebateView> {
       child: Scaffold(
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
             : Container(
-          height: screenHeight,
-          alignment: Alignment.center,
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                height: screenHeight * 0.1,
-                decoration: const BoxDecoration(
-                  color: AppConstants.backgroundBlue,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.white,
-                      width: 2,
-                    ),
-                  ),
-                ),
-                child: SizedBox(
-                  width: screenWidth,
-                  child:  Text(
-                    AppLocalizations.of(context).translate('debate'),
-                    style: TextStyle(fontSize: 25, color: Colors.white),
-                  ),
-                ),
-              ),
-               Text(
-                AppLocalizations.of(context).translate('please_select_option'),
-                style: TextStyle(fontSize: 18, color: Colors.white),
-                textAlign: TextAlign.center,
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: debate != null
-                    ? Container(
-                  height: screenHeight * 0.65,
-                  width: screenWidth,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: debate!.teams!.map((team) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: SizedBox(
-                          width: screenWidth * 0.8,
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  AppConstants.buttonLightPurple),
-                              foregroundColor: MaterialStateProperty.all<Color>(
-                                  Colors.white),
-                              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                                const EdgeInsets.all(12),
-                              ),
-                              shape: MaterialStateProperty.all<OutlinedBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                            ),
-                            onPressed: () async {
-                              final result = await _checkPreviousAnswer();
-                              if (result) {
-                                AppLocalizations.of(context).translate('error');
-                              AppLocalizations.of(context).translate('already_voted');                             } else {
-                                _sendAnswer(1, team.id!); // İlgili `answerId` ve `team.id` gönderiliyor
-                              }
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                team.logoName != null
-                                    ? Image.network(
-                                  'https://app.kongrepad.com/storage/team-logos/${team.logoName}.${team.logoExtension}',
-                                  width: 150,
-                                  height: 150,
-                                  fit: BoxFit.contain,
-                                )
-                                    : Text(team.title.toString()),
-                              ],
-                            ),
+                height: screenHeight,
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      height: screenHeight * 0.1,
+                      decoration: const BoxDecoration(
+                        color: AppConstants.backgroundBlue,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white,
+                            width: 2,
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                )
-                    :  Text(
-                  AppLocalizations.of(context).translate('no_active_debate'),                  style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                      child: SizedBox(
+                        width: screenWidth,
+                        child: Text(
+                          AppLocalizations.of(context).translate('debate'),
+                          style: TextStyle(fontSize: 25, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      AppLocalizations.of(context)
+                          .translate('please_select_option'),
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                      textAlign: TextAlign.center,
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: debate != null
+                          ? Container(
+                              height: screenHeight * 0.65,
+                              width: screenWidth,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: debate!.teams!.map((team) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: SizedBox(
+                                      width: screenWidth * 0.8,
+                                      child: ElevatedButton(
+                                        style: ButtonStyle(
+                                          backgroundColor:
+                                              WidgetStateProperty.all<Color>(
+                                                  AppConstants
+                                                      .buttonLightPurple),
+                                          foregroundColor:
+                                              WidgetStateProperty.all<Color>(
+                                                  Colors.white),
+                                          padding: WidgetStateProperty.all<
+                                              EdgeInsetsGeometry>(
+                                            const EdgeInsets.all(12),
+                                          ),
+                                          shape: WidgetStateProperty.all<
+                                              OutlinedBorder>(
+                                            RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                          ),
+                                        ),
+                                        onPressed: () async {
+                                          final result =
+                                              await _checkPreviousAnswer();
+                                          if (result) {
+                                            AppLocalizations.of(context)
+                                                .translate('error');
+                                            AppLocalizations.of(context)
+                                                .translate('already_voted');
+                                          } else {
+                                            _sendAnswer(1,
+                                                team.id!); // İlgili `answerId` ve `team.id` gönderiliyor
+                                          }
+                                        },
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            team.logoName != null
+                                                ? Image.network(
+                                                    'https://app.kongrepad.com/storage/team-logos/${team.logoName}.${team.logoExtension}',
+                                                    width: 150,
+                                                    height: 150,
+                                                    fit: BoxFit.contain,
+                                                  )
+                                                : Text(team.title.toString()),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            )
+                          : Text(
+                              AppLocalizations.of(context)
+                                  .translate('no_active_debate'),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 18),
+                            ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -258,7 +275,8 @@ class _DebateViewState extends State<DebateView> {
     final debateId = debate?.id;
 
     // Önceden oy verilen debate ID'lerini kontrol et
-    List<String>? answeredDebates = prefs.getStringList('answeredDebates') ?? [];
+    List<String>? answeredDebates =
+        prefs.getStringList('answeredDebates') ?? [];
     return answeredDebates.contains('$participantId-$debateId');
   }
 
@@ -290,7 +308,8 @@ class _DebateViewState extends State<DebateView> {
       return;
     }
 
-    final url = Uri.parse('https://app.kongrepad.com/api/v1/debate/$debateId/debate-vote');
+    final url = Uri.parse(
+        'https://app.kongrepad.com/api/v1/debate/$debateId/debate-vote');
     final body = jsonEncode({
       'team': teamId,
       'participant_id': participantId,
@@ -315,30 +334,41 @@ class _DebateViewState extends State<DebateView> {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status'] == true) {
-          await _showDialog(AppLocalizations.of(context).translate('success'),
-            AppLocalizations.of(context).translate('vote_send_success'),);
+          await _showDialog(
+            AppLocalizations.of(context).translate('success'),
+            AppLocalizations.of(context).translate('vote_send_success'),
+          );
 
           // Oy başarıyla gönderildiyse debate ID'sini kaydet
-          List<String>? answeredDebates = prefs.getStringList('answeredDebates') ?? [];
+          List<String>? answeredDebates =
+              prefs.getStringList('answeredDebates') ?? [];
           answeredDebates.add('$participantId-$debateId');
           prefs.setStringList('answeredDebates', answeredDebates);
 
           Navigator.of(context).pop(); // İşlem başarılı olursa sayfayı kapat
         } else {
-          await _showDialog( AppLocalizations.of(context).translate('error'),
-            AppLocalizations.of(context).translate('vote_send_error'),);
+          await _showDialog(
+            AppLocalizations.of(context).translate('error'),
+            AppLocalizations.of(context).translate('vote_send_error'),
+          );
         }
       } else if (response.statusCode == 401) {
-        await _showDialog(AppLocalizations.of(context).translate('unauthorized_access'), AppLocalizations.of(context).translate('missing_info'));
+        await _showDialog(
+            AppLocalizations.of(context).translate('unauthorized_access'),
+            AppLocalizations.of(context).translate('missing_info'));
         Navigator.pushReplacementNamed(context, '/login');
       } else {
-        await _showDialog(AppLocalizations.of(context).translate('error'),
-          AppLocalizations.of(context).translate('vote_send_error'),);
+        await _showDialog(
+          AppLocalizations.of(context).translate('error'),
+          AppLocalizations.of(context).translate('vote_send_error'),
+        );
       }
     } catch (error) {
       print("Error while sending answer: $error");
-      await _showDialog(AppLocalizations.of(context).translate('error'),
-        AppLocalizations.of(context).translate('vote_send_error'),);
+      await _showDialog(
+        AppLocalizations.of(context).translate('error'),
+        AppLocalizations.of(context).translate('vote_send_error'),
+      );
     } finally {
       setState(() {
         _sending = false;
@@ -356,8 +386,9 @@ class _DebateViewState extends State<DebateView> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child:  Text(AppLocalizations.of(context).translate('ok'),
-                ),
+              child: Text(
+                AppLocalizations.of(context).translate('ok'),
+              ),
               onPressed: () {
                 Navigator.of(context).pop(); // Dialog'u kapat
               },

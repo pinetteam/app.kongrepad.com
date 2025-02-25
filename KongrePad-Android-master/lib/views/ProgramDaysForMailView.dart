@@ -10,20 +10,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 
-
-
 String translateDate(String englishDate, BuildContext context) {
   String translatedDate = englishDate;
 
   dayTranslations.forEach((english, turkish) {
-    final translation = AppLocalizations.of(context).translate(english.toLowerCase());
+    final translation =
+        AppLocalizations.of(context).translate(english.toLowerCase());
     if (englishDate.contains(english)) {
       translatedDate = translatedDate.replaceAll(english, translation);
     }
   });
 
   monthTranslations.forEach((english, turkish) {
-    final translation = AppLocalizations.of(context).translate(english.toLowerCase());
+    final translation =
+        AppLocalizations.of(context).translate(english.toLowerCase());
     if (englishDate.contains(english)) {
       translatedDate = translatedDate.replaceAll(english, translation);
     }
@@ -49,7 +49,7 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
 
     try {
       final url =
-      Uri.parse('https://app.kongrepad.com/api/v1/hall/$hallId/program');
+          Uri.parse('https://app.kongrepad.com/api/v1/hall/$hallId/program');
       final response = await http.get(
         url,
         headers: <String, String>{
@@ -91,195 +91,194 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
     return Scaffold(
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
-            : Container(
-          decoration: const BoxDecoration(
-              color: AppConstants.programBackgroundYellow),
-          height: screenHeight,
-          alignment: Alignment.center,
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                height: screenHeight * 0.1,
-                decoration: const BoxDecoration(
-                  color: AppConstants.buttonYellow,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.white, // Border color
-                      width: 2, // Border width
-                    ),
-                  ),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
-                child: Container(
-                  width: screenWidth,
-                  child: Stack(
-                    alignment: Alignment.centerLeft,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          height: screenHeight * 0.05,
-                          width: screenHeight * 0.05,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors
-                                .white, // Circular background color
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SvgPicture.asset(
-                              'assets/icon/chevron.left.svg',
-                              color: AppConstants.buttonYellow,
-                              height: screenHeight * 0.03,
-                            ),
+              )
+            : Container(
+                decoration: const BoxDecoration(
+                    color: AppConstants.programBackgroundYellow),
+                height: screenHeight,
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      height: screenHeight * 0.1,
+                      decoration: const BoxDecoration(
+                        color: AppConstants.buttonYellow,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white, // Border color
+                            width: 2, // Border width
                           ),
                         ),
                       ),
-                       Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      child: Container(
+                        width: screenWidth,
+                        child: Stack(
+                          alignment: Alignment.centerLeft,
                           children: [
-                            Text(
-                              AppLocalizations.of(context).translate("select_day"),                              style: TextStyle(
-                                  fontSize: 25, color: Colors.white),
-                            )
-                          ]),
-                    ],
-                  ),
-                ),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: Container(
-                  alignment: Alignment.topCenter,
-                  height: screenHeight * 0.775,
-                  width: screenWidth,
-                  child: Column(
-                    children: programDays?.map((day) {
-                      String translatedDay = translateDateToTurkish(day.day.toString());
-
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: SizedBox(
-                          width: screenWidth * 0.8,
-                          child: ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor:
-                                MaterialStateProperty
-                                    .all<Color>(AppConstants
-                                    .hallsButtonBlue),
-                                foregroundColor:
-                                MaterialStateProperty
-                                    .all<Color>(AppConstants
-                                    .backgroundBlue),
-                                padding: MaterialStateProperty.all<
-                                    EdgeInsetsGeometry>(
-                                  const EdgeInsets.all(12),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: Container(
+                                height: screenHeight * 0.05,
+                                width: screenHeight * 0.05,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color:
+                                      Colors.white, // Circular background color
                                 ),
-                                shape: MaterialStateProperty.all<
-                                    RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                    borderRadius:
-                                    BorderRadius.circular(14),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SvgPicture.asset(
+                                    'assets/icon/chevron.left.svg',
+                                    color: AppConstants.buttonYellow,
+                                    height: screenHeight * 0.03,
                                   ),
                                 ),
                               ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          ProgramMailView(
-                                            programDay: day,
-                                            hallId: hallId,
-                                          )),
-                                );
-                              },
-                              child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.max,
+                            ),
+                            Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  SvgPicture.asset(
-                                    'assets/icon/chevron.right.2.svg',
-                                    color:
-                                    AppConstants.backgroundBlue,
-                                    height: screenHeight * 0.03,
-                                  ),
-                                  SizedBox(
-                                    width: screenWidth * 0.05,
-                                  ),
-                                  Flexible(
-                                    child: Text(
-                                      translatedDay,
-                                      style:
-                                      TextStyle(fontSize: 20),
-                                    ),
-                                  ),
-                                ],
-                              )),
+                                  Text(
+                                    AppLocalizations.of(context)
+                                        .translate("select_day"),
+                                    style: TextStyle(
+                                        fontSize: 25, color: Colors.white),
+                                  )
+                                ]),
+                          ],
                         ),
-                      );
-                    }).toList() ??
-                        [],
-                  ),
-                ),
-              ),
-              Container(
-                width: screenWidth,
-                height: screenHeight * 0.1,
-                decoration:
-                BoxDecoration(color: AppConstants.buttonYellow),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          AppConstants.programBackgroundYellow),
-                      onPressed: _sending
-                          ? null
-                          : () {
-                        _sendAllMail();
-                      },
-                      child: _sending
-                          ? CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white),
-                      )
-                          : Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: Container(
+                        alignment: Alignment.topCenter,
+                        height: screenHeight * 0.775,
+                        width: screenWidth,
+                        child: Column(
+                          children: programDays?.map((day) {
+                                String translatedDay =
+                                    translateDateToTurkish(day.day.toString());
+
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SizedBox(
+                                    width: screenWidth * 0.8,
+                                    child: ElevatedButton(
+                                        style: ButtonStyle(
+                                          backgroundColor:
+                                              WidgetStateProperty.all<Color>(
+                                                  AppConstants.hallsButtonBlue),
+                                          foregroundColor:
+                                              WidgetStateProperty.all<Color>(
+                                                  AppConstants.backgroundBlue),
+                                          padding: WidgetStateProperty.all<
+                                              EdgeInsetsGeometry>(
+                                            const EdgeInsets.all(12),
+                                          ),
+                                          shape: WidgetStateProperty.all<
+                                              RoundedRectangleBorder>(
+                                            RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ProgramMailView(
+                                                      programDay: day,
+                                                      hallId: hallId,
+                                                    )),
+                                          );
+                                        },
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.max,
+                                          children: [
+                                            SvgPicture.asset(
+                                              'assets/icon/chevron.right.2.svg',
+                                              color:
+                                                  AppConstants.backgroundBlue,
+                                              height: screenHeight * 0.03,
+                                            ),
+                                            SizedBox(
+                                              width: screenWidth * 0.05,
+                                            ),
+                                            Flexible(
+                                              child: Text(
+                                                translatedDay,
+                                                style: TextStyle(fontSize: 20),
+                                              ),
+                                            ),
+                                          ],
+                                        )),
+                                  ),
+                                );
+                              }).toList() ??
+                              [],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: screenWidth,
+                      height: screenHeight * 0.1,
+                      decoration:
+                          BoxDecoration(color: AppConstants.buttonYellow),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SvgPicture.asset(
-                            'assets/icon/envelope.open.fill.svg',
-                            color: Colors.black,
-                            height: screenHeight * 0.02,
-                          ),
-                          SizedBox(
-                            width: 10,
-                          ),
-                           Text(
-                            AppLocalizations.of(context)
-                                .translate("send_all_documents"),                            style: TextStyle(
-                                fontSize: 17,
-                                color: Colors.black),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    AppConstants.programBackgroundYellow),
+                            onPressed: _sending
+                                ? null
+                                : () {
+                                    _sendAllMail();
+                                  },
+                            child: _sending
+                                ? CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/icon/envelope.open.fill.svg',
+                                        color: Colors.black,
+                                        height: screenHeight * 0.02,
+                                      ),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Text(
+                                        AppLocalizations.of(context)
+                                            .translate("send_all_documents"),
+                                        style: TextStyle(
+                                            fontSize: 17, color: Colors.black),
+                                      ),
+                                    ],
+                                  ),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ));
+              ));
   }
 
   Future<void> _sendAllMail() async {
@@ -300,8 +299,7 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
       AlertService().showAlertDialog(
         context,
         title: AppLocalizations.of(context).translate("success"),
-        content:
-        AppLocalizations.of(context).translate("sending_success"),
+        content: AppLocalizations.of(context).translate("sending_success"),
       );
       setState(() {
         _sending = false;

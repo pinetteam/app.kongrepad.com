@@ -23,7 +23,8 @@ class _LoginViewState extends State<LoginView> {
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MainPageView(title: 'Main Page')),
+          MaterialPageRoute(
+              builder: (context) => const MainPageView(title: 'Main Page')),
         );
       }
     }
@@ -49,7 +50,6 @@ class _LoginViewState extends State<LoginView> {
       SnackBar(content: Text('Language set to $language')),
     );
   }
-
 
   void _showPopup(BuildContext context) {
     showDialog(
@@ -189,10 +189,13 @@ class _LoginViewState extends State<LoginView> {
                   // Login Button
                   ElevatedButton(
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(AppConstants.loginButtonOrange),
-                      foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.all(12)),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      backgroundColor: WidgetStateProperty.all<Color>(
+                          AppConstants.loginButtonOrange),
+                      foregroundColor:
+                          WidgetStateProperty.all<Color>(Colors.white),
+                      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+                          const EdgeInsets.all(12)),
+                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -244,11 +247,15 @@ class _LoginViewState extends State<LoginView> {
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        text: AppLocalizations.of(context).translate('kvkk_acceptance') + ' ',
+                        text: AppLocalizations.of(context)
+                                .translate('kvkk_acceptance') +
+                            ' ',
                         style: const TextStyle(color: Colors.black),
                         children: [
                           TextSpan(
-                            text: '\n'+AppLocalizations.of(context).translate('privacy_policy_title'),
+                            text: '\n' +
+                                AppLocalizations.of(context)
+                                    .translate('privacy_policy_title'),
                             style: const TextStyle(
                               color: Colors.black,
                               decoration: TextDecoration.underline,
@@ -265,10 +272,13 @@ class _LoginViewState extends State<LoginView> {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(AppConstants.loginWithCodeButtonBlue),
-                      foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
-                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.all(12)),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      backgroundColor: WidgetStateProperty.all<Color>(
+                          AppConstants.loginWithCodeButtonBlue),
+                      foregroundColor:
+                          WidgetStateProperty.all<Color>(Colors.black),
+                      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+                          const EdgeInsets.all(12)),
+                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),

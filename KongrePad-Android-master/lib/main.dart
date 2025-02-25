@@ -7,19 +7,30 @@ import 'package:pusher_beams/pusher_beams.dart';
 import 'package:kongrepad/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'firebase_options.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions
+          .currentPlatform, // Otomatik oluşturulan Firebase yapılandırması
+    );
+    print("✅ Firebase başarıyla başlatıldı!");
+  } catch (e) {
+    print("❌ Firebase başlatılamadı: $e");
+    return;
+  }
 
   PusherBeams beamsClient = PusherBeams.instance;
   beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');
 
   // SharedPreferences ile dil kodunu kontrol et
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? languageCode = prefs.getString('languageCode') ?? 'en'; // Varsayılan olarak İngilizce
+  String? languageCode =
+      prefs.getString('languageCode') ?? 'en'; // Varsayılan olarak İngilizce
 
   runApp(MyApp(locale: Locale(languageCode)));
 }

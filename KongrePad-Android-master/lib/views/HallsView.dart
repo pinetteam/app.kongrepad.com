@@ -117,12 +117,13 @@ class _HallsViewState extends State<HallsView> {
                                   ),
                                 ),
                               ),
-                               Row(
+                              Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
                                       AppLocalizations.of(context)
-                                          .translate('select_hall'),                                      style: TextStyle(
+                                          .translate('select_hall'),
+                                      style: TextStyle(
                                           fontSize: 25, color: Colors.white),
                                     )
                                   ]),
@@ -144,16 +145,16 @@ class _HallsViewState extends State<HallsView> {
                                       child: ElevatedButton(
                                         style: ButtonStyle(
                                           backgroundColor:
-                                              MaterialStateProperty.all<Color>(
+                                              WidgetStateProperty.all<Color>(
                                                   AppConstants.hallsButtonBlue),
                                           foregroundColor:
-                                              MaterialStateProperty.all<Color>(
+                                              WidgetStateProperty.all<Color>(
                                                   AppConstants.backgroundBlue),
-                                          padding: MaterialStateProperty.all<
+                                          padding: WidgetStateProperty.all<
                                               EdgeInsetsGeometry>(
                                             const EdgeInsets.all(12),
                                           ),
-                                          shape: MaterialStateProperty.all<
+                                          shape: WidgetStateProperty.all<
                                               RoundedRectangleBorder>(
                                             RoundedRectangleBorder(
                                               borderRadius:

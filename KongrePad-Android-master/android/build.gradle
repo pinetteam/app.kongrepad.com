@@ -28,15 +28,26 @@ tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
 buildscript {
+    ext.kotlin_version = '1.9.20'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.0'  // Bu zaten mevcut olabilir
-        classpath 'com.google.gms:google-services:4.3.15'    }
+        classpath 'com.android.tools.build:gradle:8.1.0'
+        classpath 'com.google.gms:google-services:4.4.0'
+}
+
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10"
+
     }
 
 }
+
+configurations.all {
+    resolutionStrategy.force 'com.google.errorprone:error_prone_annotations:2.3.1'
+    exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+}
+
+

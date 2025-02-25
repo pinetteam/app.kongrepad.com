@@ -62,152 +62,155 @@ class _SurveysViewState extends State<SurveysView> {
       child: Scaffold(
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
-            : Container(
-          height: screenHeight,
-          alignment: Alignment.center,
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                height: screenHeight * 0.1,
-                decoration: const BoxDecoration(
-                  color: AppConstants.backgroundBlue,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.white, // Border color
-                      width: 2, // Border width
-                    ),
-                  ),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
-                child: Container(
-                  width: screenWidth,
-                  child: Stack(
-                    alignment: Alignment.centerLeft,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => MainPageView(
-                                  title: '',
-                                )),
-                          );
-                        },
-                        child: Container(
-                          height: screenHeight * 0.05,
-                          width: screenHeight * 0.05,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white, // Circular background color
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SvgPicture.asset(
-                              'assets/icon/chevron.left.svg',
-                              color: AppConstants.backgroundBlue,
-                              height: screenHeight * 0.03,
-                            ),
+              )
+            : Container(
+                height: screenHeight,
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      height: screenHeight * 0.1,
+                      decoration: const BoxDecoration(
+                        color: AppConstants.backgroundBlue,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white, // Border color
+                            width: 2, // Border width
                           ),
                         ),
                       ),
-                       Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      child: Container(
+                        width: screenWidth,
+                        child: Stack(
+                          alignment: Alignment.centerLeft,
                           children: [
-                            Text(
-                              AppLocalizations.of(context)
-                                  .translate('surveys'),
-                              style: TextStyle(
-                                  fontSize: 25, color: Colors.white),
-                            )
-                          ]),
-                    ],
-                  ),
-                ),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: Container(
-                  height: screenHeight * 0.65,
-                  width: screenWidth,
-                  child: Column(
-                    children: surveys?.map((survey) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: SizedBox(
-                          width: screenWidth * 0.8,
-                          height: screenHeight * 0.1,
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor:
-                              MaterialStateProperty.all<Color>(
-                                  survey.isCompleted == true
-                                      ? Colors.redAccent
-                                      : AppConstants.buttonDarkBlue),
-                              foregroundColor:
-                              MaterialStateProperty.all<Color>(
-                                  AppConstants.backgroundBlue),
-                              padding:
-                              MaterialStateProperty.all<EdgeInsetsGeometry>(
-                                const EdgeInsets.all(12),
-                              ),
-                              shape: MaterialStateProperty.all<
-                                  RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius:
-                                  BorderRadius.circular(14),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => MainPageView(
+                                            title: '',
+                                          )),
+                                );
+                              },
+                              child: Container(
+                                height: screenHeight * 0.05,
+                                width: screenHeight * 0.05,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color:
+                                      Colors.white, // Circular background color
                                 ),
-                              ),
-                            ),
-                            onPressed: () {
-                              // Navigate to SurveyView with isEditable flag
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SurveyView(
-                                    survey: survey,
-                                    isEditable: !(survey.isCompleted ?? false),  // Provide a default value of false if isCompleted is null
-                                  ),
-                                ),
-
-                              );
-                            },
-                            child: Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
                                   child: SvgPicture.asset(
-                                    'assets/icon/checklist.checked.svg',
-                                    color: Colors.white,
+                                    'assets/icon/chevron.left.svg',
+                                    color: AppConstants.backgroundBlue,
                                     height: screenHeight * 0.03,
                                   ),
                                 ),
-                                Text(
-                                  survey.title.toString(),
-                                  style: const TextStyle(
-                                      fontSize: 20,
-                                      color: Colors.white),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
+                            Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(context)
+                                        .translate('surveys'),
+                                    style: TextStyle(
+                                        fontSize: 25, color: Colors.white),
+                                  )
+                                ]),
+                          ],
                         ),
-                      );
-                    }).toList() ??
-                        [],
-                  ),
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: Container(
+                        height: screenHeight * 0.65,
+                        width: screenWidth,
+                        child: Column(
+                          children: surveys?.map((survey) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SizedBox(
+                                    width: screenWidth * 0.8,
+                                    height: screenHeight * 0.1,
+                                    child: ElevatedButton(
+                                      style: ButtonStyle(
+                                        backgroundColor:
+                                            WidgetStateProperty.all<Color>(
+                                                survey.isCompleted == true
+                                                    ? Colors.redAccent
+                                                    : AppConstants
+                                                        .buttonDarkBlue),
+                                        foregroundColor:
+                                            WidgetStateProperty.all<Color>(
+                                                AppConstants.backgroundBlue),
+                                        padding: WidgetStateProperty.all<
+                                            EdgeInsetsGeometry>(
+                                          const EdgeInsets.all(12),
+                                        ),
+                                        shape: WidgetStateProperty.all<
+                                            RoundedRectangleBorder>(
+                                          RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        // Navigate to SurveyView with isEditable flag
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => SurveyView(
+                                              survey: survey,
+                                              isEditable: !(survey
+                                                      .isCompleted ??
+                                                  false), // Provide a default value of false if isCompleted is null
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.max,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: SvgPicture.asset(
+                                              'assets/icon/checklist.checked.svg',
+                                              color: Colors.white,
+                                              height: screenHeight * 0.03,
+                                            ),
+                                          ),
+                                          Text(
+                                            survey.title.toString(),
+                                            style: const TextStyle(
+                                                fontSize: 20,
+                                                color: Colors.white),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList() ??
+                              [],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }
