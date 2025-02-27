@@ -178,41 +178,32 @@ class _SurveyViewState extends State<SurveyView> {
                                 ),
                                 question.options?.length != 0
                                     ? Column(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: question.options!.map((option) {
-                                      return CheckboxListTile(
-                                        shape: const CircleBorder(),
-                                        contentPadding: EdgeInsets.zero,
+                                      return RadioListTile<int>(
                                         title: Text(
                                           option.option.toString(),
                                           textAlign: TextAlign.start,
-                                          style: const TextStyle(
-                                              fontSize: 20,
-                                              color: Colors.black),
+                                          style: const TextStyle(fontSize: 20, color: Colors.black),
                                         ),
-                                        value: option.isSelected,  // Show the previous answer
-                                        onChanged: isEditable  // Enable or disable based on isEditable
-                                            ? (value) {
+                                        value: option.id!,
+                                        groupValue: answers.contains(option.id) ? option.id! : null,
+                                        onChanged: isEditable
+                                            ? (int? value) {
                                           setState(() {
+                                            answers.removeWhere((id) => question.options!.any((o) => o.id == id));
+                                            answers.add(value!);
+
                                             question.options!.forEach((o) {
-                                              if (o == option) {
-                                                o.isSelected = value!;
-                                                if (value) {
-                                                  answers.add(o.id!);
-                                                } else {
-                                                  answers.remove(o.id);
-                                                }
-                                              }
+                                              o.isSelected = (o.id == value);
                                             });
                                           });
                                         }
-                                            : null,  // Disable if not editable
-                                        controlAffinity:
-                                        ListTileControlAffinity.leading,
+                                            : null,
                                       );
                                     }).toList())
                                     : Container(),
+
                                 Container(
                                   width: double.infinity,
                                   height: screenHeight * 0.001,

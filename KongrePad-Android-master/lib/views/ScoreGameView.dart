@@ -33,7 +33,9 @@ class _ScoreGameViewState extends State<ScoreGameView> {
         url,
         headers: <String, String>{
           'Authorization': 'Bearer $token',
+
         },
+
       );
 
       if (response.statusCode == 200) {
@@ -56,6 +58,8 @@ class _ScoreGameViewState extends State<ScoreGameView> {
   @override
   initState() {
     super.initState();
+
+
     getData();
     print("User Total Point: ${scoreGame?.userTotalPoint}");
   }
