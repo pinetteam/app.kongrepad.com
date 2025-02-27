@@ -112,53 +112,58 @@ class _SessionViewState extends State<SessionView> {
                             width: screenWidth * 0.45,
                             height: 60,
                             child: ElevatedButton(
-                                style: ButtonStyle(
-                                  backgroundColor:
-                                      WidgetStateProperty.all<Color>(
-                                          Colors.redAccent),
-                                  foregroundColor:
-                                      WidgetStateProperty.all<Color>(
-                                          Colors.white),
-                                  padding: WidgetStateProperty.all<
-                                      EdgeInsetsGeometry>(
-                                    const EdgeInsets.all(12),
-                                  ),
-                                  shape: WidgetStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(Colors.redAccent),
+                                foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
+                                padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+                                  EdgeInsets.symmetric(
+                                    vertical: screenHeight * 0.015, // Ekran yüksekliğine göre padding
+                                    horizontal: screenWidth * 0.05, // Ekran genişliğine göre padding
                                   ),
                                 ),
-                                onPressed: () {
-                                  if (participant?.type! != "attendee") {
-                                    // todo alert soru sorma izniniz yok
-                                  } else {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => AskQuestionView(
-                                              hallId: widget.hallId)),
-                                    );
-                                  }
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SvgPicture.asset(
-                                      'assets/icon/questionmark.svg',
-                                      color: Colors.white,
-                                      height: 75,
+                                shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                              ),
+                              onPressed: () {
+                                if (participant?.type! != "attendee") {
+                                  // todo: alert soru sorma izniniz yok
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AskQuestionView(hallId: widget.hallId),
                                     ),
-                                    SizedBox(width: screenWidth * 0.01),
-                                    Text(
-                                      AppLocalizations.of(context)
-                                          .translate('ask_question'),
-                                      style: TextStyle(fontSize: 20),
+                                  );
+                                }
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/icon/questionmark.svg',
+                                    color: Colors.white,
+                                    height: screenHeight * 0.05,
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  Flexible(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        AppLocalizations.of(context).translate('ask_question'),
+                                        style: TextStyle(
+                                          fontSize: screenWidth * 0.045,
+                                        ),
+                                      ),
                                     ),
-                                  ],
-                                )),
+                                  ),
+                                ],
+                              ),
+                            ),
+
                           ),
                         ],
                       )
