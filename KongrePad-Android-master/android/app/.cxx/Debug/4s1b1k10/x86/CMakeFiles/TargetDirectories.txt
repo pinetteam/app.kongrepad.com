@@ -1,0 +1,2 @@
+/Users/pashasarizada/Documents/KongrePadIOS/KongrePad-Android-master/android/app/.cxx/Debug/4s1b1k10/x86/CMakeFiles/rebuild_cache.dir
+/Users/pashasarizada/Documents/KongrePadIOS/KongrePad-Android-master/android/app/.cxx/Debug/4s1b1k10/x86/CMakeFiles/edit_cache.dir

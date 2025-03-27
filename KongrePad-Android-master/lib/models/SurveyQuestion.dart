@@ -1,4 +1,5 @@
-import 'package:kongrepad/Models/SurveyOption.dart';
+
+import 'SurveyOption.dart';
 
 class SurveyQuestion {
   int? id;

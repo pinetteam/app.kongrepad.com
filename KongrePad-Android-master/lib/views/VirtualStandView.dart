@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:kongrepad/Models/VirtualStand.dart';
-import 'package:kongrepad/utils/app_constants.dart';
+
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+
+import '../Models/VirtualStand.dart';
+import '../utils/app_constants.dart';
 
 class VirtualStandView extends StatefulWidget {
   const VirtualStandView({super.key, required this.stand});

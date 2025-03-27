@@ -3,13 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
-import 'package:kongrepad/Models/Hall.dart';
-import 'package:kongrepad/Models/Program.dart';
-import 'package:kongrepad/utils/app_constants.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/Hall.dart';
+import '../models/Program.dart';
+import '../utils/app_constants.dart';
 
 Map<String, String> dayTranslations = {
   'Monday': 'Pazartesi',

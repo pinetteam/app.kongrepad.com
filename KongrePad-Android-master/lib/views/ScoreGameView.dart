@@ -3,12 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:kongrepad/Models/ScoreGame.dart';
-import 'package:kongrepad/utils/app_constants.dart';
+
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/ScoreGame.dart';
+import '../utils/app_constants.dart';
 import 'ScoreGamePointsView.dart';
 
 class ScoreGameView extends StatefulWidget {

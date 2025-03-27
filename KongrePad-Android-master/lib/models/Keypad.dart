@@ -1,4 +1,5 @@
-import 'package:kongrepad/Models/KeypadOption.dart';
+
+import 'KeypadOption.dart';
 
 class Keypad {
   int? id;

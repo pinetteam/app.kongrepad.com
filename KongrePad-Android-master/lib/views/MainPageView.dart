@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:kongrepad/views/LoginView.dart';
-import 'package:kongrepad/views/lower_half_ellipse.dart';
+
 import 'package:pusher_beams/pusher_beams.dart';
 import '../../services/auth_service.dart';
 import '../../services/pusher_service.dart';
@@ -16,6 +15,7 @@ import 'HallsView.dart';
 import '../Models/VirtualStand.dart';
 import '../../models/meeting.dart';
 import '../../models/participant.dart';
+import 'LoginView.dart';
 import 'ProfileView.dart';
 import 'ProgramDaysForMailView.dart';
 import 'ProgramDaysView.dart';
@@ -25,6 +25,7 @@ import 'SurveysView.dart';
 import 'VirtualStandView.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../utils/notification_helper.dart';
+import 'lower_half_ellipse.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 

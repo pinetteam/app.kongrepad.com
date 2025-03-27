@@ -18,33 +18,65 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
   final TextEditingController _controller = TextEditingController();
 
   void _submit() async {
-    final response = await http.post(
-      Uri.parse('http://app.kongrepad.com/api/v1/auth/login/participant'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'username': _controller.text,
-      }),
-    );
+    try {
+      print("API isteği gönderiliyor...");
 
-    final responseBody = jsonDecode(response.body);
-    if (responseBody['token'] != null) {
+      final response = await http.post(
+        Uri.parse('http://app.kongrepad.com/api/v1/auth/login/participant'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'username': _controller.text,
+        }),
+      );
+
+      print("API yanıt kodu: ${response.statusCode}");
+      print("API yanıtı: ${response.body}");
+
+      if (response.statusCode != 200) {
+        print("Hata: Sunucudan beklenmeyen bir yanıt geldi.");
+        AlertService().showAlertDialog(
+          context,
+          title: "Hata",
+          content: "Sunucudan geçerli bir yanıt alınamadı. Hata kodu: ${response.statusCode}",
+        );
+        return;
+      }
+
+      final responseBody = jsonDecode(response.body);
+
+      if (responseBody == null || !responseBody.containsKey('token')) {
+        print("Hata: Yanıtta 'token' bulunamadı.");
+        print("Gönderilen kullanıcı adı: ${_controller.text}");
+
+        AlertService().showAlertDialog(
+          context,
+          title: "Giriş Başarısız",
+          content: "Geçersiz yanıt alındı, lütfen tekrar deneyin.",
+        );
+        return;
+      }
+
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', responseBody['token']);
-      // Navigator.pushNamed(context, '/main');
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => MainPageView(
-                  title: '',
-                )), // Ana sayfa buraya
-      );
-    } else {
+
+      print("Giriş başarılı, ana sayfaya yönlendiriliyor...");
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainPageView(title: ''),
+
+          ),
+        );
+      }
+    } catch (e) {
+      print("İstisna yakalandı: $e");
       AlertService().showAlertDialog(
         context,
-        title: AppLocalizations.of(context).translate('error_title'),
-        content: AppLocalizations.of(context).translate('error_message'),
+        title: "Hata",
+        content: "Bir hata oluştu: $e",
       );
     }
   }

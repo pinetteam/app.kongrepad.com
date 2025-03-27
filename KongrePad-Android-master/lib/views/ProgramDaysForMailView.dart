@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
-import 'package:kongrepad/Models/Program.dart';
-import 'package:kongrepad/views/ProgramMailView.dart';
-import 'package:kongrepad/services/alert_service.dart';
-import 'package:kongrepad/utils/app_constants.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/Program.dart';
+import '../services/alert_service.dart';
+import '../utils/app_constants.dart';
+import 'ProgramMailView.dart';
 
 String translateDate(String englishDate, BuildContext context) {
   String translatedDate = englishDate;

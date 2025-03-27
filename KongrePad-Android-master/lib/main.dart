@@ -1,13 +1,13 @@
+import 'package:KongrePad/utils/app_constants.dart';
+import 'package:KongrePad/views/LoginView.dart';
+import 'package:KongrePad/views/MainPageView.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:kongrepad/utils/app_constants.dart';
-import 'package:kongrepad/views/LoginView.dart';
-import 'package:kongrepad/views/MainPageView.dart';
 import 'package:pusher_beams/pusher_beams.dart';
-import 'package:kongrepad/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
+import 'l10n/app_localizations.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 

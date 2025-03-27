@@ -1,6 +1,7 @@
-import 'package:kongrepad/Models/Debate.dart';
-import 'package:kongrepad/Models/Participant.dart';
-import 'package:kongrepad/Models/Session.dart';
+
+import 'Debate.dart';
+import 'Participant.dart';
+import 'Session.dart';
 
 class ProgramDay {
   String? day;

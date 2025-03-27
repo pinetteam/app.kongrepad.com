@@ -1,4 +1,5 @@
-import 'package:kongrepad/Models/DebateTeam.dart';
+
+import 'DebateTeam.dart';
 
 class Debate {
   int? id;

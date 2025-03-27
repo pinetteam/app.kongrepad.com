@@ -1,4 +1,5 @@
-import 'package:kongrepad/Models/Session.dart';
+
+import 'Session.dart';
 
 class Document {
   int? id;

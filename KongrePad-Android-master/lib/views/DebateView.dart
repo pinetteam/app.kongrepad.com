@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:kongrepad/Models/Debate.dart';
-import 'package:kongrepad/utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/Debate.dart';
+import '../utils/app_constants.dart';
 
 class DebateView extends StatefulWidget {
   const DebateView({super.key, required this.hallId});

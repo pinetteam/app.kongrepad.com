@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
-import 'package:kongrepad/Models/Survey.dart';
-import 'package:kongrepad/Models/SurveyQuestion.dart';
-import 'package:kongrepad/services/alert_service.dart';
-import 'package:kongrepad/utils/app_constants.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/Survey.dart';
+import '../models/SurveyQuestion.dart';
+import '../services/alert_service.dart';
+import '../utils/app_constants.dart';
 import 'SurveysView.dart';
 
 class SurveyView extends StatefulWidget {

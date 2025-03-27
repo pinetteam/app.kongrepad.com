@@ -1,0 +1,2 @@
+/Users/pashasarizada/Documents/KongrePadIOS/KongrePad-Android-master/android/app/.cxx/RelWithDebInfo/143f5k1a/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+/Users/pashasarizada/Documents/KongrePadIOS/KongrePad-Android-master/android/app/.cxx/RelWithDebInfo/143f5k1a/armeabi-v7a/CMakeFiles/edit_cache.dir
