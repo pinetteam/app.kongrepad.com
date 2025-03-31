@@ -55,7 +55,7 @@ android {
         minSdkVersion 28
         compileSdkVersion 34
         targetSdkVersion 34
-        versionCode 14  // Versiyon kodunu her güncellemede artırın.
+        versionCode 16 // Versiyon kodunu her güncellemede artırın.
         versionName "1.1.3"  // Versiyon adını istediğiniz gibi belirleyin.
         multiDexEnabled true
     }
