@@ -34,6 +34,10 @@ local.properties
 *.iml
 .vscode/
 
+
+*.log
+*.lock
+
 # OS
 .DS_Store
 Thumbs.db

@@ -116,68 +116,93 @@ class _MainPageViewState extends State<MainPageView>
   }
 
   Future<void> getData() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Eğer token yoksa giriş ekranına yönlendir
-    if (prefs.getString('token') == null) {
-      print("Token bulunamadı, LoginView'e yönlendiriliyor.");
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginView()),
-      );
-      return;
-    }
-
     try {
-      // Token'ı al
-      String? token = await AuthService().getToken();
-      await prefs.setString('token', token!);
-      print("Token başarıyla kaydedildi: $token");
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      // Kullanıcı bilgilerini al
-      meeting = await AuthService().getMeeting();
-      participant = await AuthService().getParticipant();
-
-      if (meeting == null ||
-          meeting!.id == null ||
-          participant == null ||
-          participant!.type == null) {
-        print(
-            "Meeting veya Participant bilgileri eksik. LoginView'e yönlendiriliyor.");
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginView()),
-        );
+      // Token kontrolü
+      String? token = prefs.getString('token');
+      if (token == null) {
+        print("Token bulunamadı, LoginView'e yönlendiriliyor.");
+        _redirectToLogin();
         return;
       }
 
-      // Virtual stands verilerini al
-      virtualStands = await AuthService().getVirtualStands();
+      print("Mevcut token: $token");
 
-      // Participant ID'yi kaydet
+      // Meeting ve Participant bilgilerini çek
+      print("Meeting ve participant bilgileri alınıyor...");
+
+      meeting = await AuthService().getMeeting();
+      participant = await AuthService().getParticipant();
+
+      // Meeting kontrolü
+      if (meeting == null) {
+        print("Meeting bilgisi alınamadı, LoginView'e yönlendiriliyor.");
+        _redirectToLogin();
+        return;
+      }
+
+      // Participant kontrolü
+      if (participant == null) {
+        print("Participant bilgisi alınamadı, LoginView'e yönlendiriliyor.");
+        _redirectToLogin();
+        return;
+      }
+
+      print("Meeting ID: ${meeting!.id}");
+      print("Participant ID: ${participant!.id}, Type: ${participant!.type}");
+
+      // Virtual stands verilerini çek (hata olsa bile devam et)
+      try {
+        virtualStands = await AuthService().getVirtualStands();
+        print("Virtual stands yüklendi: ${virtualStands?.length ?? 0} adet");
+      } catch (e) {
+        print("Virtual stands yüklenemedi: $e");
+        virtualStands = [];
+      }
+
+      // Participant ID kaydet
       if (participant!.id != null) {
         await AuthService().saveParticipantId(participant!.id!);
         print("Participant ID kaydedildi: ${participant!.id}");
-      } else {
-        print("Error: Participant ID eksik.");
       }
-      await setupPusherBeams(meeting!, participant!);
+
+      // Pusher Beams ayarla
+      try {
+        await setupPusherBeams(meeting!, participant!);
+        print("Pusher Beams kurulumu tamamlandı");
+      } catch (e) {
+        print("Pusher Beams kurulum hatası: $e");
+      }
 
       // Pusher'a abone ol
-      await PusherService().subscribeToPusher(meeting!.id!, context);
+      try {
+        await PusherService().subscribeToPusher(meeting!.id!, context);
+        print("Pusher aboneliği başarılı");
+      } catch (e) {
+        print("Pusher abonelik hatası: $e");
+      }
 
-      print("Meeting ID: ${meeting?.id}");
-      print("Participant Type: ${participant?.type}");
+      print("getData başarıyla tamamlandı");
+
     } catch (e) {
-      print("Error in getData: $e");
+      print("getData genel hatası: $e");
+      _redirectToLogin();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  void _redirectToLogin() {
+    if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginView()),
       );
-    } finally {
-      setState(() {
-        _loading = false;
-      });
     }
   }
 

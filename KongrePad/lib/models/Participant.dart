@@ -17,9 +17,9 @@ class Participant {
   String? lastLoginDatetime;
   String? lastActivity;
   String? type;
-  int? enrolled;
-  int? gdprConsent;
-  int? status;
+  bool? enrolled;    // int'den bool'a değiştir
+  bool? gdprConsent; // int'den bool'a değiştir
+  bool? status;      // int'den bool'a değiştir
 
   Participant({
     this.id,
@@ -45,29 +45,33 @@ class Participant {
     this.status,
   });
 
-  factory Participant.fromJson(Map<String, dynamic> json) => Participant(
-    id: json['id'],
-    meetingId: json['meeting_id'],
-    username: json['username'],
-    title: json['title'],
-    firstName: json['first_name'],
-    lastName: json['last_name'],
-    fullName: json['full_name'],
-    identificationNumber: json['identification_number'],
-    organisation: json['organisation'],
-    email: json['email'],
-    phoneCountryId: json['phone_country_id'],
-    phone: json['phone'],
-    password: json['password'],
-    lastLoginIp: json['last_login_ip'],
-    lastLoginAgent: json['last_login_agent'],
-    lastLoginDatetime: json['last_login_datetime'],
-    lastActivity: json['last_activity'],
-    type: json['type'],
-    enrolled: json['enrolled'],
-    gdprConsent: json['gdpr_consent'],
-    status: json['status'],
-  );
+  factory Participant.fromJson(Map<String, dynamic> json) {
+    print('Parsing participant JSON: $json'); // Debug için
+
+    return Participant(
+      id: json['id'],
+      meetingId: json['meeting_id'],
+      username: json['username'],
+      title: json['title'],
+      firstName: json['first_name'],
+      lastName: json['last_name'],
+      fullName: json['full_name'],
+      identificationNumber: json['identification_number'],
+      organisation: json['organisation'],
+      email: json['email'],
+      phoneCountryId: json['phone_country_id'],
+      phone: json['phone'],
+      password: json['password'],
+      lastLoginIp: json['last_login_ip'],
+      lastLoginAgent: json['last_login_agent'],
+      lastLoginDatetime: json['last_login_datetime'],
+      lastActivity: json['last_activity'],
+      type: json['type'],
+      enrolled: json['enrolled'],       // API'dan bool geliyor
+      gdprConsent: json['gdpr_consent'], // API'dan bool geliyor
+      status: json['status'],           // API'dan bool geliyor
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
