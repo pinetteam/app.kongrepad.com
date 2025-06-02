@@ -6,120 +6,109 @@ import '../views/DebateView.dart';
 import '../views/KeypadView.dart';
 
 class PusherService {
+  static final PusherService _instance = PusherService._internal();
   final PusherChannelsFlutter _pusher = PusherChannelsFlutter.getInstance();
-  bool _isConnected = false;
-  String? _lastEventName; // Son işlenen event'i takip eder
+  bool _isConnecting = false;
+  String? _currentChannel;
 
-  Future<void> initPusher() async {
-    if (!_isConnected) {
-      try {
-        await _pusher.init(
-          apiKey: "314fc649c9f65b8d7960", // Pusher API Key
-          cluster: "eu", // Cluster bilgisi
-        );
-        await _pusher.connect();
-        _isConnected = true;
-        print("Pusher connected successfully.");
-      } catch (e) {
-        print("Error initializing Pusher: $e");
-      }
-    }
+  factory PusherService() {
+    return _instance;
   }
 
+  PusherService._internal();
+
   Future<void> subscribeToPusher(int meetingId, BuildContext context) async {
-    await initPusher();
+    if (_isConnecting) return;
 
-    String channelName = 'meeting-$meetingId';
+    try {
+      _isConnecting = true;
 
-    // Eski kanal varsa temizle
-    var channel = await _pusher.getChannel(channelName);
-    if (channel != null) {
-      print("Unsubscribing from existing channel: $channelName");
-      await _pusher.unsubscribe(channelName: channelName);
+      // Eğer önceki bir bağlantı varsa temizle
+      if (_currentChannel != null) {
+        await _pusher.unsubscribe(channelName: _currentChannel!);
+      }
+
+      await _pusher.init(
+          apiKey: "314fc649c9f65b8d7960",
+          cluster: "eu",
+          onConnectionStateChange: (currentState, previousState) {
+            print(
+                "Connection state changed from $previousState to $currentState");
+          },
+          onError: (message, code, error) {
+            print("Pusher error: $message, code: $code, error: $error");
+          });
+
+      _currentChannel = 'meeting-$meetingId';
+
+      await _pusher.subscribe(
+          channelName: _currentChannel!,
+          onEvent: (event) {
+            print("Event received: ${event.eventName} - ${event.data}");
+            _handlePusherEvent(event, context, meetingId);
+          });
+
+      await _pusher.connect();
+      print(
+          "Successfully connected to Pusher and subscribed to meeting-$meetingId");
+    } catch (e) {
+      print("Pusher error: $e");
+    } finally {
+      _isConnecting = false;
     }
-
-    // Yeni kanala abone ol
-    await _pusher.subscribe(
-      channelName: channelName,
-      onEvent: (event) {
-        print("Event received on channel $channelName:");
-        print("Event Name: ${event.eventName}");
-        print("Event Data: ${event.data}");
-        _handlePusherEvent(event, context, meetingId);
-      },
-    );
-
-    print("Subscribed to channel: $channelName");
   }
 
   void _handlePusherEvent(
       PusherEvent event, BuildContext context, int meetingId) {
     if (event.eventName == "pusher:subscription_succeeded") {
-      print("Subscription succeeded event ignored.");
+      print("Successfully subscribed to channel");
       return;
     }
 
-    if (event.data != null && event.data!.isNotEmpty) {
-      try {
-        final data = jsonDecode(event.data!);
+    try {
+      final data = jsonDecode(event.data ?? "{}");
 
-        // Aynı event'in tekrar çalışmasını engelle
-        if (_lastEventName == event.eventName && data['hall_id'] == null) {
-          print("Duplicate event ignored: ${event.eventName}");
-          return;
-        }
-        _lastEventName = event.eventName;
-
-        if (event.eventName == "keypad") {
-          // Keypad event'i için KeypadView aç
-          if (data.containsKey('hall_id')) {
-            int hallId = data['hall_id'];
-            print("Navigating to KeypadView for hall_id: $hallId");
-
+      switch (event.eventName) {
+        case "keypad":
+          if (data['hall_id'] != null) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => KeypadView(hallId: hallId)),
-            ).then((_) {
-              print("Returned from KeypadView.");
-              subscribeToPusher(meetingId, context); // Kanalı yenile
-            });
-          } else {
-            print("Error: 'hall_id' not found in keypad event data.");
+                builder: (context) => KeypadView(hallId: data['hall_id']),
+              ),
+            );
           }
-        } else if (event.eventName == "debate") {
-          // Debate event'i için DebateView aç
-          if (data.containsKey('hall_id')) {
-            int hallId = data['hall_id'];
-            print("Navigating to DebateView for hall_id: $hallId");
+          break;
 
+        case "debate":
+          if (data['hall_id'] != null) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => DebateView(hallId: hallId)),
-            ).then((_) {
-              print("Returned from DebateView.");
-              subscribeToPusher(meetingId, context); // Kanalı yenile
-            });
-          } else {
-            print("Error: 'hall_id' not found in debate event data.");
+                builder: (context) => DebateView(hallId: data['hall_id']),
+              ),
+            );
           }
-        } else {
-          print("Unhandled event name: ${event.eventName}");
-        }
-      } catch (e) {
-        print("Error parsing event data: $e");
+          break;
+
+        default:
+          print("Unhandled event: ${event.eventName}");
       }
-    } else {
-      print("Error: Event data is null or empty.");
+    } catch (e) {
+      print("Error handling Pusher event: $e");
     }
   }
 
   Future<void> disconnectPusher() async {
-    if (_isConnected) {
+    try {
+      if (_currentChannel != null) {
+        await _pusher.unsubscribe(channelName: _currentChannel!);
+        _currentChannel = null;
+      }
       await _pusher.disconnect();
-      _isConnected = false;
-      print("Pusher disconnected.");
+      print("Successfully disconnected from Pusher");
+    } catch (e) {
+      print("Disconnect error: $e");
     }
   }
 }

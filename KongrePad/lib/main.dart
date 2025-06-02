@@ -15,8 +15,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions
-          .currentPlatform,
+      options: DefaultFirebaseOptions.currentPlatform,
     );
     print(" Firebase başarıyla başlatıldı!");
   } catch (e) {
@@ -24,8 +23,14 @@ void main() async {
     return;
   }
 
-  PusherBeams beamsClient = PusherBeams.instance;
-  beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');
+  try {
+    PusherBeams beamsClient = PusherBeams.instance;
+    await beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');
+    print("Pusher Beams başarıyla başlatıldı!");
+  } catch (e) {
+    print("Pusher Beams başlatılamadı: $e");
+    // Uygulama Pusher olmadan da çalışabilir
+  }
 
   // SharedPreferences ile dil kodunu kontrol et
   final SharedPreferences prefs = await SharedPreferences.getInstance();

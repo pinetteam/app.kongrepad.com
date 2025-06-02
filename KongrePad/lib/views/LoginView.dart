@@ -8,6 +8,8 @@ import '../utils/app_constants.dart';
 import 'login_with_code_view..dart';
 import 'qr_view_example.dart';
 import '../l10n/app_localizations.dart'; // AppLocalizations import edildi.
+import '../services/auth_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -17,6 +19,9 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
+  final TextEditingController _usernameController = TextEditingController();
+  bool _loading = false;
+
   Future<void> _checkLoginStatus() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     if (prefs.getString('token') != null) {
@@ -78,6 +83,51 @@ class _LoginViewState extends State<LoginView> {
         );
       },
     );
+  }
+
+  Future<String?> getFCMToken() async {
+    try {
+      return await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      print("FCM Token error: $e");
+      return null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (_loading) return;
+
+    setState(() => _loading = true);
+
+    try {
+      String? fcmToken = await getFCMToken();
+      final result =
+          await AuthService().login(_usernameController.text, fcmToken);
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const MainPageView(title: '')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   @override

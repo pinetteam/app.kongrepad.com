@@ -33,41 +33,48 @@ class Meeting {
     this.mailFirstHallId,
   });
 
-  factory Meeting.fromJson(Map<String, dynamic> json) => Meeting(
-    id: json['id'],
-    bannerName: json['banner_name'],
-    bannerExtension: json['banner_extension'],
-    code: json['code'],
-    title: json['title'],
-    startAt: json['start_at'],
-    finishAt: json['finish_at'],
-    sessionHallCount: json['session_hall_count'],
-    sessionFirstHallId: json['session_first_hall_id'],
-    questionHallCount: json['question_hall_count'],
-    questionFirstHallId: json['question_first_hall_id'],
-    programHallCount: json['program_hall_count'],
-    programFirstHallId: json['program_first_hall_id'],
-    mailHallCount: json['mail_hall_count'],
-    mailFirstHallId: json['mail_first_hall_id'],
-  );
+  factory Meeting.fromJson(Map<String, dynamic> json) {
+    // Eğer meeting key'i varsa, içindeki veriyi kullan
+    final meetingData = json.containsKey('meeting') ? json['meeting'] : json;
+
+    print('Processing meeting data: $meetingData');
+
+    return Meeting(
+      id: meetingData['id'],
+      bannerName: meetingData['banner_name'],
+      bannerExtension: meetingData['banner_extension'],
+      code: meetingData['code'],
+      title: meetingData['title'],
+      startAt: meetingData['start_at'],
+      finishAt: meetingData['finish_at'],
+      sessionHallCount: meetingData['session_hall_count'],
+      sessionFirstHallId: meetingData['session_first_hall_id'],
+      questionHallCount: meetingData['question_hall_count'],
+      questionFirstHallId: meetingData['question_first_hall_id'],
+      programHallCount: meetingData['program_hall_count'],
+      programFirstHallId: meetingData['program_first_hall_id'],
+      mailHallCount: meetingData['mail_hall_count'],
+      mailFirstHallId: meetingData['mail_first_hall_id'],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'banner_name': bannerName,
-    'banner_extension': bannerExtension,
-    'code': code,
-    'title': title,
-    'start_at': startAt,
-    'finish_at': finishAt,
-    'session_hall_count': sessionHallCount,
-    'session_first_hall_id': sessionFirstHallId,
-    'question_hall_count': questionHallCount,
-    'question_first_hall_id': questionFirstHallId,
-    'program_hall_count': programHallCount,
-    'program_first_hall_id': programFirstHallId,
-    'mail_hall_count': mailHallCount,
-    'mail_first_hall_id': mailFirstHallId,
-  };
+        'id': id,
+        'banner_name': bannerName,
+        'banner_extension': bannerExtension,
+        'code': code,
+        'title': title,
+        'start_at': startAt,
+        'finish_at': finishAt,
+        'session_hall_count': sessionHallCount,
+        'session_first_hall_id': sessionFirstHallId,
+        'question_hall_count': questionHallCount,
+        'question_first_hall_id': questionFirstHallId,
+        'program_hall_count': programHallCount,
+        'program_first_hall_id': programFirstHallId,
+        'mail_hall_count': mailHallCount,
+        'mail_first_hall_id': mailFirstHallId,
+      };
 }
 
 class MeetingJSON {
@@ -78,16 +85,16 @@ class MeetingJSON {
   MeetingJSON({this.data, this.errors, this.status});
 
   factory MeetingJSON.fromJson(Map<String, dynamic> json) => MeetingJSON(
-    data: json['data'] != null ? Meeting.fromJson(json['data']) : null,
-    errors: json['errors'] != null
-        ? List<String>.from(json['errors'].map((x) => x))
-        : null,
-    status: json['status'],
-  );
+        data: json['data'] != null ? Meeting.fromJson(json['data']) : null,
+        errors: json['errors'] != null
+            ? List<String>.from(json['errors'].map((x) => x))
+            : null,
+        status: json['status'],
+      );
 
   Map<String, dynamic> toJson() => {
-    'data': data?.toJson(),
-    'errors': errors,
-    'status': status,
-  };
+        'data': data?.toJson(),
+        'errors': errors,
+        'status': status,
+      };
 }

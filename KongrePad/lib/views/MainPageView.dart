@@ -44,6 +44,7 @@ class _MainPageViewState extends State<MainPageView>
   Participant? participant;
   List<VirtualStand>? virtualStands;
   bool _loading = true;
+  bool _isInitialized = false;
 
   // Fetch the FCM token
   Future<String?> getFCMToken() async {
@@ -55,47 +56,45 @@ class _MainPageViewState extends State<MainPageView>
 
   Future<void> setupPusherBeams(
       Meeting meeting, Participant participant) async {
-    PusherBeams beamsClient = PusherBeams.instance;
+    if (!mounted) return;
 
-    // Start Pusher Beams with Instance ID
-    await beamsClient.start(
-        '8b5ebe3c-8106-454b-b4c7-b7c10a9320cf'); // Pusher Beams Instance ID
+    try {
+      print(
+          "Setting up Pusher Beams for Meeting ID: ${meeting.id}, Participant ID: ${participant.id}");
 
-    // Dinamik interest oluştur
-    if (meeting.id != null &&
-        participant.type != null &&
-        participant.id != null) {
+      final PusherBeams beamsClient = PusherBeams.instance;
+      await beamsClient.start('8b5ebe3c-8106-454b-b4c7-b7c10a9320cf');
+
+      // Interest oluştur
       String interest =
           'meeting-${meeting.id}-${participant.type}-${participant.id}';
-      await beamsClient.addDeviceInterest(interest);
-      print("Added dynamic interest: $interest");
-    } else {
-      print("Meeting or Participant data is missing, cannot create interest.");
-    }
+      print("Adding interest: $interest");
 
-    // Get FCM token
-    String? token = await getFCMToken();
-    if (token != null) {
-      print("FCM Token received: $token");
+      await beamsClient.addDeviceInterest(interest);
+      print("Successfully added interest: $interest");
+
+      // FCM token al
+      String? token = await getFCMToken();
+      if (token != null) {
+        print("FCM Token received: $token");
+      }
+    } catch (e) {
+      print("Error in setupPusherBeams: $e");
     }
   }
 
-  void _subscribeToPusher() async {
-    if (meeting != null && participant != null) {
-      PusherService pusherService = PusherService();
-      await pusherService.subscribeToPusher(meeting!.id!, context);
-    } else {
-      print("Meeting or participant is null. Cannot subscribe to Pusher.");
+  void _subscribeToPusher() {
+    if (meeting != null) {
+      PusherService().subscribeToPusher(meeting!.id!, context);
     }
   }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    getData();
-    _subscribeToPusher();
-    checkNotificationPermission(context); // Bildirim izinlerini kontrol eder.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeData();
+    });
   }
 
   @override
@@ -115,85 +114,62 @@ class _MainPageViewState extends State<MainPageView>
     super.dispose();
   }
 
-  Future<void> getData() async {
+  Future<void> _initializeData() async {
+    if (_isInitialized || !mounted) return;
+
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      setState(() => _loading = true);
 
-      // Token kontrolü
-      String? token = prefs.getString('token');
-      if (token == null) {
-        print("Token bulunamadı, LoginView'e yönlendiriliyor.");
-        _redirectToLogin();
-        return;
-      }
+      final authService = AuthService();
 
-      print("Mevcut token: $token");
+      // Profil bilgilerini al
+      final profileData = await authService.getProfile();
+      participant = Participant.fromJson(profileData['participant']);
 
-      // Meeting ve Participant bilgilerini çek
-      print("Meeting ve participant bilgileri alınıyor...");
+      // Meeting bilgilerini al
+      meeting = await authService.getMeeting();
 
-      meeting = await AuthService().getMeeting();
-      participant = await AuthService().getParticipant();
-
-      // Meeting kontrolü
       if (meeting == null) {
         print("Meeting bilgisi alınamadı, LoginView'e yönlendiriliyor.");
         _redirectToLogin();
         return;
       }
 
-      // Participant kontrolü
-      if (participant == null) {
-        print("Participant bilgisi alınamadı, LoginView'e yönlendiriliyor.");
-        _redirectToLogin();
-        return;
-      }
-
-      print("Meeting ID: ${meeting!.id}");
-      print("Participant ID: ${participant!.id}, Type: ${participant!.type}");
-
-      // Virtual stands verilerini çek (hata olsa bile devam et)
-      try {
-        virtualStands = await AuthService().getVirtualStands();
-        print("Virtual stands yüklendi: ${virtualStands?.length ?? 0} adet");
-      } catch (e) {
-        print("Virtual stands yüklenemedi: $e");
-        virtualStands = [];
-      }
-
-      // Participant ID kaydet
-      if (participant!.id != null) {
-        await AuthService().saveParticipantId(participant!.id!);
-        print("Participant ID kaydedildi: ${participant!.id}");
-      }
-
-      // Pusher Beams ayarla
-      try {
-        await setupPusherBeams(meeting!, participant!);
-        print("Pusher Beams kurulumu tamamlandı");
-      } catch (e) {
-        print("Pusher Beams kurulum hatası: $e");
-      }
-
-      // Pusher'a abone ol
-      try {
-        await PusherService().subscribeToPusher(meeting!.id!, context);
-        print("Pusher aboneliği başarılı");
-      } catch (e) {
-        print("Pusher abonelik hatası: $e");
-      }
-
-      print("getData başarıyla tamamlandı");
-
-    } catch (e) {
-      print("getData genel hatası: $e");
-      _redirectToLogin();
-    } finally {
       if (mounted) {
+        // Pusher ayarlarını yap
+        await setupPusherBeams(meeting!, participant!);
+        _subscribeToPusher();
+
         setState(() {
+          _isInitialized = true;
           _loading = false;
         });
       }
+    } catch (e) {
+      print("Initialization error: $e");
+      if (mounted) {
+        _redirectToLogin();
+      }
+    }
+  }
+
+  Future<void> _setupPusherChannels() async {
+    try {
+      if (meeting != null) {
+        await PusherService().subscribeToPusher(meeting!.id!, context);
+        print("Pusher aboneliği başarılı");
+      }
+    } catch (e) {
+      print("Pusher abonelik hatası: $e");
+    }
+  }
+
+  Future<void> _setupNotifications() async {
+    try {
+      String? fcmToken = await getFCMToken();
+      print("FCM Token alındı: $fcmToken");
+    } catch (e) {
+      print("FCM Token alma hatası: $e");
     }
   }
 

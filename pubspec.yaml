@@ -1,0 +1,31 @@
+name: kongrepad
+description: KongrePad Mobile Application
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  pusher_channels_flutter: ^2.2.0
+  http: ^1.2.0
+  shared_preferences: ^2.2.2
+  device_info_plus: ^9.1.2
+  package_info_plus: ^5.0.1
+  flutter_svg: ^2.0.9
+  font_awesome_flutter: ^10.6.0
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+  pusher_beams: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/ 
