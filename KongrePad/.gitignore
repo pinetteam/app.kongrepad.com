@@ -1,99 +1,40 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Overwrite .gitignore with comprehensive rules
+@"
+# Build directories - MOST IMPORTANT
+**/build/
+build/
 .dart_tool/
+
+# Flutter/Dart generated
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-
-# Additional Build directories
-**/build/
+# Android
 **/android/build/
-**/ios/build/
-**/linux/build/
-**/macos/build/
-**/web/build/
-**/windows/build/
-
-# Flutter/Dart/Pub additional
-**/ios/Flutter/App.framework
-**/ios/Flutter/Flutter.framework
-**/ios/Flutter/Flutter.podspec
-**/ios/Flutter/Generated.xcconfig
-**/ios/Flutter/ephemeral/
-**/ios/Runner/GeneratedPluginRegistrant.*
-**/macos/Flutter/GeneratedPluginRegistrant.swift
-
-# Android additional
-**/android/app/release
 **/android/.gradle/
-**/android/captures/
-**/android/gradle-wrapper.jar
-**/android/.gradletasknamecache
-**/android/gradlew
-**/android/gradlew.bat
-**/android/local.properties
-**/android/key.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+android/key.properties
+local.properties
 
-# Large binary files
-**/*.so
+# Large files
 **/*.apk
 **/*.aab
+**/*.so
 **/*.dex
-**/*.bin
 **/*.jar
+**/*.bin
 
-# Generated files
-.packages
+# IDE
+.idea/
+*.iml
+.vscode/
 
-# OS generated files
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+# OS
+.DS_Store
 Thumbs.db
-
-# Keystore files
-*.jks
-*.keystore
-
-# External native build directories
-**/android/.cxx/
-**/ios/.symlinks/
-**/macos/.symlinks/
+"@ | Out-File -FilePath ".gitignore" -Encoding UTF8 -Force
