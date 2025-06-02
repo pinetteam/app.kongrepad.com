@@ -55,6 +55,9 @@ dependencies:
   app_settings: ^5.1.1
   intl: 0.20.2
   uuid: ^4.0.0
+  device_info_plus: ^11.4.0
+  package_info_plus: ^8.3.0
+  flutter_local_notifications: ^19.2.1
 dependency_overrides:
   uuid: ^4.0.0
 

@@ -6,6 +6,10 @@ import '../l10n/app_localizations.dart';
 import 'MainPageView.dart';
 import '../services/alert_service.dart';
 import '../utils/app_constants.dart';
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
 
 class LoginWithCodeView extends StatefulWidget {
   const LoginWithCodeView({super.key});
@@ -21,13 +25,24 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
     try {
       print("API isteği gönderiliyor...");
 
+      final deviceInfo = await getDeviceInfo();
+
       final response = await http.post(
-        Uri.parse('http://app.kongrepad.com/api/v1/auth/login/participant'),
+        Uri.parse('https://api.kongrepad.com/api/v1/auth/login'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'Accept': 'application/json',
         },
-        body: jsonEncode(<String, String>{
-          'username': _controller.text,
+        body: jsonEncode({
+          'username': _controller.text.trim(),
+          'device_name': deviceInfo['device_name'],
+          'device_id': deviceInfo['device_id'],
+          'push_token': 'test-push-token',
+          'app_version': deviceInfo['app_version'],
+          'os_version': deviceInfo['os_version'],
+          'os_type': deviceInfo['os_type'],
+          'language': deviceInfo['language'],
+          'timezone': deviceInfo['timezone'],
         }),
       );
 
@@ -46,7 +61,9 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
 
       final responseBody = jsonDecode(response.body);
 
-      if (responseBody == null || !responseBody.containsKey('token')) {
+      if (responseBody == null ||
+          !responseBody.containsKey('data') ||
+          !responseBody['data'].containsKey('token')) {
         print("Hata: Yanıtta 'token' bulunamadı.");
         print("Gönderilen kullanıcı adı: ${_controller.text}");
 
@@ -58,16 +75,17 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
         return;
       }
 
+      final token = responseBody['data']['token'];
+
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', responseBody['token']);
+      await prefs.setString('token', token);
 
       print("Giriş başarılı, ana sayfaya yönlendiriliyor...");
       if (mounted) {
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => MainPageView(title: ''),
-
           ),
         );
       }
@@ -80,6 +98,42 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
       );
     }
   }
+
+
+  Future<Map<String, String>> getDeviceInfo() async {
+    final deviceInfo = DeviceInfoPlugin();
+    final packageInfo = await PackageInfo.fromPlatform();
+
+    String deviceName = '';
+    String osVersion = '';
+    String osType = '';
+    String deviceId = '';
+
+    if (Platform.isAndroid) {
+      final androidInfo = await deviceInfo.androidInfo;
+      deviceName = androidInfo.model ?? 'Unknown';
+      osVersion = androidInfo.version.release ?? 'Unknown';
+      osType = 'android';
+      deviceId = androidInfo.id ?? 'Unknown';
+    } else if (Platform.isIOS) {
+      final iosInfo = await deviceInfo.iosInfo;
+      deviceName = iosInfo.utsname.machine ?? 'Unknown';
+      osVersion = iosInfo.systemVersion ?? 'Unknown';
+      osType = 'ios';
+      deviceId = iosInfo.identifierForVendor ?? 'Unknown';
+    }
+
+    return {
+      'device_name': deviceName,
+      'device_id': deviceId,
+      'app_version': packageInfo.version,
+      'os_version': osVersion,
+      'os_type': osType,
+      'language': 'tr',
+      'timezone': DateTime.now().timeZoneName,
+    };
+  }
+
 
   @override
   Widget build(BuildContext context) {
