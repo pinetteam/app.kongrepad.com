@@ -40,3 +40,60 @@ app.*.map.json
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
+
+# Additional Build directories
+**/build/
+**/android/build/
+**/ios/build/
+**/linux/build/
+**/macos/build/
+**/web/build/
+**/windows/build/
+
+# Flutter/Dart/Pub additional
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Android additional
+**/android/app/release
+**/android/.gradle/
+**/android/captures/
+**/android/gradle-wrapper.jar
+**/android/.gradletasknamecache
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/key.properties
+
+# Large binary files
+**/*.so
+**/*.apk
+**/*.aab
+**/*.dex
+**/*.bin
+**/*.jar
+
+# Generated files
+.packages
+
+# OS generated files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Keystore files
+*.jks
+*.keystore
+
+# External native build directories
+**/android/.cxx/
+**/ios/.symlinks/
+**/macos/.symlinks/
