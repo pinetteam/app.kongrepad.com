@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
@@ -20,11 +19,13 @@ class AskQuestionView extends StatefulWidget {
 
 class _AskQuestionViewState extends State<AskQuestionView> {
   Session? _session;
-  String _question = '';
-  bool _isHiddenName = false;
-  bool _asking = false;
-  final FocusNode _focusNode = FocusNode();
+  List<Map<String, dynamic>>? _questions;
+  final TextEditingController _questionController = TextEditingController();
+  bool _isAnonymous = false;
   bool _loading = true;
+  bool _hasError = false;
+  String _errorMessage = '';
+  bool _sending = false;
 
   @override
   void initState() {
@@ -32,446 +33,374 @@ class _AskQuestionViewState extends State<AskQuestionView> {
     getData();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: _loading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : GestureDetector(
-                onTap: () {
-                  _focusNode.unfocus();
-                },
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final screenWidth = constraints.maxWidth;
-                    final screenHeight = constraints.maxHeight;
-                    return Container(
-                      color: AppConstants.backgroundBlue,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            height: screenHeight * 0.1,
-                            decoration: const BoxDecoration(
-                              color: AppConstants.backgroundBlue,
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Colors.white, // Border color
-                                  width: 1.0, // Border width
-                                ),
-                              ),
-                            ),
-                            child: SizedBox(
-                              width: screenWidth,
-                              child: Stack(
-                                alignment: Alignment.centerLeft,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: Container(
-                                      height: screenHeight * 0.05,
-                                      width: screenHeight * 0.05,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors
-                                            .white, // Circular background color
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: SvgPicture.asset(
-                                          'assets/icon/chevron.left.svg',
-                                          color: AppConstants.backgroundBlue,
-                                          height: screenHeight * 0.03,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          AppLocalizations.of(context)
-                                              .translate('ask_question'),
-                                          style: const TextStyle(
-                                              fontSize: 25,
-                                              color: Colors.white),
-                                        )
-                                      ]),
-                                ],
-                              ),
-                            ),
-                          ),
-                          _session != null
-                              ? _session!.questionsAllowed == 1
-                                  ? Expanded(
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        child: SingleChildScrollView(
-                                          child: Column(
-                                            children: [
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.all(8),
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  AppLocalizations.of(context)
-                                                      .translate('session'),
-                                                  style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 20),
-                                                ),
-                                              ),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.all(8),
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  _session!.title ?? '',
-                                                  style: const TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 15,
-                                                  ),
-                                                ),
-                                              ),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.all(8),
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  AppLocalizations.of(context)
-                                                      .translate('speaker'),
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 20,
-                                                  ),
-                                                ),
-                                              ),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.all(8),
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  _session?.speakerName ?? '',
-                                                  style: const TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 15,
-                                                  ),
-                                                ),
-                                              ),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.all(8),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.red,
-                                                  // Set background color to white
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0), // Make borders rounded
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    Container(
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        // Set background color to white
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                                10.0), // Make borders rounded
-                                                      ),
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(8),
-                                                        height:
-                                                            screenHeight * 0.3,
-                                                        child: TextField(
-                                                          maxLength: 255,
-                                                          decoration:
-                                                              InputDecoration(
-                                                            hintText: AppLocalizations
-                                                                    .of(context)
-                                                                .translate(
-                                                                    'ask_question'),
-                                                            border: InputBorder
-                                                                .none,
-                                                            counterText: "",
-                                                          ),
-                                                          maxLines: null,
-                                                          onChanged: (value) {
-                                                            setState(() {
-                                                              _question = value;
-                                                            });
-                                                          },
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    SizedBox(
-                                                      height:
-                                                          screenHeight * 0.01,
-                                                    ),
-                                                    Container(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        // Set background color to white
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                                10), // Make borders rounded
-                                                      ),
-                                                      child: Row(
-                                                        children: [
-                                                          Expanded(
-                                                            child:
-                                                                CheckboxListTile(
-                                                              title: Text(
-                                                                AppLocalizations.of(
-                                                                        context)
-                                                                    .translate(
-                                                                        'hide_my_name'),
-                                                                style: const TextStyle(
-                                                                    color: Colors
-                                                                        .black),
-                                                              ),
-                                                              value:
-                                                                  _isHiddenName,
-                                                              onChanged:
-                                                                  (value) {
-                                                                setState(() {
-                                                                  _isHiddenName =
-                                                                      value!;
-                                                                });
-                                                              },
-                                                              controlAffinity:
-                                                                  ListTileControlAffinity
-                                                                      .leading,
-                                                            ),
-                                                          ),
-                                                          Text(
-                                                            '${_question.length}/255',
-                                                            style: TextStyle(
-                                                              color: _question
-                                                                          .length <
-                                                                      140
-                                                                  ? Colors.green
-                                                                  : _question.length <
-                                                                          255
-                                                                      ? Colors
-                                                                          .yellow
-                                                                      : Colors
-                                                                          .red,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.all(8),
-                                                width: double.infinity,
-                                                child: ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                      backgroundColor:
-                                                          _question.isEmpty
-                                                              ? CupertinoColors
-                                                                  .systemGrey
-                                                              : AppConstants
-                                                                  .buttonGreen,
-                                                      foregroundColor:
-                                                          Colors.white),
-                                                  onPressed: _asking
-                                                      ? null
-                                                      : () {
-                                                          if (_question
-                                                                  .isNotEmpty &&
-                                                              _question
-                                                                      .length <=
-                                                                  256) {
-                                                            _askQuestion();
-                                                          }
-                                                        },
-                                                  child: _asking
-                                                      ? const CircularProgressIndicator(
-                                                          valueColor:
-                                                              AlwaysStoppedAnimation<
-                                                                      Color>(
-                                                                  Colors.white),
-                                                        )
-                                                      : Text(
-                                                          AppLocalizations.of(
-                                                                  context)
-                                                              .translate(
-                                                                  'send'),
-                                                        ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : Padding(
-                                      padding: const EdgeInsets.only(top: 20),
-                                      child: Text(
-                                        AppLocalizations.of(context)
-                                            .translate('no_questions_allowed'),
-                                        style: const TextStyle(
-                                            color: Colors.white, fontSize: 20),
-                                      ),
-                                    )
-                              : Padding(
-                                  padding: const EdgeInsets.only(top: 20),
-                                  child: Text(
-                                    AppLocalizations.of(context)
-                                        .translate('session_not_started'),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20,
-                                    ),
-                                  ),
-                                ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-      ),
-    );
-  }
-
-  Future<void> _askQuestion() async {
-    setState(() {
-      _asking = true;
-    });
-
-    final url = Uri.parse(
-        'https://app.kongrepad.com/api/v1/hall/${widget.hallId}/session-question');
-    final body = jsonEncode({
-      'question': _question,
-      'is_hidden_name': _isHiddenName ? 1 : 0,
-    });
-
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer ${prefs.getString('token')}',
-          'Content-Type': 'application/json',
-        },
-        body: body,
-      );
-
-      final jsonResponse = jsonDecode(response.body);
-
-      if (jsonResponse['status']) {
-        // Başarılı mesaj
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Başarılı'),
-              content: const Text('Sorunuz başarıyla gönderildi!'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Dialog'u kapatır
-                    Navigator.of(context).pop(); // Sayfadan çıkış yapar
-                  },
-                  child: const Text('Tamam'),
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        // Başarısız mesaj
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Hata'),
-              content:
-                  const Text('Bir sorun meydana geldi, lütfen tekrar deneyin!'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Dialog'u kapatır
-                  },
-                  child: const Text('Tamam'),
-                ),
-              ],
-            );
-          },
-        );
-      }
-    } catch (e) {
-      // Hata durumu
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Hata'),
-            content:
-                const Text('Bir hata meydana geldi, lütfen tekrar deneyin!'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Tamam'),
-              ),
-            ],
-          );
-        },
-      );
-    } finally {
-      setState(() {
-        _asking = false;
-      });
-    }
-  }
-
   Future<void> getData() async {
+    print('AskQuestionView - getData başladı');
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
     try {
       final url = Uri.parse(
-          'https://api.kongrepad.com/api/v1/hall/${widget.hallId}/active-session');
+          'https://api.kongrepad.com/api/v1/sessions/${widget.hallId}');
+      print('AskQuestionView - API çağrısı yapılıyor: $url');
+
       final response = await http.get(
         url,
         headers: <String, String>{
           'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      print('AskQuestionView - API yanıtı: ${response.statusCode}');
+      print('AskQuestionView - API yanıt body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        if (jsonData['data'] != null) {
+          _session = Session.fromJson(jsonData['data']);
+
+          // Soruları al
+          if (_session != null) {
+            await _getQuestions();
+          }
+
+          if (mounted) {
+            setState(() {
+              _loading = false;
+            });
+          }
+        } else {
+          setState(() {
+            _loading = false;
+            _hasError = true;
+            _errorMessage =
+                AppLocalizations.of(context).translate('no_active_session');
+          });
+        }
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      } else {
+        print('AskQuestionView - API hatası: ${response.statusCode}');
+        setState(() {
+          _loading = false;
+          _hasError = true;
+          _errorMessage = 'API Hatası: ${response.statusCode}';
+        });
+      }
+    } catch (e, stackTrace) {
+      print('AskQuestionView - Hata: $e');
+      print('AskQuestionView - Stack trace: $stackTrace');
+      setState(() {
+        _loading = false;
+        _hasError = true;
+        _errorMessage = 'Bir hata oluştu: $e';
+      });
+    }
+  }
+
+  Future<void> _getQuestions() async {
+    if (_session == null) return;
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    try {
+      final url = Uri.parse(
+          'https://api.kongrepad.com/api/v1/sessions/${_session!.id}/questions');
+      final response = await http.get(
+        url,
+        headers: <String, String>{
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
         },
       );
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        final sessionJson = SessionJSON.fromJson(jsonData);
-        setState(() {
-          _session = sessionJson.data;
-          _loading = false;
-        });
+        if (jsonData['data'] != null) {
+          setState(() {
+            _questions = List<Map<String, dynamic>>.from(jsonData['data']);
+          });
+        }
       }
     } catch (e) {
-      print('Error: $e');
+      print('Sorular alınırken hata: $e');
     }
+  }
+
+  Future<void> _askQuestion() async {
+    if (_session == null || _questionController.text.trim().isEmpty) return;
+
+    setState(() {
+      _sending = true;
+    });
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    try {
+      final url = Uri.parse(
+          'https://api.kongrepad.com/api/v1/sessions/${_session!.id}/questions');
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'question': _questionController.text.trim(),
+          'anonymous': _isAnonymous,
+          'session_id': _session!.id,
+        }),
+      );
+
+      print('Soru gönderme yanıtı: ${response.statusCode}');
+      print('Soru gönderme yanıt body: ${response.body}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        _questionController.clear();
+        await _getQuestions(); // Soruları yenile
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)
+                .translate('question_sent_success')),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        String errorMessage = jsonResponse['message'] ??
+            AppLocalizations.of(context).translate('error_occurred');
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Soru gönderme hatası: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              '${AppLocalizations.of(context).translate('error_occurred')}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _sending = false;
+      });
+    }
+  }
+
+  Widget _buildQuestionsList() {
+    return _questions == null || _questions!.isEmpty
+        ? Center(
+            child: Text(
+              AppLocalizations.of(context).translate('no_questions'),
+              style: const TextStyle(color: Colors.white70),
+            ),
+          )
+        : ListView.builder(
+            itemCount: _questions!.length,
+            itemBuilder: (context, index) {
+              final question = _questions![index];
+              return Card(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
+                ),
+                color: Colors.white.withOpacity(0.9),
+                child: ListTile(
+                  leading: const Icon(Icons.question_answer),
+                  title: Text(
+                    question['question'] ?? '',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  subtitle: Text(
+                    question['participant']?['full_name'] ?? 'Anonim',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              );
+            },
+          );
+  }
+
+  Widget _buildQuestionInput() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _questionController,
+            decoration: InputDecoration(
+              hintText:
+                  AppLocalizations.of(context).translate('ask_question_hint'),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              filled: true,
+              fillColor: Colors.grey[100],
+            ),
+            maxLines: 3,
+            minLines: 1,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: _isAnonymous,
+                      onChanged: (value) {
+                        setState(() {
+                          _isAnonymous = value ?? false;
+                        });
+                      },
+                    ),
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(context)
+                            .translate('ask_anonymously'),
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _sending || _questionController.text.trim().isEmpty
+                    ? null
+                    : _askQuestion,
+                icon: _sending
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.send),
+                label: Text(AppLocalizations.of(context).translate('send')),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppConstants.buttonGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      );
+    }
+
+    if (_hasError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red[300],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage,
+              style: const TextStyle(color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _loading = true;
+                  _hasError = false;
+                });
+                getData();
+              },
+              child: Text(AppLocalizations.of(context).translate('try_again')),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: _buildQuestionsList(),
+        ),
+        _buildQuestionInput(),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppConstants.backgroundBlue,
+      appBar: AppBar(
+        backgroundColor: AppConstants.backgroundBlue,
+        title: Text(
+          _session?.title ??
+              AppLocalizations.of(context).translate('ask_question'),
+          style: const TextStyle(color: Colors.white),
+        ),
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/icon/chevron.left.svg',
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () {
+              setState(() {
+                _loading = true;
+              });
+              getData();
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: _buildContent(),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _questionController.dispose();
+    super.dispose();
   }
 }

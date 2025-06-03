@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/app_constants.dart';
 import '../services/session_service.dart';
+import '../services/question_service.dart';
 
 class SessionView extends StatefulWidget {
   final int hallId;
@@ -18,6 +19,7 @@ class SessionView extends StatefulWidget {
 
 class _SessionViewState extends State<SessionView> {
   final SessionService _sessionService = SessionService();
+  final QuestionService _questionService = QuestionService();
   bool _loading = true;
   bool _hasError = false;
   String? _errorMessage;
@@ -30,24 +32,36 @@ class _SessionViewState extends State<SessionView> {
   bool _isReady = false;
   String? _sessionTitle;
   String? _sessionDescription;
+  int? _sessionId;
+  bool _isAnonymous = false;
 
   Future<void> _downloadAndSavePdf() async {
-    if (_pdfUrl == null) return;
+    if (_pdfUrl == null) {
+      print('PDF URL null olduğu için indirme yapılmıyor');
+      return;
+    }
 
     try {
       print('PDF indiriliyor: $_pdfUrl');
 
       final response = await http.get(Uri.parse(_pdfUrl!));
+      print('PDF indirme yanıt kodu: ${response.statusCode}');
+
       if (response.statusCode != 200) {
+        print('PDF indirme hatası: ${response.statusCode}');
+        print('PDF indirme yanıt gövdesi: ${response.body}');
         throw Exception('PDF indirilemedi: ${response.statusCode}');
       }
 
       final bytes = response.bodyBytes;
+      print('PDF boyutu: ${bytes.length} bytes');
+
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/session_document_${widget.hallId}.pdf');
       await file.writeAsBytes(bytes);
 
       print('PDF kaydedildi: ${file.path}');
+      print('PDF dosya boyutu: ${await file.length()} bytes');
 
       if (mounted) {
         setState(() {
@@ -82,11 +96,11 @@ class _SessionViewState extends State<SessionView> {
 
       print('Session başlatılıyor - Hall ID: ${widget.hallId}');
 
-      final streamData = await _sessionService.getSessionStream(widget.hallId);
-      print('Stream data response: $streamData');
+      final sessionData = await _sessionService.getActiveSession(widget.hallId);
+      print('Session data response: $sessionData');
 
-      if (streamData == null) {
-        print('Stream data null geldi');
+      if (sessionData == null) {
+        print('Session data null geldi');
         setState(() {
           _loading = false;
           _hasError = true;
@@ -95,12 +109,15 @@ class _SessionViewState extends State<SessionView> {
         return;
       }
 
-      print('Stream data alındı: $streamData');
+      print('Session data alındı: $sessionData');
 
       setState(() {
-        _pdfUrl = streamData['pdf_url'];
-        _sessionTitle = streamData['title'];
-        _sessionDescription = streamData['description'];
+        _pdfUrl = sessionData['pdf_url'];
+        _sessionTitle = sessionData['title'];
+        _sessionDescription = sessionData['description'];
+        _sessionId = sessionData['session_id'] != null
+            ? int.parse(sessionData['session_id'].toString())
+            : null;
       });
 
       if (_pdfUrl != null) {
@@ -109,9 +126,9 @@ class _SessionViewState extends State<SessionView> {
       }
 
       // Questions'ı yükle
-      if (streamData['session_id'] != null) {
+      if (_sessionId != null) {
         final questions =
-            await _sessionService.getSessionQuestions(widget.hallId);
+            await _questionService.getSessionQuestions(_sessionId!);
         print('Questions response: $questions');
 
         if (mounted && questions != null) {
@@ -140,12 +157,13 @@ class _SessionViewState extends State<SessionView> {
   }
 
   Future<void> _askQuestion() async {
-    if (_questionController.text.trim().isEmpty) return;
+    if (_questionController.text.trim().isEmpty || _sessionId == null) return;
 
     try {
-      final success = await _sessionService.askQuestion(
-        widget.hallId,
+      final success = await _questionService.askQuestion(
+        _sessionId!,
         _questionController.text.trim(),
+        anonymous: _isAnonymous,
       );
 
       if (mounted) {
@@ -161,7 +179,7 @@ class _SessionViewState extends State<SessionView> {
 
           // Questions'ı yenile
           final questions =
-              await _sessionService.getSessionQuestions(widget.hallId);
+              await _questionService.getSessionQuestions(_sessionId!);
           if (mounted && questions != null) {
             setState(() {
               _questions = questions;
@@ -191,7 +209,12 @@ class _SessionViewState extends State<SessionView> {
   }
 
   Widget _buildPdfViewer() {
+    print('PDF Viewer oluşturuluyor');
+    print('PDF URL: $_pdfUrl');
+    print('Local PDF Path: $_localPdfPath');
+
     if (_pdfUrl == null) {
+      print('PDF URL null - bilgi mesajı gösteriliyor');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -220,6 +243,7 @@ class _SessionViewState extends State<SessionView> {
     }
 
     if (_localPdfPath == null) {
+      print('Local PDF Path null - yükleniyor gösteriliyor');
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -232,6 +256,7 @@ class _SessionViewState extends State<SessionView> {
       );
     }
 
+    print('PDF görüntüleyici başlatılıyor: $_localPdfPath');
     return Column(
       children: [
         Expanded(
@@ -246,6 +271,7 @@ class _SessionViewState extends State<SessionView> {
             fitPolicy: FitPolicy.BOTH,
             preventLinkNavigation: false,
             onRender: (pages) {
+              print('PDF render edildi, sayfa sayısı: $pages');
               setState(() {
                 _totalPages = pages!;
                 _isReady = true;
@@ -262,9 +288,10 @@ class _SessionViewState extends State<SessionView> {
               print('PDF sayfa hatası: $page - $error');
             },
             onViewCreated: (PDFViewController pdfViewController) {
-              // PDF controller ayarları
+              print('PDF viewer oluşturuldu');
             },
             onPageChanged: (int? page, int? total) {
+              print('Sayfa değişti: $page / $total');
               setState(() {
                 _currentPage = page ?? 0;
               });
@@ -286,6 +313,63 @@ class _SessionViewState extends State<SessionView> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildQuestionInput() {
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _questionController,
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context)
+                        .translate('ask_question_hint'),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                  ),
+                  maxLines: 2,
+                  minLines: 1,
+                ),
+              ),
+              const SizedBox(width: 8),
+              FloatingActionButton.small(
+                onPressed: _askQuestion,
+                child: const Icon(Icons.send),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Checkbox(
+                value: _isAnonymous,
+                onChanged: (value) {
+                  setState(() {
+                    _isAnonymous = value ?? false;
+                  });
+                },
+              ),
+              Text(
+                AppLocalizations.of(context).translate('ask_anonymously'),
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -389,40 +473,7 @@ class _SessionViewState extends State<SessionView> {
                       ),
               ),
               // Question Input
-              Container(
-                padding: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: Colors.grey[300]!)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _questionController,
-                        decoration: InputDecoration(
-                          hintText: AppLocalizations.of(context)
-                              .translate('ask_question_hint'),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                        ),
-                        maxLines: 2,
-                        minLines: 1,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    FloatingActionButton.small(
-                      onPressed: _askQuestion,
-                      child: const Icon(Icons.send),
-                    ),
-                  ],
-                ),
-              ),
+              _buildQuestionInput(),
             ],
           ),
         ),

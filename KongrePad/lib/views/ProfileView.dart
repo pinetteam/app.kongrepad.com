@@ -23,24 +23,50 @@ class _ProfileViewState extends State<ProfileView> {
     final token = prefs.getString('token');
 
     try {
-      final url = Uri.parse('http://app.kongrepad.com/api/v1/participant');
+      final url = Uri.parse('http://app.kongrepad.com/api/v1/auth/profile');
+
       final response = await http.get(
         url,
         headers: <String, String>{
           'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
       );
 
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        final participantJson = ParticipantJSON.fromJson(jsonData);
+
+        // API response'una göre düzeltildi: data.participant
+        if (jsonData['success'] == true && jsonData['data'] != null) {
+          final participantData =
+              jsonData['data']['participant']; // Burada değişiklik
+          final participant = Participant.fromJson(participantData);
+
+          setState(() {
+            this.participant = participant;
+            _loading = false;
+          });
+        } else {
+          print('API Error: ${jsonData['message']}');
+          setState(() {
+            _loading = false;
+          });
+        }
+      } else {
+        print('HTTP Error: ${response.statusCode}');
+        print('Error Body: ${response.body}');
         setState(() {
-          participant = participantJson.data;
           _loading = false;
         });
       }
     } catch (e) {
-      print('Error: $e');
+      print('Exception Error: $e');
+      setState(() {
+        _loading = false;
+      });
     }
   }
 

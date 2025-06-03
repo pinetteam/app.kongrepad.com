@@ -13,6 +13,7 @@ import '../utils/app_constants.dart';
 import 'SessionView.dart';
 import 'DebateView.dart';
 import 'KeypadView.dart';
+import 'AskQuestionView.dart';
 
 class HallsView extends StatefulWidget {
   const HallsView({super.key, required this.type, required this.meetingId});
@@ -217,6 +218,15 @@ class _HallsViewState extends State<HallsView> {
                                           MaterialPageRoute(
                                               builder: (context) =>
                                                   KeypadView(hallId: hall.id!)),
+                                        );
+                                      } else if (type == "question") {
+                                        Navigator.pop(context);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  AskQuestionView(
+                                                      hallId: hall.id!)),
                                         );
                                       }
                                     },

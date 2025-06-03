@@ -186,6 +186,45 @@ class _MainPageViewState extends State<MainPageView>
     }
   }
 
+  Widget _buildBannerImage() {
+    return FutureBuilder<String?>(
+      future: SharedPreferences.getInstance()
+          .then((prefs) => prefs.getString('token')),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return _buildDefaultBanner();
+
+        return meeting != null &&
+                meeting!.bannerName != null &&
+                meeting!.bannerExtension != null
+            ? Image.network(
+                "https://api.kongrepad.com/api/v1/meetings/${meeting!.id}/banner",
+                headers: {
+                  'Authorization': 'Bearer ${snapshot.data}',
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  print('Banner yükleme hatası: $error');
+                  return _buildDefaultBanner();
+                },
+                loadingBuilder: (BuildContext context, Widget child,
+                    ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                fit: BoxFit.cover,
+                width: double.infinity,
+              )
+            : _buildDefaultBanner();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -200,22 +239,10 @@ class _MainPageViewState extends State<MainPageView>
           : SafeArea(
               child: Column(
                 children: [
-                  // Banner Section - Daha küçük
+                  // Banner Section
                   SizedBox(
-                    height: screenHeight * 0.2, // %25'ten %20'ye düşürdüm
-                    child: meeting != null &&
-                            meeting!.bannerName != null &&
-                            meeting!.bannerExtension != null
-                        ? Image.network(
-                            "https://api.kongrepad.com/storage/meeting-banners/${meeting!.bannerName}.${meeting!.bannerExtension}",
-                            errorBuilder: (context, error, stackTrace) {
-                              print('Banner yükleme hatası: $error');
-                              return _buildDefaultBanner();
-                            },
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          )
-                        : _buildDefaultBanner(),
+                    height: screenHeight * 0.2,
+                    child: _buildBannerImage(),
                   ),
 
                   // Main Content Section

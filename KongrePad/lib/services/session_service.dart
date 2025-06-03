@@ -5,77 +5,37 @@ import '../services/auth_service.dart';
 class SessionService {
   static const String baseUrl = 'https://api.kongrepad.com/api/v1';
 
-  Future<Map<String, dynamic>?> getSessionDetails(int hallId) async {
+  Future<List<Map<String, dynamic>>?> getHalls(int meetingId) async {
     try {
       final token = await AuthService().getStoredToken();
       if (token == null) throw Exception('No token found');
 
       final response = await http.get(
-        Uri.parse('$baseUrl/halls/$hallId/session'),
+        Uri.parse('$baseUrl/meetings/$meetingId/halls'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
       );
 
-      print('getSessionDetails response: ${response.body}');
+      print('Halls API yanıt kodu: ${response.statusCode}');
+      print('Halls API yanıt gövdesi: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          return data['data'];
-        }
-      }
-
-      return null;
-    } catch (e) {
-      print('GetSessionDetails error: $e');
-      return null;
-    }
-  }
-
-  Future<List<Map<String, dynamic>>?> getSessionQuestions(int hallId) async {
-    print('SessionService - getSessionQuestions başladı, hallId: $hallId');
-    try {
-      final token = await AuthService().getStoredToken();
-      print('SessionService - Token alındı: ${token?.substring(0, 10)}...');
-
-      if (token == null) {
-        print('SessionService - HATA: Token bulunamadı');
-        throw Exception('No token found');
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/halls/$hallId/questions'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
-
-      print('SessionService - Questions API yanıt: ${response.statusCode}');
-      print('SessionService - Questions API response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('SessionService - Başarılı yanıt: $data');
-        if (data['success'] == true && data['data'] is List) {
+        if (data['success'] == true && data['data'] != null) {
           return List<Map<String, dynamic>>.from(data['data']);
         }
       }
-
-      print('SessionService - API yanıtı başarısız');
       return null;
-    } catch (e, stackTrace) {
-      print('SessionService - HATA: $e');
-      print('SessionService - Stack trace: $stackTrace');
+    } catch (e) {
+      print('GetHalls error: $e');
       return null;
     }
   }
 
-  Future<bool> askQuestion(int hallId, String question) async {
-    print(
-        'SessionService - askQuestion başladı, hallId: $hallId, soru: $question');
+  Future<Map<String, dynamic>?> getActiveSession(int hallId) async {
+    print('SessionService - getActiveSession başladı, hallId: $hallId');
     try {
       final token = await AuthService().getStoredToken();
       print('SessionService - Token alındı: ${token?.substring(0, 10)}...');
@@ -85,91 +45,123 @@ class SessionService {
         throw Exception('No token found');
       }
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/halls/$hallId/questions'),
+      // Önce aktif toplantıyı al
+      final currentMeetingResponse = await http.get(
+        Uri.parse('$baseUrl/meetings/current'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'question': question,
-        }),
       );
 
-      print('SessionService - Ask Question API yanıt: ${response.statusCode}');
       print(
-          'SessionService - Ask Question API response body: ${response.body}');
+          'SessionService - Current Meeting API yanıt kodu: ${currentMeetingResponse.statusCode}');
+      print(
+          'SessionService - Current Meeting API yanıt gövdesi: ${currentMeetingResponse.body}');
 
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        print('SessionService - Başarılı yanıt: $data');
-        return data['success'] == true;
-      }
+      if (currentMeetingResponse.statusCode == 200) {
+        final meetingData = jsonDecode(currentMeetingResponse.body);
+        if (meetingData['success'] == true && meetingData['data'] != null) {
+          final meetingId = meetingData['data']['id'];
+          print('SessionService - Active Meeting ID alındı: $meetingId');
 
-      print('SessionService - API yanıtı başarısız');
-      return false;
-    } catch (e, stackTrace) {
-      print('SessionService - HATA: $e');
-      print('SessionService - Stack trace: $stackTrace');
-      return false;
-    }
-  }
+          // Aktif oturumları al
+          final liveSessionsResponse = await http.get(
+            Uri.parse('$baseUrl/sessions/live'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+            },
+          );
 
-  Future<Map<String, dynamic>?> getSessionStream(int hallId) async {
-    print('SessionService - getSessionStream başladı, hallId: $hallId');
-    try {
-      final token = await AuthService().getStoredToken();
-      print('SessionService - Token alındı: ${token?.substring(0, 10)}...');
+          print(
+              'SessionService - Live Sessions API yanıt kodu: ${liveSessionsResponse.statusCode}');
+          print(
+              'SessionService - Live Sessions API yanıt gövdesi: ${liveSessionsResponse.body}');
 
-      if (token == null) {
-        print('SessionService - HATA: Token bulunamadı');
-        throw Exception('No token found');
-      }
+          if (liveSessionsResponse.statusCode == 200) {
+            final liveData = jsonDecode(liveSessionsResponse.body);
+            print('SessionService - Live Sessions data: $liveData');
 
-      // Sessions endpoint'ini çağır
-      final uri = Uri.parse('$baseUrl/halls/$hallId/session');
-      print('SessionService - Session API çağrısı yapılıyor: $uri');
+            if (liveData['success'] == true && liveData['data'] != null) {
+              final sessions = liveData['data'] as List;
+              print(
+                  'SessionService - Bulunan oturum sayısı: ${sessions.length}');
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
+              // Program içindeki hall_id'ye göre oturumu bul
+              final currentSession = sessions.firstWhere(
+                  (session) =>
+                      session['program'] != null &&
+                      session['program']['hall_id'] == hallId,
+                  orElse: () => null);
 
-      print('SessionService - Session API yanıt kodu: ${response.statusCode}');
-      print('SessionService - Session API yanıt gövdesi: ${response.body}');
+              if (currentSession != null) {
+                print(
+                    'SessionService - Aktif oturum bulundu: ${currentSession['id']}');
+                print('SessionService - Oturum detayları: $currentSession');
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('SessionService - Session yanıtı başarılı: $data');
+                // Oturum materyallerini al
+                final materialsUrl =
+                    '$baseUrl/sessions/${currentSession['id']}/materials';
+                print('SessionService - Materials API URL: $materialsUrl');
 
-        if (data['success'] == true && data['data'] != null) {
-          final session = data['data'];
-          print('SessionService - Session data dönülüyor: $session');
-          return {
-            'pdf_url': session['document_url'],
-            'session_id': session['id'],
-            'title': session['title'],
-            'description': session['description']
-          };
-        } else {
-          print('SessionService - Session verisi boş');
-          return {
-            'pdf_url': null,
-            'session_id': null,
-            'title': 'Aktif oturum bulunamadı',
-            'description':
-                'Bu salonda şu anda aktif bir oturum bulunmamaktadır.'
-          };
+                final materialsResponse = await http.get(
+                  Uri.parse(materialsUrl),
+                  headers: {
+                    'Authorization': 'Bearer $token',
+                    'Accept': 'application/json',
+                  },
+                );
+
+                print(
+                    'SessionService - Materials API yanıt kodu: ${materialsResponse.statusCode}');
+                print(
+                    'SessionService - Materials API yanıt gövdesi: ${materialsResponse.body}');
+
+                if (materialsResponse.statusCode == 200) {
+                  final materialsData = jsonDecode(materialsResponse.body);
+                  print('SessionService - Materials data: $materialsData');
+
+                  if (materialsData['success'] == true &&
+                      materialsData['data'] != null) {
+                    final materials = materialsData['data'] as List;
+                    print(
+                        'SessionService - Bulunan materyal sayısı: ${materials.length}');
+
+                    // Önce presentation kategorisindeki dokümanı ara
+                    final presentationDoc = materials.firstWhere(
+                        (material) => material['category'] == 'presentation',
+                        orElse: () => null);
+
+                    // Eğer presentation yoksa herhangi bir dokümanı al
+                    final document = presentationDoc ??
+                        (materials.isNotEmpty ? materials.first : null);
+
+                    if (document != null) {
+                      final documentUrl = document['download_url'];
+                      print('SessionService - Doküman URL: $documentUrl');
+
+                      return {
+                        'pdf_url': documentUrl,
+                        'session_id': currentSession['id'].toString(),
+                        'title': currentSession['title'],
+                        'description': currentSession['description']
+                      };
+                    }
+                  }
+                }
+
+                // Materyal bulunamadıysa oturum bilgilerini döndür
+                return {
+                  'pdf_url': null,
+                  'session_id': currentSession['id'].toString(),
+                  'title': currentSession['title'],
+                  'description': currentSession['description']
+                };
+              }
+            }
+          }
         }
-      } else if (response.statusCode == 404) {
-        print('SessionService - Session bulunamadı (404)');
-      } else {
-        print(
-            'SessionService - Beklenmeyen durum kodu: ${response.statusCode}');
       }
 
       print('SessionService - İşlem başarısız');
