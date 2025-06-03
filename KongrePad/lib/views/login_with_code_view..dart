@@ -10,7 +10,6 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-
 class LoginWithCodeView extends StatefulWidget {
   const LoginWithCodeView({super.key});
 
@@ -55,7 +54,8 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
         AlertService().showAlertDialog(
           context,
           title: "Hata",
-          content: "Sunucudan geçerli bir yanıt alınamadı. Hata kodu: ${response.statusCode}",
+          content:
+              "Sunucudan geçerli bir yanıt alınamadı. Hata kodu: ${response.statusCode}",
         );
         return;
       }
@@ -86,7 +86,7 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => MainPageView(title: ''),
+            builder: (context) => const MainPageView(title: ''),
           ),
         );
       }
@@ -99,7 +99,6 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
       );
     }
   }
-
 
   Future<Map<String, String>> getDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
@@ -135,7 +134,6 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
     };
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,7 +147,7 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
                 filled: true,
                 fillColor: Colors.white,
                 hintText: AppLocalizations.of(context).translate('enter_code'),
-                hintStyle: TextStyle(color: Colors.grey),
+                hintStyle: const TextStyle(color: Colors.grey),
                 focusedBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Colors.orange),
                   borderRadius: BorderRadius.circular(40),
@@ -160,7 +158,7 @@ class _LoginWithCodeViewState extends State<LoginWithCodeView> {
                 ),
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 20,
             ),
             ElevatedButton(

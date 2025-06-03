@@ -12,8 +12,6 @@ import '../utils/app_constants.dart';
 //import 'ProgramMailView.dart';
 import 'ProgramView.dart';
 
-
-
 String translateDate(String englishDate, BuildContext context) {
   String translatedDate = englishDate;
 
@@ -100,8 +98,8 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
                 ),
               )
             : Container(
-                decoration:
-                    BoxDecoration(color: AppConstants.programBackgroundYellow),
+                decoration: const BoxDecoration(
+                    color: AppConstants.programBackgroundYellow),
                 height: screenHeight,
                 alignment: Alignment.topLeft,
                 child: SingleChildScrollView(
@@ -119,7 +117,7 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
                             ),
                           ),
                         ),
-                        child: Container(
+                        child: SizedBox(
                           width: screenWidth,
                           child: Stack(
                             alignment: Alignment.centerLeft,
@@ -131,7 +129,7 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
                                 child: Container(
                                   height: screenHeight * 0.04,
                                   width: screenHeight * 0.04,
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: Colors
                                         .white, // Circular background color
@@ -152,7 +150,7 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
                                     Text(
                                       AppLocalizations.of(context)
                                           .translate("select_day"),
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 25, color: Colors.white),
                                     )
                                   ]),
@@ -162,7 +160,7 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
                       ),
                       SingleChildScrollView(
                         scrollDirection: Axis.vertical,
-                        child: Container(
+                        child: SizedBox(
                           height: screenHeight * 0.65,
                           width: screenWidth,
                           child: Column(
@@ -213,7 +211,8 @@ class _ProgramDaysViewState extends State<ProgramDaysView> {
                                                 MainAxisAlignment.center,
                                             children: [
                                               Padding(
-                                                padding: EdgeInsets.all(2),
+                                                padding:
+                                                    const EdgeInsets.all(2),
                                                 child: SvgPicture.asset(
                                                   'assets/icon/chevron.right.2.svg',
                                                   color: AppConstants

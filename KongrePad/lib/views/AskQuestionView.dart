@@ -38,285 +38,318 @@ class _AskQuestionViewState extends State<AskQuestionView> {
       child: Scaffold(
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            valueColor:
-            AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
             : GestureDetector(
-          onTap: () {
-            _focusNode.unfocus();
-          },
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final screenWidth = constraints.maxWidth;
-              final screenHeight = constraints.maxHeight;
-              return Container(
-                color: AppConstants.backgroundBlue,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      height: screenHeight * 0.1,
-                      decoration: const BoxDecoration(
-                        color: AppConstants.backgroundBlue,
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.white, // Border color
-                            width: 1.0, // Border width
-                          ),
-                        ),
-                      ),
-                      child: Container(
-                        width: screenWidth,
-                        child: Stack(
-                          alignment: Alignment.centerLeft,
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                height: screenHeight * 0.05,
-                                width: screenHeight * 0.05,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color:
-                                  Colors.white, // Circular background color
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: SvgPicture.asset(
-                                    'assets/icon/chevron.left.svg',
-                                    color: AppConstants.backgroundBlue,
-                                    height: screenHeight * 0.03,
-                                  ),
+                onTap: () {
+                  _focusNode.unfocus();
+                },
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final screenWidth = constraints.maxWidth;
+                    final screenHeight = constraints.maxHeight;
+                    return Container(
+                      color: AppConstants.backgroundBlue,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            height: screenHeight * 0.1,
+                            decoration: const BoxDecoration(
+                              color: AppConstants.backgroundBlue,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.white, // Border color
+                                  width: 1.0, // Border width
                                 ),
                               ),
                             ),
-                             Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                            child: SizedBox(
+                              width: screenWidth,
+                              child: Stack(
+                                alignment: Alignment.centerLeft,
                                 children: [
-                                  Text(
-                                    AppLocalizations.of(context)
-                                        .translate('ask_question'),
-                                    style: TextStyle(
-                                        fontSize: 25, color: Colors.white),
-                                  )
-                                ]),
-                          ],
-                        ),
-                      ),
-                    ),
-                    _session != null
-                        ? _session!.questionsAllowed == 1
-                        ? Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(8),
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  AppLocalizations.of(context)
-                                      .translate('session'),
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20),
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.all(8),
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  _session!.title ?? '',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.all(8),
-                                alignment: Alignment.centerLeft,
-                                child:  Text(
-                                  AppLocalizations.of(context)
-                                      .translate('speaker'),
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.all(8),
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  _session?.speakerName ?? '',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  // Set background color to white
-                                  borderRadius: BorderRadius.circular(
-                                      10.0), // Make borders rounded
-                                ),
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        // Set background color to white
-                                        borderRadius:
-                                        BorderRadius.circular(
-                                            10.0), // Make borders rounded
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Container(
+                                      height: screenHeight * 0.05,
+                                      width: screenHeight * 0.05,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors
+                                            .white, // Circular background color
                                       ),
-                                      child: Container(
-                                        padding:
-                                        const EdgeInsets.all(8),
-                                        height: screenHeight * 0.3,
-                                        child: TextField(
-                                          maxLength: 255,
-                                          decoration:  InputDecoration(
-                                            hintText:  AppLocalizations.of(context)
-                                                .translate('ask_question'),
-                                            border: InputBorder.none,
-                                            counterText: "",
-                                          ),
-                                          maxLines: null,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _question = value;
-                                            });
-                                          },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: SvgPicture.asset(
+                                          'assets/icon/chevron.left.svg',
+                                          color: AppConstants.backgroundBlue,
+                                          height: screenHeight * 0.03,
                                         ),
                                       ),
                                     ),
-                                    SizedBox(
-                                      height: screenHeight*0.01,
-                                    ),
-                                    Container(
-                                      padding:
-                                      const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        // Set background color to white
-                                        borderRadius:
-                                        BorderRadius.circular(
-                                            10), // Make borders rounded
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: CheckboxListTile(
-                                              title: Text(
-                                                AppLocalizations.of(context)
-                                                    .translate('hide_my_name'),
-                                                style: TextStyle(
-                                                    color:
-                                                    Colors.black),
-                                              ),
-                                              value: _isHiddenName,
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  _isHiddenName =
-                                                  value!;
-                                                });
-                                              },
-                                              controlAffinity:
-                                              ListTileControlAffinity
-                                                  .leading,
-                                            ),
-                                          ),
-                                          Text(
-                                            '${_question.length}/255',
-                                            style: TextStyle(
-                                              color: _question
-                                                  .length <
-                                                  140
-                                                  ? Colors.green
-                                                  : _question.length <
-                                                  255
-                                                  ? Colors.yellow
-                                                  : Colors.red,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                  Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          AppLocalizations.of(context)
+                                              .translate('ask_question'),
+                                          style: const TextStyle(
+                                              fontSize: 25,
+                                              color: Colors.white),
+                                        )
+                                      ]),
+                                ],
                               ),
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: _question
-                                          .length ==
-                                          0
-                                          ? CupertinoColors.systemGrey
-                                          : AppConstants.buttonGreen,
-                                      foregroundColor: Colors.white),
-                                  onPressed: _asking
-                                      ? null
-                                      : () {
-                                    if (_question.isNotEmpty &&
-                                        _question.length <=
-                                            256) {
-                                      _askQuestion();
-                                    }
-                                  },
-                                  child: _asking
-                                      ? CircularProgressIndicator(
-                                    valueColor:
-                                    AlwaysStoppedAnimation<
-                                        Color>(
-                                        Colors.white),
-                                  )
-                                      : Text( AppLocalizations.of(context)
-                                      .translate('send'),),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    )
-                        : Padding(
-                      padding: EdgeInsets.only(top: 20),
-                          child: Text(
-                            AppLocalizations.of(context).translate('no_questions_allowed'),
-                                                style: TextStyle(color: Colors.white, fontSize: 20),
-                                              ),
-                        )
-                        : Padding(
-                      padding: EdgeInsets.only(top: 20),
-                          child: Text(
-              AppLocalizations.of(context).translate('session_not_started'),
-
-                                                style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
+                          _session != null
+                              ? _session!.questionsAllowed == 1
+                                  ? Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        child: SingleChildScrollView(
+                                          child: Column(
+                                            children: [
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  AppLocalizations.of(context)
+                                                      .translate('session'),
+                                                  style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 20),
                                                 ),
                                               ),
-                        ),
-                  ],
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  _session!.title ?? '',
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  AppLocalizations.of(context)
+                                                      .translate('speaker'),
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 20,
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  _session?.speakerName ?? '',
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  // Set background color to white
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0), // Make borders rounded
+                                                ),
+                                                child: Column(
+                                                  children: [
+                                                    Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        // Set background color to white
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                10.0), // Make borders rounded
+                                                      ),
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8),
+                                                        height:
+                                                            screenHeight * 0.3,
+                                                        child: TextField(
+                                                          maxLength: 255,
+                                                          decoration:
+                                                              InputDecoration(
+                                                            hintText: AppLocalizations
+                                                                    .of(context)
+                                                                .translate(
+                                                                    'ask_question'),
+                                                            border: InputBorder
+                                                                .none,
+                                                            counterText: "",
+                                                          ),
+                                                          maxLines: null,
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              _question = value;
+                                                            });
+                                                          },
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      height:
+                                                          screenHeight * 0.01,
+                                                    ),
+                                                    Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        // Set background color to white
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                10), // Make borders rounded
+                                                      ),
+                                                      child: Row(
+                                                        children: [
+                                                          Expanded(
+                                                            child:
+                                                                CheckboxListTile(
+                                                              title: Text(
+                                                                AppLocalizations.of(
+                                                                        context)
+                                                                    .translate(
+                                                                        'hide_my_name'),
+                                                                style: const TextStyle(
+                                                                    color: Colors
+                                                                        .black),
+                                                              ),
+                                                              value:
+                                                                  _isHiddenName,
+                                                              onChanged:
+                                                                  (value) {
+                                                                setState(() {
+                                                                  _isHiddenName =
+                                                                      value!;
+                                                                });
+                                                              },
+                                                              controlAffinity:
+                                                                  ListTileControlAffinity
+                                                                      .leading,
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            '${_question.length}/255',
+                                                            style: TextStyle(
+                                                              color: _question
+                                                                          .length <
+                                                                      140
+                                                                  ? Colors.green
+                                                                  : _question.length <
+                                                                          255
+                                                                      ? Colors
+                                                                          .yellow
+                                                                      : Colors
+                                                                          .red,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                width: double.infinity,
+                                                child: ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                      backgroundColor:
+                                                          _question.isEmpty
+                                                              ? CupertinoColors
+                                                                  .systemGrey
+                                                              : AppConstants
+                                                                  .buttonGreen,
+                                                      foregroundColor:
+                                                          Colors.white),
+                                                  onPressed: _asking
+                                                      ? null
+                                                      : () {
+                                                          if (_question
+                                                                  .isNotEmpty &&
+                                                              _question
+                                                                      .length <=
+                                                                  256) {
+                                                            _askQuestion();
+                                                          }
+                                                        },
+                                                  child: _asking
+                                                      ? const CircularProgressIndicator(
+                                                          valueColor:
+                                                              AlwaysStoppedAnimation<
+                                                                      Color>(
+                                                                  Colors.white),
+                                                        )
+                                                      : Text(
+                                                          AppLocalizations.of(
+                                                                  context)
+                                                              .translate(
+                                                                  'send'),
+                                                        ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Padding(
+                                      padding: const EdgeInsets.only(top: 20),
+                                      child: Text(
+                                        AppLocalizations.of(context)
+                                            .translate('no_questions_allowed'),
+                                        style: const TextStyle(
+                                            color: Colors.white, fontSize: 20),
+                                      ),
+                                    )
+                              : Padding(
+                                  padding: const EdgeInsets.only(top: 20),
+                                  child: Text(
+                                    AppLocalizations.of(context)
+                                        .translate('session_not_started'),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-        ),
+              ),
       ),
     );
   }
@@ -353,15 +386,15 @@ class _AskQuestionViewState extends State<AskQuestionView> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Başarılı'),
-              content: Text('Sorunuz başarıyla gönderildi!'),
+              title: const Text('Başarılı'),
+              content: const Text('Sorunuz başarıyla gönderildi!'),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(); // Dialog'u kapatır
                     Navigator.of(context).pop(); // Sayfadan çıkış yapar
                   },
-                  child: Text('Tamam'),
+                  child: const Text('Tamam'),
                 ),
               ],
             );
@@ -373,14 +406,15 @@ class _AskQuestionViewState extends State<AskQuestionView> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Hata'),
-              content: Text('Bir sorun meydana geldi, lütfen tekrar deneyin!'),
+              title: const Text('Hata'),
+              content:
+                  const Text('Bir sorun meydana geldi, lütfen tekrar deneyin!'),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(); // Dialog'u kapatır
                   },
-                  child: Text('Tamam'),
+                  child: const Text('Tamam'),
                 ),
               ],
             );
@@ -393,14 +427,15 @@ class _AskQuestionViewState extends State<AskQuestionView> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Hata'),
-            content: Text('Bir hata meydana geldi, lütfen tekrar deneyin!'),
+            title: const Text('Hata'),
+            content:
+                const Text('Bir hata meydana geldi, lütfen tekrar deneyin!'),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text('Tamam'),
+                child: const Text('Tamam'),
               ),
             ],
           );
@@ -419,7 +454,7 @@ class _AskQuestionViewState extends State<AskQuestionView> {
 
     try {
       final url = Uri.parse(
-          'https://app.kongrepad.com/api/v1/hall/${widget.hallId}/active-session');
+          'https://api.kongrepad.com/api/v1/hall/${widget.hallId}/active-session');
       final response = await http.get(
         url,
         headers: <String, String>{

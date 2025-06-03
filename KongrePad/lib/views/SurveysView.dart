@@ -84,7 +84,7 @@ class _SurveysViewState extends State<SurveysView> {
                           ),
                         ),
                       ),
-                      child: Container(
+                      child: SizedBox(
                         width: screenWidth,
                         child: Stack(
                           alignment: Alignment.centerLeft,
@@ -94,7 +94,7 @@ class _SurveysViewState extends State<SurveysView> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => MainPageView(
+                                      builder: (context) => const MainPageView(
                                             title: '',
                                           )),
                                 );
@@ -102,7 +102,7 @@ class _SurveysViewState extends State<SurveysView> {
                               child: Container(
                                 height: screenHeight * 0.05,
                                 width: screenHeight * 0.05,
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
                                   color:
                                       Colors.white, // Circular background color
@@ -123,7 +123,7 @@ class _SurveysViewState extends State<SurveysView> {
                                   Text(
                                     AppLocalizations.of(context)
                                         .translate('surveys'),
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontSize: 25, color: Colors.white),
                                   )
                                 ]),
@@ -133,7 +133,7 @@ class _SurveysViewState extends State<SurveysView> {
                     ),
                     SingleChildScrollView(
                       scrollDirection: Axis.vertical,
-                      child: Container(
+                      child: SizedBox(
                         height: screenHeight * 0.65,
                         width: screenWidth,
                         child: Column(

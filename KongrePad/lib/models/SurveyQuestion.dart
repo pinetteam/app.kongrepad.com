@@ -1,4 +1,3 @@
-
 import 'SurveyOption.dart';
 
 class SurveyQuestion {
@@ -35,14 +34,14 @@ class SurveyQuestion {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['id'] = this.id;
-    data['sort_order'] = this.sortOrder;
-    data['survey_id'] = this.surveyId;
-    data['selected_option'] = this.selectedOption;
-    data['question'] = this.question;
-    data['options'] = this.options?.map((e) => e.toJson()).toList();
-    data['status'] = this.status;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['sort_order'] = sortOrder;
+    data['survey_id'] = surveyId;
+    data['selected_option'] = selectedOption;
+    data['question'] = question;
+    data['options'] = options?.map((e) => e.toJson()).toList();
+    data['status'] = status;
     return data;
   }
 }
@@ -69,10 +68,10 @@ class SurveyQuestionsJSON {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['data'] = this.data?.map((e) => e.toJson()).toList();
-    data['errors'] = this.errors;
-    data['status'] = this.status;
+    data['errors'] = errors;
+    data['status'] = status;
     return data;
   }
 }
@@ -97,10 +96,10 @@ class SurveyQuestionJSON {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['data'] = this.data?.toJson();
-    data['errors'] = this.errors;
-    data['status'] = this.status;
+    data['errors'] = errors;
+    data['status'] = status;
     return data;
   }
 }

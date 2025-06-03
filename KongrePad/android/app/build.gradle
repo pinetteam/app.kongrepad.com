@@ -53,10 +53,9 @@ android {
     defaultConfig {
         applicationId "tr.com.pinet.kongrepad"
         minSdkVersion 28
-        compileSdkVersion 34
         targetSdkVersion 34
-        versionCode 16 // Versiyon kodunu her güncellemede artırın.
-        versionName "1.1.3"  // Versiyon adını istediğiniz gibi belirleyin.
+        versionCode 16
+        versionName "1.1.3"
         multiDexEnabled true
     }
     /*

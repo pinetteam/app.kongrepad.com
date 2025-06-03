@@ -34,9 +34,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
         url,
         headers: <String, String>{
           'Authorization': 'Bearer $token',
-
         },
-
       );
 
       if (response.statusCode == 200) {
@@ -59,7 +57,6 @@ class _ScoreGameViewState extends State<ScoreGameView> {
   @override
   initState() {
     super.initState();
-
 
     getData();
     print("User Total Point: ${scoreGame?.userTotalPoint}");
@@ -92,7 +89,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                             ),
                           ),
                           color: AppConstants.backgroundBlue),
-                      child: Container(
+                      child: SizedBox(
                         width: screenWidth,
                         child: Stack(
                           alignment: Alignment.centerLeft,
@@ -104,7 +101,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                               child: Container(
                                 height: screenHeight * 0.05,
                                 width: screenHeight * 0.05,
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
                                   color:
                                       Colors.white, // Circular background color
@@ -120,7 +117,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                               child: Text(
                                 AppLocalizations.of(context)
                                     .translate('points'),
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 25, color: Colors.white),
                               ),
                             ),
@@ -128,7 +125,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                         ),
                       ),
                     ),
-                    Container(
+                    SizedBox(
                       width: screenHeight * 0.3,
                       height: screenHeight * 0.3,
                       child: const Center(
@@ -140,7 +137,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                       ),
                     ),
                     Text("${scoreGame?.userTotalPoint ?? 0} ",
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: AppConstants.scoreGameGreen,
                             fontSize: 35,
                             fontWeight: FontWeight.bold)),
@@ -185,7 +182,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                             Text(
                               AppLocalizations.of(context)
                                   .translate('score_history'),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 25,
                                 color: Colors.white,
                               ),
@@ -230,7 +227,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                                 builder: (BuildContext context) {
                                   return AlertDialog(
                                     contentPadding: EdgeInsets.zero,
-                                    content: Container(
+                                    content: SizedBox(
                                       width: screenWidth * 0.9,
                                       height: screenHeight * 0.9,
                                       child: QRViewExample(
@@ -262,7 +259,7 @@ class _ScoreGameViewState extends State<ScoreGameView> {
                                 Text(
                                   AppLocalizations.of(context)
                                       .translate('scan_qr_code'),
-                                  style: TextStyle(fontSize: 25),
+                                  style: const TextStyle(fontSize: 25),
                                 ),
                               ],
                             )),
@@ -419,7 +416,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                   children: [
                     TextSpan(
                       text: '${addedPoints.toString()} ', // Dinamik puan
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.green),
                     ),
                     TextSpan(
@@ -429,7 +426,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                     TextSpan(
                       text:
                           '${scoreGame?.userTotalPoint.toString() ?? '0'}.', // Dinamik toplam puan
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.blue),
                     ),
                   ],

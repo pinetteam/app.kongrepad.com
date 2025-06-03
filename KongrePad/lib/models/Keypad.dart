@@ -1,4 +1,3 @@
-
 import 'KeypadOption.dart';
 
 class Keypad {
@@ -44,17 +43,17 @@ class Keypad {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['sort_order'] = this.sortOrder;
-    data['session_id'] = this.sessionId;
-    data['code'] = this.code;
-    data['title'] = this.title;
-    data['keypad'] = this.keypad;
-    data['voting_started_at'] = this.votingStartedAt;
-    data['voting_finished_at'] = this.votingFinishedAt;
-    data['options'] = this.options?.map((e) => e.toJson()).toList();
-    data['on_vote'] = this.onVote;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['sort_order'] = sortOrder;
+    data['session_id'] = sessionId;
+    data['code'] = code;
+    data['title'] = title;
+    data['keypad'] = keypad;
+    data['voting_started_at'] = votingStartedAt;
+    data['voting_finished_at'] = votingFinishedAt;
+    data['options'] = options?.map((e) => e.toJson()).toList();
+    data['on_vote'] = onVote;
     return data;
   }
 }
@@ -77,10 +76,10 @@ class KeypadsJSON {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['data'] = this.data?.map((e) => e.toJson()).toList();
-    data['errors'] = this.errors;
-    data['status'] = this.status;
+    data['errors'] = errors;
+    data['status'] = status;
     return data;
   }
 }
@@ -101,10 +100,10 @@ class KeypadJSON {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['data'] = this.data?.toJson();
-    data['errors'] = this.errors;
-    data['status'] = this.status;
+    data['errors'] = errors;
+    data['status'] = status;
     return data;
   }
 }

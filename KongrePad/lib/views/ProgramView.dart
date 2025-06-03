@@ -82,11 +82,12 @@ class _ProgramViewState extends State<ProgramView> {
     final token = prefs.getString('token');
 
     try {
-      final url = Uri.parse('https://app.kongrepad.com/api/v1/hall/$hallId');
+      final url = Uri.parse('https://api.kongrepad.com/api/v1/hall/$hallId');
       final response = await http.get(
         url,
         headers: <String, String>{
           'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
         },
       );
 
@@ -110,7 +111,7 @@ class _ProgramViewState extends State<ProgramView> {
   }
 
   String getLogoUrl(Program program) {
-    return "https://app.kongrepad.com/storage/program-logos/${program.logoName}.${program.logoExtension}";
+    return "https://api.kongrepad.com/storage/program-logos/${program.logoName}.${program.logoExtension}";
   }
 
   @override
@@ -159,9 +160,9 @@ class _ProgramViewState extends State<ProgramView> {
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 80),
-                            child: const Text(
+                          const Padding(
+                            padding: EdgeInsets.only(right: 80),
+                            child: Text(
                               "Bilimsel Program",
                               style:
                                   TextStyle(fontSize: 25, color: Colors.white),

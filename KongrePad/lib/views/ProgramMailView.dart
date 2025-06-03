@@ -63,13 +63,15 @@ double calculateTimeDifference(String start, String end) {
 }
 
 class ProgramMailView extends StatefulWidget {
-  const ProgramMailView({super.key, required this.programDay, required this.hallId});
+  const ProgramMailView(
+      {super.key, required this.programDay, required this.hallId});
 
   final ProgramDay programDay;
   final int hallId;
 
   @override
-  State<ProgramMailView> createState() => _ProgramMailViewState(programDay, hallId);
+  State<ProgramMailView> createState() =>
+      _ProgramMailViewState(programDay, hallId);
 }
 
 class _ProgramMailViewState extends State<ProgramMailView> {
@@ -93,7 +95,7 @@ class _ProgramMailViewState extends State<ProgramMailView> {
     }
 
     try {
-      final url = Uri.parse('https://app.kongrepad.com/api/v1/hall/$hallId');
+      final url = Uri.parse('https://api.kongrepad.com/api/v1/hall/$hallId');
       final response = await http.get(
         url,
         headers: <String, String>{
@@ -116,7 +118,8 @@ class _ProgramMailViewState extends State<ProgramMailView> {
 
   Future<void> _saveSelectionsToPreferences() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('selectedDocuments', documents.map((e) => e.toString()).toList());
+    prefs.setStringList(
+        'selectedDocuments', documents.map((e) => e.toString()).toList());
   }
 
   @override
@@ -135,253 +138,328 @@ class _ProgramMailViewState extends State<ProgramMailView> {
       backgroundColor: AppConstants.programBackgroundYellow,
       body: _loading
           ? const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-        ),
-      )
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
           : SafeArea(
-        child: Scrollbar(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: AppConstants.buttonYellow,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Scrollbar(
+                child: SingleChildScrollView(
+                  child: Column(
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SvgPicture.asset(
-                              'assets/icon/chevron.left.svg',
-                              color: AppConstants.buttonYellow,
-                              height: screenHeight * 0.03,
-                            ),
-                          ),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          color: AppConstants.buttonYellow,
                         ),
-                      ),
-                       Text(
-                        AppLocalizations.of(context).translate("send_mail"),
-                        style: TextStyle(fontSize: 25, color: Colors.white),
-                      ),
-                      const SizedBox(width: 55),
-                    ],
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.01),
-
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppConstants.programBackgroundYellow,
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        Text(
-                          hall?.title.toString() ?? "",
-                          style: const TextStyle(fontSize: 23, color: Colors.black),
-                        ),
-                        Text(
-                          translateDateToTurkish(programDay!.day.toString()),
-                          style: const TextStyle(fontSize: 20, color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: programDay?.programs?.length ?? 0,
-                  itemBuilder: (context, index) {
-                    final program = programDay!.programs![index];
-                    double heightFactor = calculateTimeDifference(program.startAt!, program.finishAt!);
-
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: screenWidth * 0.25,
-                                  decoration: BoxDecoration(
-                                    color: AppConstants.programBackgroundYellow,
-                                    border: Border.all(color: Colors.black),
-                                    borderRadius: BorderRadius.circular(14),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SvgPicture.asset(
+                                    'assets/icon/chevron.left.svg',
+                                    color: AppConstants.buttonYellow,
+                                    height: screenHeight * 0.03,
                                   ),
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              AppLocalizations.of(context)
+                                  .translate("send_mail"),
+                              style: const TextStyle(
+                                  fontSize: 25, color: Colors.white),
+                            ),
+                            const SizedBox(width: 55),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.01),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppConstants.programBackgroundYellow,
+                            border: Border.all(color: Colors.black),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            children: [
+                              Text(
+                                hall?.title.toString() ?? "",
+                                style: const TextStyle(
+                                    fontSize: 23, color: Colors.black),
+                              ),
+                              Text(
+                                translateDateToTurkish(
+                                    programDay!.day.toString()),
+                                style: const TextStyle(
+                                    fontSize: 20, color: Colors.black),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: programDay?.programs?.length ?? 0,
+                        itemBuilder: (context, index) {
+                          final program = programDay!.programs![index];
+                          double heightFactor = calculateTimeDifference(
+                              program.startAt!, program.finishAt!);
+
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              children: [
+                                IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        program.startAt ?? "",
-                                        style: const TextStyle(fontSize: 18, color: AppConstants.backgroundBlue),
-                                      ),
-                                      Expanded(
-                                        child: Container(
-                                          width: 2.0,
-                                          color: Colors.black,
-                                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                                      Container(
+                                        width: screenWidth * 0.25,
+                                        decoration: BoxDecoration(
+                                          color: AppConstants
+                                              .programBackgroundYellow,
+                                          border:
+                                              Border.all(color: Colors.black),
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                        ),
+                                        padding: const EdgeInsets.all(12),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              program.startAt ?? "",
+                                              style: const TextStyle(
+                                                  fontSize: 18,
+                                                  color: AppConstants
+                                                      .backgroundBlue),
+                                            ),
+                                            Expanded(
+                                              child: Container(
+                                                width: 2.0,
+                                                color: Colors.black,
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 4.0),
+                                              ),
+                                            ),
+                                            Text(
+                                              program.finishAt ?? "",
+                                              style: const TextStyle(
+                                                  fontSize: 18,
+                                                  color: AppConstants
+                                                      .backgroundBlue),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      Text(
-                                        program.finishAt ?? "",
-                                        style: const TextStyle(fontSize: 18, color: AppConstants.backgroundBlue),
+                                      const SizedBox(width: 10),
+                                      Flexible(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppConstants.hallsButtonBlue,
+                                            border:
+                                                Border.all(color: Colors.black),
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                          ),
+                                          padding: const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                program.title.toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 18,
+                                                    color: Colors.black),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              if (program.chairs!.isNotEmpty)
+                                                Text(
+                                                  (program.chairs!.length == 1
+                                                          ? AppLocalizations.of(
+                                                                  context)
+                                                              .translate(
+                                                                  "moderator")
+                                                          : AppLocalizations.of(
+                                                                  context)
+                                                              .translate(
+                                                                  "moderators")) +
+                                                      program.chairs!
+                                                          .map((chair) =>
+                                                              chair.fullName)
+                                                          .join(', '),
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      color: CupertinoColors
+                                                          .black),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              if (program.description != null)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 8.0),
+                                                  child: Text(
+                                                    program.description
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontSize: 16,
+                                                        color: CupertinoColors
+                                                            .black),
+                                                    maxLines: 3,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              if (program.sessions!.isNotEmpty)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 8.0),
+                                                  child: Column(
+                                                    children: program.sessions!
+                                                        .map((session) {
+                                                      bool isDisabled = session
+                                                              .isDocumentRequested ??
+                                                          false;
+                                                      bool canShare = session
+                                                              .documentSharingViaEmail ??
+                                                          false;
+
+                                                      return Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          border: Border.all(
+                                                              color:
+                                                                  Colors.black),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          color: isDisabled
+                                                              ? Colors
+                                                                  .grey.shade300
+                                                              : Colors.white,
+                                                        ),
+                                                        child: CheckboxListTile(
+                                                          title: Text(
+                                                            session.title!,
+                                                            style: TextStyle(
+                                                              fontSize:
+                                                                  screenWidth *
+                                                                      0.04,
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                          value: documents
+                                                              .contains(session
+                                                                  .documentId),
+                                                          onChanged:
+                                                              (isDisabled ||
+                                                                      !canShare)
+                                                                  ? null
+                                                                  : (bool?
+                                                                      selected) {
+                                                                      setState(
+                                                                          () {
+                                                                        if (selected ==
+                                                                            true) {
+                                                                          documents
+                                                                              .add(session.documentId!);
+                                                                        } else {
+                                                                          documents
+                                                                              .remove(session.documentId!);
+                                                                        }
+                                                                      });
+                                                                      _saveSelectionsToPreferences();
+                                                                    },
+                                                          activeColor: isDisabled
+                                                              ? Colors.grey
+                                                              : AppConstants
+                                                                  .hallsButtonBlue,
+                                                          checkColor:
+                                                              Colors.white,
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-
-                                Flexible(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: AppConstants.hallsButtonBlue,
-                                      border: Border.all(color: Colors.black),
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          program.title.toString(),
-                                          style: const TextStyle(fontSize: 18, color: Colors.black),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        if (program.chairs!.isNotEmpty)
-                                          Text(
-                                            (program.chairs!.length == 1
-                                                ?  AppLocalizations.of(context)
-                                                .translate("moderator")
-                                                : AppLocalizations.of(context)
-                                                .translate("moderators")) +
-                                                program.chairs!.map((chair) => chair.fullName).join(', '),
-                                            style: const TextStyle(fontSize: 16, color: CupertinoColors.black),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        if (program.description != null)
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 8.0),
-                                            child: Text(
-                                              program.description.toString(),
-                                              style: const TextStyle(fontSize: 16, color: CupertinoColors.black),
-                                              maxLines: 3,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-
-                                        if (program.sessions!.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 8.0),
-                                            child: Column(
-                                              children: program.sessions!.map((session) {
-                                                bool isDisabled = session.isDocumentRequested ?? false;
-                                                bool canShare = session.documentSharingViaEmail ?? false;
-
-                                                return Container(
-                                                  decoration: BoxDecoration(
-                                                    border: Border.all(color: Colors.black),
-                                                    borderRadius: BorderRadius.circular(8),
-                                                    color: isDisabled
-                                                        ? Colors.grey.shade300
-                                                        : Colors.white,
-                                                  ),
-                                                  child: CheckboxListTile(
-                                                    title: Text(
-                                                      session.title!,
-                                                      style: TextStyle(
-                                                        fontSize: screenWidth * 0.04,
-                                                      ),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                    value: documents.contains(session.documentId),
-                                                    onChanged: (isDisabled || !canShare)
-                                                        ? null
-                                                        : (bool? selected) {
-                                                      setState(() {
-                                                        if (selected == true) {
-                                                          documents.add(session.documentId!);
-                                                        } else {
-                                                          documents.remove(session.documentId!);
-                                                        }
-                                                      });
-                                                      _saveSelectionsToPreferences();
-                                                    },
-                                                    activeColor: isDisabled
-                                                        ? Colors.grey
-                                                        : AppConstants.hallsButtonBlue,
-                                                    checkColor: Colors.white,
-                                                  ),
-                                                );
-                                              }).toList(),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-
-                Container(
-                  width: screenWidth,
-                  height: screenHeight * 0.1,
-                  decoration: BoxDecoration(color: AppConstants.buttonYellow),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppConstants.programBackgroundYellow,
-                        ),
-                        onPressed: _sending ? null : () => _sendMail(),
-                        child: _sending
-                            ? CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        )
-                            : Row(
+                      Container(
+                        width: screenWidth,
+                        height: screenHeight * 0.1,
+                        decoration: const BoxDecoration(
+                            color: AppConstants.buttonYellow),
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            SvgPicture.asset(
-                              'assets/icon/envelope.open.fill.svg',
-                              color: Colors.black,
-                              height: screenHeight * 0.02,
-                            ),
-                            const SizedBox(width: 10),
-                             Text(
-                              AppLocalizations.of(context)
-                                  .translate("send"),  style: TextStyle(fontSize: 20, color: Colors.black),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    AppConstants.programBackgroundYellow,
+                              ),
+                              onPressed: _sending ? null : () => _sendMail(),
+                              child: _sending
+                                  ? const CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/icon/envelope.open.fill.svg',
+                                          color: Colors.black,
+                                          height: screenHeight * 0.02,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          AppLocalizations.of(context)
+                                              .translate("send"),
+                                          style: const TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.black),
+                                        ),
+                                      ],
+                                    ),
                             ),
                           ],
                         ),
@@ -389,11 +467,8 @@ class _ProgramMailViewState extends State<ProgramMailView> {
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -428,12 +503,16 @@ class _ProgramMailViewState extends State<ProgramMailView> {
           AppLocalizations.of(context).translate("mail_sending_success"),
         );
       } else {
-        await _showDialog( AppLocalizations.of(context).translate("error"),
-          AppLocalizations.of(context).translate("mail_sending_error"),);
+        await _showDialog(
+          AppLocalizations.of(context).translate("error"),
+          AppLocalizations.of(context).translate("mail_sending_error"),
+        );
       }
     } catch (e) {
-      await _showDialog(  AppLocalizations.of(context).translate("error"),
-        AppLocalizations.of(context).translate("mail_sending_error"),);
+      await _showDialog(
+        AppLocalizations.of(context).translate("error"),
+        AppLocalizations.of(context).translate("mail_sending_error"),
+      );
     } finally {
       setState(() {
         _sending = false;
@@ -450,8 +529,9 @@ class _ProgramMailViewState extends State<ProgramMailView> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child:  Text(  AppLocalizations.of(context).translate("ok"),
-                ),
+              child: Text(
+                AppLocalizations.of(context).translate("ok"),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },

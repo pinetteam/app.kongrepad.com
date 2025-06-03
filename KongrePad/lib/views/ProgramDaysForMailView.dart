@@ -115,7 +115,7 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                           ),
                         ),
                       ),
-                      child: Container(
+                      child: SizedBox(
                         width: screenWidth,
                         child: Stack(
                           alignment: Alignment.centerLeft,
@@ -127,7 +127,7 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                               child: Container(
                                 height: screenHeight * 0.05,
                                 width: screenHeight * 0.05,
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
                                   color:
                                       Colors.white, // Circular background color
@@ -148,7 +148,7 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                                   Text(
                                     AppLocalizations.of(context)
                                         .translate("select_day"),
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontSize: 25, color: Colors.white),
                                   )
                                 ]),
@@ -219,7 +219,8 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                                             Flexible(
                                               child: Text(
                                                 translatedDay,
-                                                style: TextStyle(fontSize: 20),
+                                                style: const TextStyle(
+                                                    fontSize: 20),
                                               ),
                                             ),
                                           ],
@@ -235,7 +236,7 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                       width: screenWidth,
                       height: screenHeight * 0.1,
                       decoration:
-                          BoxDecoration(color: AppConstants.buttonYellow),
+                          const BoxDecoration(color: AppConstants.buttonYellow),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -249,7 +250,7 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                                     _sendAllMail();
                                   },
                             child: _sending
-                                ? CircularProgressIndicator(
+                                ? const CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                         Colors.white),
                                   )
@@ -262,13 +263,13 @@ class _ProgramDaysForMailViewState extends State<ProgramDaysForMailView> {
                                         color: Colors.black,
                                         height: screenHeight * 0.02,
                                       ),
-                                      SizedBox(
+                                      const SizedBox(
                                         width: 10,
                                       ),
                                       Text(
                                         AppLocalizations.of(context)
                                             .translate("send_all_documents"),
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontSize: 17, color: Colors.black),
                                       ),
                                     ],

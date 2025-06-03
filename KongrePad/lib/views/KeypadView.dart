@@ -9,7 +9,6 @@ import '../l10n/app_localizations.dart';
 import '../models/Keypad.dart';
 import '../utils/app_constants.dart';
 
-
 class KeypadView extends StatefulWidget {
   const KeypadView({super.key, required this.hallId});
 
@@ -36,12 +35,13 @@ class _KeypadViewState extends State<KeypadView> {
     getData();
     _subscribeToPusher();
   }
+
   @override
   void dispose() {
     // KeypadView kapandığında 'keypad-updates' kanalından aboneliği kaldırır
     PusherService().unsubscribeFromChannel('keypad-updates');
     super.dispose();
-    }
+  }
 
   Future<void> getData() async {
     print('Starting getData function for hallId: $hallId');
@@ -57,7 +57,8 @@ class _KeypadViewState extends State<KeypadView> {
 
     try {
       print('Making API request for active keypad for hallId $hallId...');
-      final url = Uri.parse('http://app.kongrepad.com/api/v1/hall/$hallId/active-keypad');
+      final url = Uri.parse(
+          'https://api.kongrepad.com/api/v1/hall/$hallId/active-keypad');
       print('Requesting URL: $url');
 
       final response = await http.get(
@@ -81,7 +82,9 @@ class _KeypadViewState extends State<KeypadView> {
           keypad = keypadJson.data;
           _loading = false;
           // Artık `keypad` alanını kullanarak soru metnini gösteriyoruz
-          questionText = keypad?.keypad?.isNotEmpty == true ? keypad?.keypad : "Soru mevcut değil";
+          questionText = keypad?.keypad?.isNotEmpty == true
+              ? keypad?.keypad
+              : "Soru mevcut değil";
         });
 
         if (keypad != null) {
@@ -115,7 +118,8 @@ class _KeypadViewState extends State<KeypadView> {
       pusher.onEvent = (PusherEvent event) {
         print('Pusher event received: ${event.toString()}');
 
-        if (event.channelName == 'keypad-updates' && event.eventName == 'keypad-activated') {
+        if (event.channelName == 'keypad-updates' &&
+            event.eventName == 'keypad-activated') {
           print('Pusher keypad update received: ${event.data}');
 
           if (event.data != null && event.data!.isNotEmpty) {
@@ -159,88 +163,94 @@ class _KeypadViewState extends State<KeypadView> {
       child: Scaffold(
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
             : keypad?.options?.isNotEmpty == true
-            ? Container(
-          height: screenHeight,
-          alignment: Alignment.center,
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                height: screenHeight * 0.11,
-                decoration: const BoxDecoration(
-                  color: AppConstants.backgroundBlue,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.white, // Border color
-                      width: 1, // Border width
+                ? Container(
+                    height: screenHeight,
+                    alignment: Alignment.center,
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          height: screenHeight * 0.11,
+                          decoration: const BoxDecoration(
+                            color: AppConstants.backgroundBlue,
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Colors.white, // Border color
+                                width: 1, // Border width
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            AppLocalizations.of(context)
+                                .translate("please_select_answer"),
+                            style: const TextStyle(fontSize: 22, color: Colors.white),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            questionText ?? "", // Soru metnini gösteriyoruz
+                            style: const TextStyle(
+                                fontSize: 25, color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          child: SizedBox(
+                            height: screenHeight * 0.65,
+                            width: screenWidth,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: keypad!.options!.map((option) {
+                                print('Keypad ID: ${keypad?.id}');
+
+                                print(
+                                    'Rendering option: ${option.option} with id: ${option.id}');
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SizedBox(
+                                    width: screenWidth * 1,
+                                    height: screenHeight * 0.10,
+                                    child: ElevatedButton(
+                                        onPressed: () {
+                                          print(
+                                              'Option selected: ${option.option} (ID: ${option.id})');
+                                          _sendAnswer(option.id!);
+                                        },
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                option.option.toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 18),
+                                              ),
+                                            ),
+                                          ],
+                                        )),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      AppLocalizations.of(context)
+                          .translate("no_active_keypad"),
+                      style: const TextStyle(fontSize: 20, color: Colors.white),
                     ),
                   ),
-                ),
-                child: Text(
-                    AppLocalizations.of(context)
-                        .translate("please_select_answer"),style:  TextStyle(fontSize: 22, color: Colors.white),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  questionText ?? "", // Soru metnini gösteriyoruz
-                  style: const TextStyle(fontSize: 25, color: Colors.white),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: Container(
-                  height: screenHeight * 0.65,
-                  width: screenWidth,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: keypad!.options!.map((option) {
-                      print('Keypad ID: ${keypad?.id}');
-
-                      print('Rendering option: ${option.option} with id: ${option.id}');
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: SizedBox(
-                          width: screenWidth * 1,
-                          height: screenHeight*0.10,
-                          child: ElevatedButton(
-                              onPressed: () {
-                                print('Option selected: ${option.option} (ID: ${option.id})');
-                                _sendAnswer(option.id!);
-                              },
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      option.option.toString(),
-                                      style: const TextStyle(fontSize: 18),
-                                    ),
-                                  ),
-                                ],
-                              )),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        )
-            : Center(
-          child: Text(
-            AppLocalizations.of(context).translate("no_active_keypad"),
-            style: const TextStyle(fontSize: 20, color: Colors.white),
-          ),
-        ),
       ),
     );
   }
@@ -271,7 +281,8 @@ class _KeypadViewState extends State<KeypadView> {
     // İstek gövdesini oluşturuyoruz
     final body = jsonEncode({
       'option': answerId,
-      'participant_id': 123, // Geçici olarak participant_id ekliyoruz (gerçek değerle değiştirin)
+      'participant_id':
+          123, // Geçici olarak participant_id ekliyoruz (gerçek değerle değiştirin)
       'keypad_id': keypad?.id, // Keypad ID'yi ekliyoruz
     });
     print('POST Body: $body'); // Gönderilen JSON'u logluyoruz
@@ -315,7 +326,8 @@ class _KeypadViewState extends State<KeypadView> {
           );
         }
       } else {
-        print('Vote submission failed with status code: ${response.statusCode}');
+        print(
+            'Vote submission failed with status code: ${response.statusCode}');
         _showDialog(
           AppLocalizations.of(context).translate('error'),
           AppLocalizations.of(context).translate('vote_submission_failed'),
@@ -332,7 +344,6 @@ class _KeypadViewState extends State<KeypadView> {
         _sending = false;
       });
     }
-
   }
 
   // Bu fonksiyon AlertDialog göstermek için kullanılıyor
@@ -345,7 +356,7 @@ class _KeypadViewState extends State<KeypadView> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child:  Text(AppLocalizations.of(context).translate("ok")),
+              child: Text(AppLocalizations.of(context).translate("ok")),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -355,7 +366,6 @@ class _KeypadViewState extends State<KeypadView> {
       },
     );
   }
-
 }
 
 class PusherService {

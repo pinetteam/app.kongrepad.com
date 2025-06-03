@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AlertService {
-  void showAlertDialog(BuildContext context, {String? title, String? content, VoidCallback? onDismiss}) {
+  void showAlertDialog(BuildContext context,
+      {String? title, String? content, VoidCallback? onDismiss}) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -10,7 +11,7 @@ class AlertService {
           content: Text(content ?? ''),
           actions: <Widget>[
             TextButton(
-              child: Text("OK"),
+              child: const Text("OK"),
               onPressed: () {
                 Navigator.of(context).pop(); // Dismiss the dialog
                 if (onDismiss != null) {

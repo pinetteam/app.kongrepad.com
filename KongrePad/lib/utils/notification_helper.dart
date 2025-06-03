@@ -12,8 +12,8 @@ Future<void> checkNotificationPermission(BuildContext context) async {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Bildirim İzni Gerekli"),
-          content: Text(
+          title: const Text("Bildirim İzni Gerekli"),
+          content: const Text(
               "Bildirimlerimizi almak için lütfen bildirim izinlerini açın. Bu sayede etkinliklerden haberdar olabilirsiniz."),
           actions: [
             TextButton(
@@ -21,14 +21,14 @@ Future<void> checkNotificationPermission(BuildContext context) async {
                 Navigator.of(context).pop(); // Dialogu kapat
                 // Burada başka bir işlem yapmak isterseniz ekleyebilirsiniz.
               },
-              child: Text("Hayır, teşekkürler"),
+              child: const Text("Hayır, teşekkürler"),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Önce dialogu kapat
                 AppSettings.openAppSettings(type: AppSettingsType.notification);
               },
-              child: Text("İzin Ver"),
+              child: const Text("İzin Ver"),
             ),
           ],
         );

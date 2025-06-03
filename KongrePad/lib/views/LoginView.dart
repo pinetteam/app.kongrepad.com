@@ -297,15 +297,13 @@ class _LoginViewState extends State<LoginView> {
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        text: AppLocalizations.of(context)
-                                .translate('kvkk_acceptance') +
-                            ' ',
+                        text:
+                            '${AppLocalizations.of(context).translate('kvkk_acceptance')} ',
                         style: const TextStyle(color: Colors.black),
                         children: [
                           TextSpan(
-                            text: '\n' +
-                                AppLocalizations.of(context)
-                                    .translate('privacy_policy_title'),
+                            text:
+                                '\n${AppLocalizations.of(context).translate('privacy_policy_title')}',
                             style: const TextStyle(
                               color: Colors.black,
                               decoration: TextDecoration.underline,

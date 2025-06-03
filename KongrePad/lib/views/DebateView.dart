@@ -179,20 +179,21 @@ class _DebateViewState extends State<DebateView> {
                         width: screenWidth,
                         child: Text(
                           AppLocalizations.of(context).translate('debate'),
-                          style: TextStyle(fontSize: 25, color: Colors.white),
+                          style: const TextStyle(
+                              fontSize: 25, color: Colors.white),
                         ),
                       ),
                     ),
                     Text(
                       AppLocalizations.of(context)
                           .translate('please_select_option'),
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                      style: const TextStyle(fontSize: 18, color: Colors.white),
                       textAlign: TextAlign.center,
                     ),
                     SingleChildScrollView(
                       scrollDirection: Axis.vertical,
                       child: debate != null
-                          ? Container(
+                          ? SizedBox(
                               height: screenHeight * 0.65,
                               width: screenWidth,
                               child: Column(
@@ -258,8 +259,8 @@ class _DebateViewState extends State<DebateView> {
                           : Text(
                               AppLocalizations.of(context)
                                   .translate('no_active_debate'),
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 18),
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 18),
                             ),
                     ),
                   ],

@@ -1,267 +1,423 @@
-import 'dart:convert';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import '../l10n/app_localizations.dart';
-import '../models/Document.dart';
-import '../models/Participant.dart';
-import '../models/Session.dart';
 import '../utils/app_constants.dart';
-import 'AskQuestionView.dart';
+import '../services/session_service.dart';
 
 class SessionView extends StatefulWidget {
-  const SessionView({super.key, required this.hallId});
-
   final int hallId;
+
+  const SessionView({Key? key, required this.hallId}) : super(key: key);
 
   @override
   State<SessionView> createState() => _SessionViewState();
 }
 
 class _SessionViewState extends State<SessionView> {
-  Session? session;
-  Document? document;
-  Participant? participant;
+  final SessionService _sessionService = SessionService();
   bool _loading = true;
+  bool _hasError = false;
+  String? _errorMessage;
+  String? _pdfUrl;
+  String? _localPdfPath;
+  List<Map<String, dynamic>>? _questions;
+  final TextEditingController _questionController = TextEditingController();
+  int _currentPage = 0;
+  int _totalPages = 0;
+  bool _isReady = false;
+
+  Future<void> _downloadAndSavePdf() async {
+    if (_pdfUrl == null) return;
+
+    try {
+      print('PDF indiriliyor: $_pdfUrl');
+
+      final response = await http.get(Uri.parse(_pdfUrl!));
+      if (response.statusCode != 200) {
+        throw Exception('PDF indirilemedi: ${response.statusCode}');
+      }
+
+      final bytes = response.bodyBytes;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/session_document_${widget.hallId}.pdf');
+      await file.writeAsBytes(bytes);
+
+      print('PDF kaydedildi: ${file.path}');
+
+      if (mounted) {
+        setState(() {
+          _localPdfPath = file.path;
+        });
+      }
+    } catch (e) {
+      print('PDF download hatası: $e');
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'PDF indirilemedi: $e';
+          _loading = false;
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    getData();
+    _initializeSession();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Size screenSize = MediaQuery.of(context).size;
-    double screenWidth = screenSize.width;
-    double screenHeight = screenSize.height;
-    return Scaffold(
-        body: _loading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : Column(children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  height: 80,
-                  decoration: const BoxDecoration(
-                    color: AppConstants.backgroundBlue,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.white, // Border color
-                        width: 1, // Border width
-                      ),
-                    ),
-                  ),
-                  child: Container(
-                    width: screenWidth,
-                    child: Stack(
-                      alignment: Alignment.centerLeft,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            height: screenHeight * 0.05,
-                            width: screenHeight * 0.05,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white, // Circular background color
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SvgPicture.asset(
-                                'assets/icon/chevron.left.svg',
-                                color: AppConstants.backgroundBlue,
-                                height: screenHeight * 0.03,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                AppLocalizations.of(context)
-                                    .translate('watch_presentation'),
-                                style: TextStyle(
-                                    fontSize: 25, color: Colors.white),
-                              ),
-                            ]),
-                      ],
-                    ),
-                  ),
-                ),
-                session != null &&
-                        document != null &&
-                        document?.allowedToReview == 1
-                    ? Column(
-                        children: [
-                          Container(
-                            height: screenHeight * 0.8,
-                            child: SfPdfViewer.network(
-                                'https://app.kongrepad.com/storage/documents/${document?.fileName}.${document?.fileExtension}'),
-                          ),
-                          SizedBox(height: screenHeight * 0.01),
-                          SizedBox(
-                            width: screenWidth * 0.45,
-                            height: 60,
-                            child: ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor: WidgetStateProperty.all<Color>(Colors.redAccent),
-                                foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-                                padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
-                                  EdgeInsets.symmetric(
-                                    vertical: screenHeight * 0.015, // Ekran yüksekliğine göre padding
-                                    horizontal: screenWidth * 0.05, // Ekran genişliğine göre padding
-                                  ),
-                                ),
-                                shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                              ),
-                              onPressed: () {
-                                if (participant?.type! != "attendee") {
-                                  // todo: alert soru sorma izniniz yok
-                                } else {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => AskQuestionView(hallId: widget.hallId),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icon/questionmark.svg',
-                                    color: Colors.white,
-                                    height: screenHeight * 0.05,
-                                  ),
-                                  SizedBox(width: screenWidth * 0.02),
-                                  Flexible(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        AppLocalizations.of(context).translate('ask_question'),
-                                        style: TextStyle(
-                                          fontSize: screenWidth * 0.045,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                          ),
-                        ],
-                      )
-                    : Container(
-                        height: screenHeight * 0.8,
-                        alignment: Alignment.center,
-                        child: session == null
-                            ? Text(
-                                AppLocalizations.of(context)
-                                    .translate('no_active_session'),
-                                style: TextStyle(
-                                    fontSize: 25, color: Colors.white),
-                              )
-                            : document == null
-                                ? Text(
-                                    AppLocalizations.of(context)
-                                        .translate('no_active_document'),
-                                    style: TextStyle(
-                                        fontSize: 25, color: Colors.white),
-                                  )
-                                : Padding(
-                                    padding: EdgeInsets.all(25),
-                                    child: Text(
-                                      AppLocalizations.of(context)
-                                          .translate('preview_closed'),
-                                      style: TextStyle(
-                                          fontSize: 25, color: Colors.white),
-                                    ),
-                                  ),
-                      ),
-              ]));
-  }
-
-  Future<void> getData() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
+  Future<void> _initializeSession() async {
     try {
-      final url = Uri.parse(
-          'https://app.kongrepad.com/api/v1/hall/${widget.hallId}/active-session');
-      final response = await http.get(
-        url,
-        headers: <String, String>{
-          'Authorization': 'Bearer $token',
-        },
-      );
+      setState(() {
+        _loading = true;
+        _hasError = false;
+        _errorMessage = null;
+      });
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        final sessionJson = SessionJSON.fromJson(jsonData);
+      print('Session başlatılıyor - Hall ID: ${widget.hallId}');
+
+      final streamData = await _sessionService.getSessionStream(widget.hallId);
+      if (streamData == null) {
         setState(() {
-          session = sessionJson.data!;
+          _loading = false;
+          _hasError = true;
+          _errorMessage = 'Oturum bilgileri alınamadı';
+        });
+        return;
+      }
+
+      print('Stream data alındı: $streamData');
+
+      if (streamData['pdf_url'] == null) {
+        setState(() {
+          _loading = false;
+          _hasError = true;
+          _errorMessage = 'Bu oturumda henüz bir doküman paylaşılmadı';
+        });
+        return;
+      }
+
+      setState(() {
+        _pdfUrl = streamData['pdf_url'];
+      });
+
+      await _downloadAndSavePdf();
+
+      // Questions'ı yükle
+      final questions =
+          await _sessionService.getSessionQuestions(widget.hallId);
+      if (mounted && questions != null) {
+        setState(() {
+          _questions = questions;
+        });
+      }
+
+      if (mounted) {
+        setState(() {
           _loading = false;
         });
       }
     } catch (e) {
-      print('Error: $e');
-    }
-
-    try {
-      final url = Uri.parse(
-          'https://app.kongrepad.com/api/v1/hall/${widget.hallId}/active-document');
-      final response = await http.get(
-        url,
-        headers: <String, String>{
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        final documentJson = DocumentJSON.fromJson(jsonData);
+      print('Session initialization hatası: $e');
+      if (mounted) {
         setState(() {
-          document = documentJson.data!;
+          _loading = false;
+          _hasError = true;
+          _errorMessage = 'Oturum yüklenirken bir hata oluştu: $e';
         });
       }
-    } catch (e) {
-      print('Error: $e');
     }
+  }
+
+  Future<void> _askQuestion() async {
+    if (_questionController.text.trim().isEmpty) return;
+
     try {
-      final url = Uri.parse('http://app.kongrepad.com/api/v1/participant');
-      final response = await http.get(
-        url,
-        headers: <String, String>{
-          'Authorization': 'Bearer $token',
-        },
+      final success = await _sessionService.askQuestion(
+        widget.hallId,
+        _questionController.text.trim(),
       );
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        final participantJson = ParticipantJSON.fromJson(jsonData);
-        setState(() {
-          participant = participantJson.data;
-        });
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text(AppLocalizations.of(context).translate('question_sent')),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _questionController.clear();
+
+          // Questions'ı yenile
+          final questions =
+              await _sessionService.getSessionQuestions(widget.hallId);
+          if (mounted && questions != null) {
+            setState(() {
+              _questions = questions;
+            });
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  AppLocalizations.of(context).translate('question_error')),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
-      print('Error: $e');
+      print('Question gönderme hatası: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Soru gönderilirken hata oluştu: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
+  }
+
+  Widget _buildPdfViewer() {
+    if (_localPdfPath == null) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.picture_as_pdf, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('Doküman bulunamadı'),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: PDFView(
+            filePath: _localPdfPath!,
+            enableSwipe: true,
+            swipeHorizontal: false,
+            autoSpacing: false,
+            pageFling: true,
+            pageSnap: true,
+            defaultPage: _currentPage,
+            fitPolicy: FitPolicy.BOTH,
+            preventLinkNavigation: false,
+            onRender: (pages) {
+              setState(() {
+                _totalPages = pages!;
+                _isReady = true;
+              });
+            },
+            onError: (error) {
+              print('PDF viewer hatası: $error');
+              setState(() {
+                _hasError = true;
+                _errorMessage = 'PDF görüntülenirken hata oluştu: $error';
+              });
+            },
+            onPageError: (page, error) {
+              print('PDF sayfa hatası: $page - $error');
+            },
+            onViewCreated: (PDFViewController pdfViewController) {
+              // PDF controller ayarları
+            },
+            onPageChanged: (int? page, int? total) {
+              setState(() {
+                _currentPage = page ?? 0;
+              });
+            },
+          ),
+        ),
+        if (_isReady)
+          Container(
+            padding: const EdgeInsets.all(8.0),
+            color: Colors.grey[200],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Sayfa ${_currentPage + 1} / $_totalPages',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildContent() {
+    if (_loading) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Oturum yükleniyor...'),
+          ],
+        ),
+      );
+    }
+
+    if (_hasError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red[300],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage ?? 'Bir hata oluştu',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _initializeSession,
+              child: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // PDF Viewer
+        Expanded(
+          flex: 2,
+          child: _buildPdfViewer(),
+        ),
+        // Questions Section
+        Expanded(
+          flex: 1,
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8.0),
+                color: Colors.grey[100],
+                child: Row(
+                  children: [
+                    const Icon(Icons.question_answer, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Sorular (${_questions?.length ?? 0})',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _questions == null || _questions!.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Henüz soru sorulmamış',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _questions!.length,
+                        itemBuilder: (context, index) {
+                          final question = _questions![index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                              vertical: 4.0,
+                            ),
+                            child: ListTile(
+                              leading: const Icon(Icons.help_outline),
+                              title: Text(
+                                question['question'] ?? '',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              subtitle: Text(
+                                question['participant']?['full_name'] ??
+                                    'Anonim',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              // Question Input
+              Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Colors.grey[300]!)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _questionController,
+                        decoration: InputDecoration(
+                          hintText: AppLocalizations.of(context)
+                              .translate('ask_question_hint'),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                        maxLines: 2,
+                        minLines: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    FloatingActionButton.small(
+                      onPressed: _askQuestion,
+                      child: const Icon(Icons.send),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).translate('session')),
+        backgroundColor: AppConstants.backgroundBlue,
+        actions: [
+          if (_localPdfPath != null)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _initializeSession,
+              tooltip: 'Yenile',
+            ),
+        ],
+      ),
+      body: _buildContent(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _questionController.dispose();
+    super.dispose();
   }
 }

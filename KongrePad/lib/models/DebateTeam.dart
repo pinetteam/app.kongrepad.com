@@ -30,14 +30,14 @@ class DebateTeam {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['debate_id'] = this.debateId;
-    data['code'] = this.code;
-    data['logo_name'] = this.logoName;
-    data['logo_extension'] = this.logoExtension;
-    data['title'] = this.title;
-    data['description'] = this.description;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['debate_id'] = debateId;
+    data['code'] = code;
+    data['logo_name'] = logoName;
+    data['logo_extension'] = logoExtension;
+    data['title'] = title;
+    data['description'] = description;
     return data;
   }
 }

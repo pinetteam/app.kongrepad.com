@@ -193,244 +193,655 @@ class _MainPageViewState extends State<MainPageView>
           ? const Center(
               child: CircularProgressIndicator(),
             )
-          : Column(
-              children: [
-                Image.network(
-                  meeting != null
-                      ? "https://app.kongrepad.com/storage/meeting-banners/${meeting!.bannerName}.${meeting!.bannerExtension}"
-                      : "",
-                ),
-                Stack(
-                  alignment: Alignment.topCenter,
+          : SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
                   children: [
-                    LowerHalfEllipse(screenWidth, screenHeight * 0.07),
-                    Column(
-                      children: [
-                        SizedBox(height: screenHeight * 0.01),
-                        Text(
-                          "${participant?.fullName}",
-                          style: const TextStyle(
-                              fontSize: 25, color: Colors.white),
-                        ),
-                        SizedBox(
-                          height: screenHeight * 0.04,
-                        ),
-                        Container(
-                          width: screenWidth * 0.95,
-                          height: screenHeight * 0.002,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              'assets/icon/chevron.left.svg',
-                              color: Colors.white,
-                              height: screenHeight * 0.02,
-                            ),
-                            SizedBox(
-                              width: screenWidth * 0.8,
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Container(
-                                  height: screenHeight * 0.07,
-                                  child: Row(
-                                    children: virtualStands?.map((stand) {
-                                          return Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: GestureDetector(
-                                                onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          VirtualStandView(
-                                                              stand: stand),
-                                                    ),
-                                                  );
-                                                },
-                                                child: Padding(
-                                                  padding: EdgeInsets.all(5),
-                                                  child: Image.network(
-                                                    'https://app.kongrepad.com/storage/virtual-stands/${stand.fileName}.${stand.fileExtension}',
-                                                    fit: BoxFit.contain,
-                                                  ),
-                                                )),
-                                          );
-                                        }).toList() ??
-                                        [],
-                                  ),
-                                ),
+                    SizedBox(
+                      height: 200,
+                      child: Image.network(
+                        meeting != null &&
+                                meeting!.bannerName != null &&
+                                meeting!.bannerExtension != null
+                            ? "https://api.kongrepad.com/storage/meeting-banners/${meeting!.bannerName}.${meeting!.bannerExtension}"
+                            : "https://api.kongrepad.com/storage/meeting-banners/default.png",
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Banner yükleme hatası: $error');
+                          return Container(
+                            height: 200,
+                            color: AppConstants.backgroundBlue,
+                            child: Center(
+                              child: Text(
+                                meeting?.title ?? 'Kongre',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 24),
                               ),
                             ),
-                            SvgPicture.asset(
-                              'assets/icon/chevron.right.svg',
-                              color: Colors.white,
-                              height: screenHeight * 0.02,
-                            ),
-                          ],
-                        ),
-                        Container(
-                          width: screenWidth * 0.95,
-                          height: screenHeight * 0.002,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        SizedBox(
-                          height: screenHeight * 0.04,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          );
+                        },
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    ),
+                    Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        LowerHalfEllipse(screenWidth, screenHeight * 0.07),
+                        Column(
                           children: [
+                            SizedBox(height: screenHeight * 0.01),
+                            Text(
+                              "${participant?.fullName}",
+                              style: const TextStyle(
+                                  fontSize: 25, color: Colors.white),
+                            ),
+                            SizedBox(height: screenHeight * 0.04),
+                            Container(
+                              width: screenWidth * 0.95,
+                              height: screenHeight * 0.002,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                             SizedBox(
-                              width: screenWidth * 0.45,
-                              height: screenHeight * 0.16,
-                              child: ElevatedButton(
-                                  style: ButtonStyle(
-                                    backgroundColor:
-                                        WidgetStateProperty.all<Color>(
-                                            AppConstants.buttonLightPurple),
-                                    foregroundColor:
-                                        WidgetStateProperty.all<Color>(
-                                            Colors.white),
-                                    padding: WidgetStateProperty.all<
-                                        EdgeInsetsGeometry>(
-                                      const EdgeInsets.all(12),
-                                    ),
-                                    shape: WidgetStateProperty.all<
-                                        RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
+                              height: screenHeight * 0.1,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/icon/chevron.left.svg',
+                                    color: Colors.white,
+                                    height: screenHeight * 0.02,
+                                  ),
+                                  Expanded(
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                        children: virtualStands?.map((stand) {
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            VirtualStandView(
+                                                                stand: stand),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Image.network(
+                                                    'https://api.kongrepad.com/storage/virtual-stands/${stand.fileName}.${stand.fileExtension}',
+                                                    fit: BoxFit.contain,
+                                                    height: screenHeight * 0.08,
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList() ??
+                                            [],
                                       ),
                                     ),
                                   ),
-                                  onPressed: () {
-                                    if (meeting?.sessionHallCount == 1) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => SessionView(
-                                                hallId: meeting!
-                                                    .sessionFirstHallId!)),
-                                      );
-                                    } else {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            backgroundColor:
-                                                AppConstants.backgroundBlue,
-                                            contentPadding: EdgeInsets.zero,
-                                            content: SizedBox(
-                                              width: screenWidth * 0.9,
-                                              height: screenHeight * 0.8,
-                                              child: const HallsView(
-                                                  type: "session"),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    }
-                                  },
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
+                                  SvgPicture.asset(
+                                    'assets/icon/chevron.right.svg',
+                                    color: Colors.white,
+                                    height: screenHeight * 0.02,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: screenWidth * 0.95,
+                              height: screenHeight * 0.002,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.04),
+                            // Main buttons
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      SvgPicture.asset(
-                                        'assets/icon/play.fill.svg',
-                                        color: Colors.white,
-                                        height: screenHeight * 0.06,
+                                      Expanded(
+                                        child: AspectRatio(
+                                          aspectRatio: 1,
+                                          child: ElevatedButton(
+                                            style: ButtonStyle(
+                                              backgroundColor:
+                                                  WidgetStateProperty
+                                                      .all<Color>(AppConstants
+                                                          .buttonLightPurple),
+                                              foregroundColor:
+                                                  WidgetStateProperty.all<
+                                                      Color>(Colors.white),
+                                              padding: WidgetStateProperty.all<
+                                                  EdgeInsetsGeometry>(
+                                                const EdgeInsets.all(12),
+                                              ),
+                                              shape: WidgetStateProperty.all<
+                                                  RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                ),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              print(
+                                                  "MainPageView - Session butonuna tıklandı");
+                                              if (meeting?.sessionHallCount ==
+                                                  1) {
+                                                print(
+                                                    "MainPageView - Tek salon var, direkt SessionView'a yönlendiriliyor. HallId: ${meeting!.sessionFirstHallId}");
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          SessionView(
+                                                              hallId: meeting!
+                                                                  .sessionFirstHallId!)),
+                                                );
+                                              } else {
+                                                print(
+                                                    "MainPageView - Birden fazla salon var, HallsView açılıyor");
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const Scaffold(
+                                                      backgroundColor:
+                                                          AppConstants
+                                                              .backgroundBlue,
+                                                      body: HallsView(
+                                                          type: "session"),
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  'assets/icon/play.fill.svg',
+                                                  color: Colors.white,
+                                                  height: screenHeight * 0.06,
+                                                ),
+                                                Text(
+                                                  AppLocalizations.of(context)
+                                                      .translate(
+                                                          'watch_presentation'),
+                                                  style: const TextStyle(
+                                                      fontSize: 18),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  maxLines: 1,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                      Text(
-                                        AppLocalizations.of(context)
-                                            .translate('watch_presentation'),
-                                        style: TextStyle(fontSize: 18),
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: AspectRatio(
+                                          aspectRatio: 1,
+                                          child: ElevatedButton(
+                                            style: ButtonStyle(
+                                              backgroundColor:
+                                                  WidgetStateProperty.all<
+                                                      Color>(Colors.redAccent),
+                                              foregroundColor:
+                                                  WidgetStateProperty.all<
+                                                      Color>(Colors.white),
+                                              padding: WidgetStateProperty.all<
+                                                  EdgeInsetsGeometry>(
+                                                const EdgeInsets.all(12),
+                                              ),
+                                              shape: WidgetStateProperty.all<
+                                                  RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                ),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              if (participant?.type! !=
+                                                  "attendee") {
+                                                AlertService().showAlertDialog(
+                                                  context,
+                                                  title: 'Uyarı',
+                                                  content:
+                                                      'Soru sorma izniniz yok!',
+                                                );
+                                              } else if (meeting
+                                                      ?.questionHallCount ==
+                                                  1) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AskQuestionView(
+                                                              hallId: meeting!
+                                                                  .questionFirstHallId!)),
+                                                );
+                                              } else {
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      backgroundColor:
+                                                          AppConstants
+                                                              .backgroundBlue,
+                                                      contentPadding:
+                                                          EdgeInsets.zero,
+                                                      content: SizedBox(
+                                                        width:
+                                                            screenWidth * 0.9,
+                                                        height:
+                                                            screenHeight * 0.8,
+                                                        child: const HallsView(
+                                                            type: "question"),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              }
+                                            },
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  'assets/icon/questionmark.svg',
+                                                  color: Colors.white,
+                                                  height: screenHeight * 0.06,
+                                                ),
+                                                Text(
+                                                  AppLocalizations.of(context)
+                                                      .translate(
+                                                          'ask_question'),
+                                                  style: const TextStyle(
+                                                      fontSize: 20),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ],
-                                  )),
-                            ),
-                            SizedBox(
-                              width: screenWidth * 0.01,
-                            ),
-                            SizedBox(
-                              width: screenWidth * 0.45,
-                              height: screenHeight * 0.16,
-                              child: ElevatedButton(
-                                  style: ButtonStyle(
-                                    backgroundColor:
-                                        WidgetStateProperty.all<Color>(
-                                            Colors.redAccent),
-                                    foregroundColor:
-                                        WidgetStateProperty.all<Color>(
-                                            Colors.white),
-                                    padding: WidgetStateProperty.all<
-                                        EdgeInsetsGeometry>(
-                                      const EdgeInsets.all(12),
-                                    ),
-                                    shape: WidgetStateProperty.all<
-                                        RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: AspectRatio(
+                                          aspectRatio: 1,
+                                          child: ElevatedButton(
+                                            style: ButtonStyle(
+                                              backgroundColor:
+                                                  WidgetStateProperty
+                                                      .all<Color>(AppConstants
+                                                          .buttonYellow),
+                                              foregroundColor:
+                                                  WidgetStateProperty.all<
+                                                      Color>(Colors.white),
+                                              padding: WidgetStateProperty.all<
+                                                  EdgeInsetsGeometry>(
+                                                const EdgeInsets.all(12),
+                                              ),
+                                              shape: WidgetStateProperty.all<
+                                                  RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                ),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              if (meeting?.programHallCount ==
+                                                  1) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ProgramDaysView(
+                                                              hallId: meeting!
+                                                                  .programFirstHallId!)),
+                                                );
+                                              } else {
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      backgroundColor:
+                                                          AppConstants
+                                                              .backgroundBlue,
+                                                      contentPadding:
+                                                          EdgeInsets.zero,
+                                                      content: SizedBox(
+                                                        width:
+                                                            screenWidth * 0.9,
+                                                        height:
+                                                            screenHeight * 0.8,
+                                                        child: const HallsView(
+                                                            type: "program"),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              }
+                                            },
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  'assets/icon/book.fill.svg',
+                                                  color: Colors.white,
+                                                  height: screenHeight * 0.06,
+                                                ),
+                                                const SizedBox(
+                                                  height: 5,
+                                                ),
+                                                Text(
+                                                  AppLocalizations.of(context)
+                                                      .translate(
+                                                          'scientific_program'),
+                                                  style: const TextStyle(
+                                                      fontSize: 16),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
                                       ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: AspectRatio(
+                                          aspectRatio: 1,
+                                          child: ElevatedButton(
+                                            style: ButtonStyle(
+                                              backgroundColor:
+                                                  WidgetStateProperty
+                                                      .all<Color>(AppConstants
+                                                          .buttonLightBlue),
+                                              foregroundColor:
+                                                  WidgetStateProperty.all<
+                                                      Color>(Colors.white),
+                                              padding: WidgetStateProperty.all<
+                                                  EdgeInsetsGeometry>(
+                                                const EdgeInsets.all(12),
+                                              ),
+                                              shape: WidgetStateProperty.all<
+                                                  RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                ),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              if (participant?.type! !=
+                                                  "attendee") {
+                                                AlertService().showAlertDialog(
+                                                  context,
+                                                  title: AppLocalizations.of(
+                                                          context)
+                                                      .translate('warning'),
+                                                  content: AppLocalizations.of(
+                                                          context)
+                                                      .translate(
+                                                          'no_permission_mail'),
+                                                );
+                                              } else if (meeting
+                                                      ?.mailHallCount ==
+                                                  1) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ProgramDaysForMailView(
+                                                              hallId: meeting!
+                                                                  .mailFirstHallId!)),
+                                                );
+                                              } else {
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      backgroundColor:
+                                                          AppConstants
+                                                              .backgroundBlue,
+                                                      contentPadding:
+                                                          EdgeInsets.zero,
+                                                      content: SizedBox(
+                                                        width:
+                                                            screenWidth * 0.9,
+                                                        height:
+                                                            screenHeight * 0.8,
+                                                        child: const HallsView(
+                                                            type: "mail"),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              }
+                                            },
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  'assets/icon/envelope.open.fill.svg',
+                                                  color: Colors.white,
+                                                  height: screenHeight * 0.06,
+                                                ),
+                                                Text(
+                                                  AppLocalizations.of(context)
+                                                      .translate('send_mail'),
+                                                  style: const TextStyle(
+                                                      fontSize: 20),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: AspectRatio(
+                                          aspectRatio: 1,
+                                          child: ElevatedButton(
+                                            style: ButtonStyle(
+                                              backgroundColor:
+                                                  WidgetStateProperty
+                                                      .all<Color>(AppConstants
+                                                          .buttonDarkBlue),
+                                              foregroundColor:
+                                                  WidgetStateProperty.all<
+                                                      Color>(Colors.white),
+                                              padding: WidgetStateProperty.all<
+                                                  EdgeInsetsGeometry>(
+                                                const EdgeInsets.all(12),
+                                              ),
+                                              shape: WidgetStateProperty.all<
+                                                  RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                ),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const SurveysView()),
+                                              );
+                                            },
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  'assets/icon/checklist.checked.svg',
+                                                  color: Colors.white,
+                                                  height: screenHeight * 0.06,
+                                                ),
+                                                Text(
+                                                  AppLocalizations.of(context)
+                                                      .translate('surveys'),
+                                                  style: const TextStyle(
+                                                      fontSize: 20),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: AspectRatio(
+                                          aspectRatio: 1,
+                                          child: ElevatedButton(
+                                            style: ButtonStyle(
+                                              backgroundColor:
+                                                  WidgetStateProperty.all<
+                                                          Color>(
+                                                      AppConstants.buttonGreen),
+                                              foregroundColor:
+                                                  WidgetStateProperty.all<
+                                                      Color>(Colors.white),
+                                              padding: WidgetStateProperty.all<
+                                                  EdgeInsetsGeometry>(
+                                                const EdgeInsets.all(12),
+                                              ),
+                                              shape: WidgetStateProperty.all<
+                                                  RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                ),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const ScoreGameView()),
+                                              );
+                                            },
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Center(
+                                                  child: Icon(
+                                                    FontAwesomeIcons.qrcode,
+                                                    size: 60,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  AppLocalizations.of(context)
+                                                      .translate('scan_qr'),
+                                                  style: const TextStyle(
+                                                      fontSize: 20),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Bottom navigation
+                            Container(
+                              width: screenWidth * 0.95,
+                              height: screenHeight * 0.001,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      if (participant?.type! != "attendee") {
+                                        AlertService().showAlertDialog(
+                                          context,
+                                          title: AppLocalizations.of(context)
+                                              .translate('success'),
+                                          content: AppLocalizations.of(context)
+                                              .translate('logout_success'),
+                                        );
+                                      }
+                                      Navigator.pop(context);
+                                    },
+                                    child: SvgPicture.asset(
+                                      'assets/icon/power.svg',
+                                      color: Colors.white,
+                                      height: screenHeight * 0.03,
                                     ),
                                   ),
-                                  onPressed: () {
-                                    if (participant?.type! != "attendee") {
-                                      AlertService().showAlertDialog(
-                                        context,
-                                        title: 'Uyarı',
-                                        content: 'Soru sorma izniniz yok!',
-                                      );
-                                    } else if (meeting?.questionHallCount ==
-                                        1) {
+                                  const Spacer(),
+                                  GestureDetector(
+                                    onTap: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                AskQuestionView(
-                                                    hallId: meeting!
-                                                        .questionFirstHallId!)),
+                                                const AnnouncementsView()),
                                       );
-                                    } else {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            backgroundColor:
-                                                AppConstants.backgroundBlue,
-                                            contentPadding: EdgeInsets.zero,
-                                            content: SizedBox(
-                                              width: screenWidth * 0.9,
-                                              height: screenHeight * 0.8,
-                                              child: const HallsView(
-                                                  type: "question"),
-                                            ),
-                                          );
-                                        },
+                                    },
+                                    child: SvgPicture.asset(
+                                      'assets/icon/bell.svg',
+                                      color: Colors.white,
+                                      height: screenHeight * 0.03,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.01),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const ProfileView()),
                                       );
-                                    }
-                                  },
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      SvgPicture.asset(
-                                        'assets/icon/questionmark.svg',
-                                        color: Colors.white,
-                                        height: screenHeight * 0.06,
-                                      ),
-                                      Text(
-                                        AppLocalizations.of(context)
-                                            .translate('ask_question'),
-                                        style: TextStyle(fontSize: 20),
-                                      ),
-                                    ],
-                                  )),
+                                    },
+                                    child: SvgPicture.asset(
+                                      'assets/icon/person.svg',
+                                      color: Colors.white,
+                                      height: screenHeight * 0.03,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -438,323 +849,7 @@ class _MainPageViewState extends State<MainPageView>
                     ),
                   ],
                 ),
-                SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: screenWidth * 0.45,
-                      height: screenHeight * 0.16,
-                      child: ElevatedButton(
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all<Color>(
-                                AppConstants.buttonYellow),
-                            foregroundColor:
-                                WidgetStateProperty.all<Color>(Colors.white),
-                            padding:
-                                WidgetStateProperty.all<EdgeInsetsGeometry>(
-                              const EdgeInsets.all(12),
-                            ),
-                            shape:
-                                WidgetStateProperty.all<RoundedRectangleBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                          onPressed: () {
-                            if (meeting?.programHallCount == 1) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => ProgramDaysView(
-                                        hallId: meeting!.programFirstHallId!)),
-                              );
-                            } else {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    backgroundColor:
-                                        AppConstants.backgroundBlue,
-                                    contentPadding: EdgeInsets.zero,
-                                    content: SizedBox(
-                                      width: screenWidth * 0.9,
-                                      height: screenHeight * 0.8,
-                                      child: const HallsView(type: "program"),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          },
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/icon/book.fill.svg',
-                                color: Colors.white,
-                                height: screenHeight * 0.06,
-                              ),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              Text(
-                                AppLocalizations.of(context)
-                                    .translate('scientific_program'),
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          )),
-                    ),
-                    SizedBox(
-                      width: screenWidth * 0.01,
-                    ),
-                    SizedBox(
-                      width: screenWidth * 0.45,
-                      height: screenHeight * 0.16,
-                      child: ElevatedButton(
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all<Color>(
-                                AppConstants.buttonLightBlue),
-                            foregroundColor:
-                                WidgetStateProperty.all<Color>(Colors.white),
-                            padding:
-                                WidgetStateProperty.all<EdgeInsetsGeometry>(
-                              const EdgeInsets.all(12),
-                            ),
-                            shape:
-                                WidgetStateProperty.all<RoundedRectangleBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                          onPressed: () {
-                            if (participant?.type! != "attendee") {
-                              AlertService().showAlertDialog(
-                                context,
-                                title: AppLocalizations.of(context)
-                                    .translate('warning'),
-                                content: AppLocalizations.of(context)
-                                    .translate('no_permission_mail'),
-                              );
-                            } else if (meeting?.mailHallCount == 1) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        ProgramDaysForMailView(
-                                            hallId: meeting!.mailFirstHallId!)),
-                              );
-                            } else {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    backgroundColor:
-                                        AppConstants.backgroundBlue,
-                                    contentPadding: EdgeInsets.zero,
-                                    content: SizedBox(
-                                      width: screenWidth * 0.9,
-                                      height: screenHeight * 0.8,
-                                      child: const HallsView(type: "mail"),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          },
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/icon/envelope.open.fill.svg',
-                                color: Colors.white,
-                                height: screenHeight * 0.06,
-                              ),
-                              Text(
-                                AppLocalizations.of(context)
-                                    .translate('send_mail'),
-                                style: TextStyle(fontSize: 20),
-                              ),
-                            ],
-                          )),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: screenWidth * 0.45,
-                      height: screenHeight * 0.16,
-                      child: ElevatedButton(
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all<Color>(
-                                AppConstants.buttonDarkBlue),
-                            foregroundColor:
-                                WidgetStateProperty.all<Color>(Colors.white),
-                            padding:
-                                WidgetStateProperty.all<EdgeInsetsGeometry>(
-                              const EdgeInsets.all(12),
-                            ),
-                            shape:
-                                WidgetStateProperty.all<RoundedRectangleBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const SurveysView()),
-                            );
-                          },
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/icon/checklist.checked.svg',
-                                color: Colors.white,
-                                height: screenHeight * 0.06,
-                              ),
-                              Text(
-                                AppLocalizations.of(context)
-                                    .translate('surveys'),
-                                style: TextStyle(fontSize: 20),
-                              ),
-                            ],
-                          )),
-                    ),
-                    SizedBox(
-                      width: screenWidth * 0.01,
-                    ),
-                    SizedBox(
-                      width: screenWidth * 0.45,
-                      height: screenHeight * 0.16,
-                      child: ElevatedButton(
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all<Color>(
-                                AppConstants.buttonGreen),
-                            foregroundColor:
-                                WidgetStateProperty.all<Color>(Colors.white),
-                            padding:
-                                WidgetStateProperty.all<EdgeInsetsGeometry>(
-                              const EdgeInsets.all(12),
-                            ),
-                            shape:
-                                WidgetStateProperty.all<RoundedRectangleBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const ScoreGameView()),
-                            );
-                          },
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Center(
-                                child: Icon(
-                                  FontAwesomeIcons.qrcode,
-                                  size: 60,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                AppLocalizations.of(context)
-                                    .translate('scan_qr'),
-                                style: TextStyle(fontSize: 20),
-                              ),
-                            ],
-                          )),
-                    ),
-                  ],
-                ),
-                Spacer(),
-                Container(
-                  width: screenWidth * 0.95,
-                  height: screenHeight * 0.001,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          // logOut();
-                          if (participant?.type! != "attendee") {
-                            AlertService().showAlertDialog(
-                              context,
-                              title: AppLocalizations.of(context)
-                                  .translate('success'),
-                              content: AppLocalizations.of(context)
-                                  .translate('logout_success'),
-                            );
-                          }
-
-                          Navigator.pop(context);
-                        },
-                        child: SvgPicture.asset(
-                          'assets/icon/power.svg',
-                          color: Colors.white,
-                          height: screenHeight * 0.03,
-                        ),
-                      ),
-                      Spacer(),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const AnnouncementsView()),
-                          );
-                        },
-                        child: SvgPicture.asset(
-                          'assets/icon/bell.svg',
-                          color: Colors.white,
-                          height: screenHeight * 0.03,
-                        ),
-                      ),
-                      SizedBox(
-                        width: screenWidth * 0.01,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const ProfileView()),
-                          );
-                        },
-                        child: SvgPicture.asset(
-                          'assets/icon/person.svg',
-                          color: Colors.white,
-                          height: screenHeight * 0.03,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
     );
   }

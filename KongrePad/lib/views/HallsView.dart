@@ -10,9 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_localizations.dart';
 import '../models/Hall.dart';
 import '../utils/app_constants.dart';
-import 'AskQuestionView.dart';
-import 'ProgramDaysView.dart';
 import 'SessionView.dart';
+import 'DebateView.dart';
+import 'KeypadView.dart';
 
 class HallsView extends StatefulWidget {
   const HallsView({super.key, required this.type});
@@ -25,33 +25,73 @@ class HallsView extends StatefulWidget {
 
 class _HallsViewState extends State<HallsView> {
   Future<void> getData() async {
+    print('HallsView - getData başladı');
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
     try {
-      final url = Uri.parse('http://app.kongrepad.com/api/v1/hall');
+      final url = Uri.parse('https://api.kongrepad.com/api/v1/halls/list');
+      print('HallsView - API çağrısı yapılıyor: $url');
       final response = await http.get(
         url,
         headers: <String, String>{
           'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
         },
       );
 
+      print('HallsView - API yanıtı: ${response.statusCode}');
+      print('HallsView - API yanıt body: ${response.body}');
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        final hallsJson = HallsJSON.fromJson(jsonData);
+        if (jsonData['success'] == true && jsonData['data'] != null) {
+          final hallsJson = HallsJSON.fromJson(jsonData);
+          if (hallsJson.data != null && hallsJson.data!.isNotEmpty) {
+            setState(() {
+              halls = hallsJson.data;
+              _loading = false;
+            });
+            print(
+                'HallsView - Veriler başarıyla yüklendi. Hall sayısı: ${halls?.length}');
+          } else {
+            print('HallsView - Veri bulunamadı');
+            setState(() {
+              _loading = false;
+              _hasError = true;
+              _errorMessage = 'Salon bulunamadı';
+            });
+          }
+        } else {
+          throw Exception(jsonData['message'] ?? 'API yanıtı başarısız');
+        }
+      } else if (response.statusCode == 401) {
+        // Token geçersiz, login sayfasına yönlendir
+        Navigator.of(context).pushReplacementNamed('/login');
+      } else {
+        print('HallsView - API hatası: ${response.statusCode}');
         setState(() {
-          halls = hallsJson.data;
           _loading = false;
+          _hasError = true;
+          _errorMessage =
+              'Salonlar yüklenirken bir hata oluştu (${response.statusCode})';
         });
       }
-    } catch (e) {
-      print('Error: $e');
+    } catch (e, stackTrace) {
+      print('HallsView - Hata: $e');
+      print('HallsView - Stack trace: $stackTrace');
+      setState(() {
+        _loading = false;
+        _hasError = true;
+        _errorMessage = 'Bir hata oluştu: $e';
+      });
     }
   }
 
   final String type;
   bool _loading = true;
+  bool _hasError = false;
+  String? _errorMessage;
   List<Hall>? halls;
 
   _HallsViewState(this.type);
@@ -75,147 +115,146 @@ class _HallsViewState extends State<HallsView> {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
-              : Container(
-                  height: screenHeight,
-                  alignment: Alignment.center,
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        height: screenHeight * 0.1,
-                        decoration: const BoxDecoration(
-                          color: AppConstants.backgroundBlue,
-                          border: Border(
-                            bottom: BorderSide(
-                              color: Colors.white, // Border color
-                              width: 1, // Border width
-                            ),
+              : _hasError
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _errorMessage ?? 'Bir hata oluştu',
+                            style: const TextStyle(color: Colors.white),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        child: Container(
-                          width: screenWidth,
-                          child: Stack(
-                            alignment: Alignment.centerLeft,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Container(
-                                  height: screenHeight * 0.04,
-                                  width: screenHeight * 0.04,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors
-                                        .white, // Circular background color
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _loading = true;
+                                _hasError = false;
+                                _errorMessage = null;
+                              });
+                              getData();
+                            },
+                            child: const Text('Tekrar Dene'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Container(
+                      width: screenWidth,
+                      height: screenHeight,
+                      decoration: const BoxDecoration(
+                        color: AppConstants.backgroundBlue,
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: screenWidth,
+                            height: screenHeight * 0.1,
+                            decoration: const BoxDecoration(
+                              color: AppConstants.backgroundBlue,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  icon: SvgPicture.asset(
+                                    'assets/icon/chevron.left.svg',
+                                    colorFilter: const ColorFilter.mode(
+                                        Colors.white, BlendMode.srcIn),
                                   ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: SvgPicture.asset(
-                                      'assets/icon/chevron.left.svg',
-                                      color: AppConstants.backgroundBlue,
-                                      height: screenHeight * 0.03,
-                                    ),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                Text(
+                                  AppLocalizations.of(context)
+                                      .translate('halls'),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
-                              Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      AppLocalizations.of(context)
-                                          .translate('select_hall'),
-                                      style: TextStyle(
-                                          fontSize: 25, color: Colors.white),
-                                    )
-                                  ]),
-                            ],
+                                const SizedBox(width: 40),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: Container(
-                          height: screenHeight * 0.7,
-                          width: screenWidth,
-                          child: Column(
-                            children: halls?.map((hall) {
-                                  return Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: SizedBox(
-                                      width: screenWidth * 0.7,
-                                      child: ElevatedButton(
-                                        style: ButtonStyle(
-                                          backgroundColor:
-                                              WidgetStateProperty.all<Color>(
-                                                  AppConstants.hallsButtonBlue),
-                                          foregroundColor:
-                                              WidgetStateProperty.all<Color>(
-                                                  AppConstants.backgroundBlue),
-                                          padding: WidgetStateProperty.all<
-                                              EdgeInsetsGeometry>(
-                                            const EdgeInsets.all(12),
-                                          ),
-                                          shape: WidgetStateProperty.all<
-                                              RoundedRectangleBorder>(
-                                            RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
+                          Expanded(
+                            child: Container(
+                              width: screenWidth,
+                              decoration: const BoxDecoration(
+                                color: AppConstants.backgroundBlue,
+                              ),
+                              child: ListView.builder(
+                                itemCount: halls?.length ?? 0,
+                                itemBuilder: (context, index) {
+                                  final hall = halls![index];
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (type == "session") {
+                                        print(
+                                            "HallsView - SessionView'a yönlendiriliyor. HallId: ${hall.id}");
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => SessionView(
+                                                  hallId: hall.id!)),
+                                        );
+                                      } else if (type == "debate") {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  DebateView(hallId: hall.id!)),
+                                        );
+                                      } else if (type == "keypad") {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  KeypadView(hallId: hall.id!)),
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.hallsButtonBlue,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              hall.title ?? '',
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        onPressed: () {
-                                          if (type == "program") {
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  backgroundColor: AppConstants
-                                                      .backgroundBlue,
-                                                  contentPadding:
-                                                      EdgeInsets.zero,
-                                                  content: SizedBox(
-                                                    width: screenWidth * 0.9,
-                                                    height: screenHeight * 0.8,
-                                                    child: ProgramDaysView(
-                                                        hallId: hall.id!),
-                                                  ),
-                                                );
-                                              },
-                                            );
-                                          } else if (type == "question") {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AskQuestionView(
-                                                          hallId: hall.id!)),
-                                            );
-                                          } else if (type == "session") {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      SessionView(
-                                                          hallId: hall.id!)),
-                                            );
-                                          }
-                                        },
-                                        child: Text(
-                                          hall.title.toString(),
-                                          style: TextStyle(fontSize: 20),
-                                        ),
+                                          SvgPicture.asset(
+                                            'assets/icon/chevron.right.svg',
+                                            colorFilter: const ColorFilter.mode(
+                                                Colors.black, BlendMode.srcIn),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   );
-                                }).toList() ??
-                                [],
+                                },
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                )),
+                    )),
     );
   }
 }

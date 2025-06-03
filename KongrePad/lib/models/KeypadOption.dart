@@ -16,11 +16,11 @@ class KeypadOption {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['sort_order'] = this.sortOrder;
-    data['keypad_id'] = this.keypadId;
-    data['option'] = this.option;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['sort_order'] = sortOrder;
+    data['keypad_id'] = keypadId;
+    data['option'] = option;
     return data;
   }
 }

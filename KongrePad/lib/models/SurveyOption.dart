@@ -30,14 +30,14 @@ class SurveyOption {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['id'] = this.id;
-    data['sort_order'] = this.sortOrder;
-    data['survey_id'] = this.surveyId;
-    data['question_id'] = this.questionId;
-    data['option'] = this.option;
-    data['status'] = this.status;
-    data['is_selected'] = this.isSelected;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['sort_order'] = sortOrder;
+    data['survey_id'] = surveyId;
+    data['question_id'] = questionId;
+    data['option'] = option;
+    data['status'] = status;
+    data['is_selected'] = isSelected;
     return data;
   }
 }

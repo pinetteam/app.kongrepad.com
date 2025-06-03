@@ -61,254 +61,268 @@ class _ProfileViewState extends State<ProfileView> {
     return Scaffold(
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
             : SingleChildScrollView(
-          child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Container(
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.all(10),
-                    height: screenHeight * 0.1,
-                    decoration: BoxDecoration(
-                      color: AppConstants.backgroundBlue,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.white, // Border color
-                          width: screenWidth * 0.003, // Border width
-                        ),
-                      ),
-                    ),
+                child: Column(children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
                     child: Container(
                       alignment: Alignment.center,
-                      width: screenWidth,
-                      child: Stack(
-                        alignment: Alignment.centerLeft,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                            child: Container(
-                              height: screenHeight * 0.05,
-                              width: screenHeight * 0.05,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    width: 2.0, color: const Color(0xFFFFFFFF)),
-                                shape: BoxShape.circle,
-                                color: Colors.white, // Circular background color
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: SvgPicture.asset(
-                                  'assets/icon/chevron.left.svg',
-                                  color: AppConstants.backgroundBlue,
-                                  height: screenHeight * 0.03,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(context)
-                                      .translate("my_account"),                                  style: TextStyle(fontSize: 27, color: Colors.white),
-                                )
-                              ]),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Container(
-                  width: screenWidth,
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Padding(
                       padding: const EdgeInsets.all(10),
-                      child: Container(
-                        alignment: Alignment.centerLeft,
-                        width: screenWidth * 0.9,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(screenWidth * 0.4),
-                              child: Container(
-                                color: Colors.white,
-                                width: screenHeight * 0.17,
-                                height: screenHeight * 0.17,
-                                child: const Image(
-                                  image:
-                                  AssetImage('assets/default_profile_photo.jpeg'),
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              height: screenHeight*0.01,
-                            ),
-                            Container(
-                              padding: EdgeInsets.all(10),
-                              // Adjust padding as needed
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                // Set background color to transparent
-                                borderRadius: BorderRadius.circular(20),
-                                // Adjust border radius as needed
-                                border: Border.all(
-                                    color: AppConstants.logoutButtonBlue,
-                                    width: 2), // Add border
-                              ),
-                              child: Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icon/person.svg',
-                                    color: Colors.white,
-                                    height: screenHeight * 0.03,
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text(
-                                    participant?.fullName.toString() ?? "",
-                                    style: const TextStyle(
-                                        fontSize: 20, color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              height: screenHeight*0.01,
-                            ),
-                            Container(
-                              padding: EdgeInsets.all(10),
-                              // Adjust padding as needed
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                // Set background color to transparent
-                                borderRadius: BorderRadius.circular(20),
-                                // Adjust border radius as needed
-                                border: Border.all(
-                                    color: AppConstants.logoutButtonBlue,
-                                    width: 2), // Add border
-                              ),
-                              child: Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icon/envelope.open.fill.svg',
-                                    color: Colors.white,
-                                    height: screenHeight * 0.03,
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text(
-                                    participant?.email.toString() ?? "",
-                                    style: const TextStyle(
-                                        fontSize: 20, color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              height: screenHeight*0.01,
-                            ),
-                            Container(
-                              padding: EdgeInsets.all(10),
-                              // Adjust padding as needed
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                // Set background color to transparent
-                                borderRadius: BorderRadius.circular(20),
-                                // Adjust border radius as needed
-                                border: Border.all(
-                                    color: AppConstants.logoutButtonBlue,
-                                    width: 2), // Add border
-                              ),
-                              child: Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icon/phone.fill.svg',
-                                    color: Colors.white,
-                                    height: screenHeight * 0.03,
-                                  ),
-                                  SizedBox(
-                                    width: screenWidth*0.01,
-                                  ),
-                                  Text(
-                                    participant?.phone.toString() ?? "",
-                                    style: const TextStyle(
-                                        fontSize: 20, color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Container(
-                              padding: EdgeInsets.all(10),
-                              // Adjust padding as needed
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                // Set background color to transparent
-                                borderRadius: BorderRadius.circular(20),
-                                // Adjust border radius as needed
-                                border: Border.all(
-                                    color: AppConstants.logoutButtonBlue,
-                                    width: 2), // Add border
-                              ),
-                              child: Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icon/building.columns.fill.svg',
-                                    color: Colors.white,
-                                    height: screenHeight * 0.03,
-                                  ),
-                                  SizedBox(
-                                    width: screenWidth*0.01,
-                                  ),
-                                  Text(
-                                    participant?.organisation.toString() ?? "",
-                                    style: const TextStyle(
-                                        fontSize: 20, color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: screenHeight * 0.25),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: screenWidth,
+                      height: screenHeight * 0.1,
                       decoration: BoxDecoration(
                         color: AppConstants.backgroundBlue,
                         border: Border(
-                          top: BorderSide(
+                          bottom: BorderSide(
                             color: Colors.white, // Border color
                             width: screenWidth * 0.003, // Border width
                           ),
                         ),
                       ),
-                      child:  Text(
-                        AppLocalizations.of(context)
-                            .translate("contact_registration_desk"),style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.white,
+                      child: Container(
+                        alignment: Alignment.center,
+                        width: screenWidth,
+                        child: Stack(
+                          alignment: Alignment.centerLeft,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: Container(
+                                height: screenHeight * 0.05,
+                                width: screenHeight * 0.05,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      width: 2.0,
+                                      color: const Color(0xFFFFFFFF)),
+                                  shape: BoxShape.circle,
+                                  color:
+                                      Colors.white, // Circular background color
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SvgPicture.asset(
+                                    'assets/icon/chevron.left.svg',
+                                    color: AppConstants.backgroundBlue,
+                                    height: screenHeight * 0.03,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(context)
+                                        .translate("my_account"),
+                                    style: const TextStyle(
+                                        fontSize: 27, color: Colors.white),
+                                  )
+                                ]),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
-                  ]),
-                )
-              ]),
-        ));
+                  ),
+                  SizedBox(
+                    width: screenWidth,
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Container(
+                              alignment: Alignment.centerLeft,
+                              width: screenWidth * 0.9,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                        screenWidth * 0.4),
+                                    child: Container(
+                                      color: Colors.white,
+                                      width: screenHeight * 0.17,
+                                      height: screenHeight * 0.17,
+                                      child: const Image(
+                                        image: AssetImage(
+                                            'assets/default_profile_photo.jpeg'),
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: screenHeight * 0.01,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    // Adjust padding as needed
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      // Set background color to transparent
+                                      borderRadius: BorderRadius.circular(20),
+                                      // Adjust border radius as needed
+                                      border: Border.all(
+                                          color: AppConstants.logoutButtonBlue,
+                                          width: 2), // Add border
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/icon/person.svg',
+                                          color: Colors.white,
+                                          height: screenHeight * 0.03,
+                                        ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        Text(
+                                          participant?.fullName.toString() ??
+                                              "",
+                                          style: const TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: screenHeight * 0.01,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    // Adjust padding as needed
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      // Set background color to transparent
+                                      borderRadius: BorderRadius.circular(20),
+                                      // Adjust border radius as needed
+                                      border: Border.all(
+                                          color: AppConstants.logoutButtonBlue,
+                                          width: 2), // Add border
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/icon/envelope.open.fill.svg',
+                                          color: Colors.white,
+                                          height: screenHeight * 0.03,
+                                        ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        Text(
+                                          participant?.email.toString() ?? "",
+                                          style: const TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: screenHeight * 0.01,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    // Adjust padding as needed
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      // Set background color to transparent
+                                      borderRadius: BorderRadius.circular(20),
+                                      // Adjust border radius as needed
+                                      border: Border.all(
+                                          color: AppConstants.logoutButtonBlue,
+                                          width: 2), // Add border
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/icon/phone.fill.svg',
+                                          color: Colors.white,
+                                          height: screenHeight * 0.03,
+                                        ),
+                                        SizedBox(
+                                          width: screenWidth * 0.01,
+                                        ),
+                                        Text(
+                                          participant?.phone.toString() ?? "",
+                                          style: const TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    // Adjust padding as needed
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      // Set background color to transparent
+                                      borderRadius: BorderRadius.circular(20),
+                                      // Adjust border radius as needed
+                                      border: Border.all(
+                                          color: AppConstants.logoutButtonBlue,
+                                          width: 2), // Add border
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/icon/building.columns.fill.svg',
+                                          color: Colors.white,
+                                          height: screenHeight * 0.03,
+                                        ),
+                                        SizedBox(
+                                          width: screenWidth * 0.01,
+                                        ),
+                                        Text(
+                                          participant?.organisation
+                                                  .toString() ??
+                                              "",
+                                          style: const TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: screenHeight * 0.25),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: screenWidth,
+                            decoration: BoxDecoration(
+                              color: AppConstants.backgroundBlue,
+                              border: Border(
+                                top: BorderSide(
+                                  color: Colors.white, // Border color
+                                  width: screenWidth * 0.003, // Border width
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              AppLocalizations.of(context)
+                                  .translate("contact_registration_desk"),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ]),
+                  )
+                ]),
+              ));
   }
 }
