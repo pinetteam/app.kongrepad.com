@@ -18,12 +18,26 @@ class ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<ProfileView> {
+
+
   Future<void> getData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
+    // Token kontrolü ekleyin
+    if (token == null || token.isEmpty) {
+      print('Token bulunamadı!');
+      setState(() {
+        _loading = false;
+      });
+      return;
+    }
+
     try {
-      final url = Uri.parse('http://app.kongrepad.com/api/v1/auth/profile');
+      final url = Uri.parse('https://api.kongrepad.com/api/v1/auth/profile');
+
+      print('Request URL: $url');
+      print('Token: Bearer $token');
 
       final response = await http.get(
         url,
@@ -34,15 +48,19 @@ class _ProfileViewState extends State<ProfileView> {
       );
 
       print('Status Code: ${response.statusCode}');
+      print('Response Headers: ${response.headers}');
       print('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
 
-        // API response'una göre düzeltildi: data.participant
+        // JSON yapısını detaylı kontrol edin
+        print('JSON Data Structure: ${jsonData.keys}');
+
         if (jsonData['success'] == true && jsonData['data'] != null) {
-          final participantData =
-              jsonData['data']['participant']; // Burada değişiklik
+          print('Data structure: ${jsonData['data'].keys}');
+
+          final participantData = jsonData['data']['participant'];
           final participant = Participant.fromJson(participantData);
 
           setState(() {
@@ -50,11 +68,14 @@ class _ProfileViewState extends State<ProfileView> {
             _loading = false;
           });
         } else {
-          print('API Error: ${jsonData['message']}');
+          print('API Error: ${jsonData['message'] ?? 'Unknown error'}');
           setState(() {
             _loading = false;
           });
         }
+      } else if (response.statusCode == 401) {
+        print('Unauthorized: Token geçersiz veya süresi dolmuş');
+        // Token'ı temizleyip login sayfasına yönlendirme yapabilirsiniz
       } else {
         print('HTTP Error: ${response.statusCode}');
         print('Error Body: ${response.body}');
@@ -69,7 +90,6 @@ class _ProfileViewState extends State<ProfileView> {
       });
     }
   }
-
   Participant? participant;
   bool _loading = true;
 

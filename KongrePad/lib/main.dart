@@ -1,4 +1,5 @@
 import 'package:KongrePad/utils/app_constants.dart';
+import 'package:KongrePad/views/AskQuestionView.dart';
 import 'package:KongrePad/views/LoginView.dart';
 import 'package:KongrePad/views/MainPageView.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -118,9 +119,20 @@ class _MyAppState extends State<MyApp> {
         '/login': (context) => const LoginView(),
         '/main': (context) => const MainPageView(title: ''),
       },
+      onGenerateRoute: (RouteSettings settings) {
+        switch (settings.name) {
+          case '/ask-question':
+            final Map<String, dynamic> args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder: (context) => AskQuestionView(
+                hallId: args['hallId'], // Sadece hallId geçir
+              ),
+            );
+          default:
+            return null;
+        }
+      },
       home: initialRoute,
     );
   }
 }
-
-//html dosyası at

@@ -10,6 +10,7 @@ class QuestionService {
     print('QuestionService - askQuestion başladı');
     print('QuestionService - Session ID: $sessionId');
     print('QuestionService - Question: $question');
+    print('QuestionService - Anonymous: $anonymous');
 
     try {
       final token = await AuthService().getStoredToken();
@@ -18,6 +19,7 @@ class QuestionService {
         throw Exception('No token found');
       }
 
+      // API dokümanına göre doğru endpoint
       final response = await http.post(
         Uri.parse('$baseUrl/sessions/$sessionId/questions'),
         headers: {
@@ -32,14 +34,18 @@ class QuestionService {
         }),
       );
 
-      print(
-          'QuestionService - Ask Question API yanıt kodu: ${response.statusCode}');
-      print(
-          'QuestionService - Ask Question API yanıt gövdesi: ${response.body}');
+      print('QuestionService - Ask Question API yanıt kodu: ${response.statusCode}');
+      print('QuestionService - Ask Question API yanıt gövdesi: ${response.body}');
 
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return data['success'] == true;
+      // 200, 201 veya 202 kabul et
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        try {
+          final data = jsonDecode(response.body);
+          return data['success'] == true;
+        } catch (e) {
+          // JSON parse hatası olsa bile status code doğruysa başarılı say
+          return true;
+        }
       }
 
       return false;
@@ -50,8 +56,7 @@ class QuestionService {
   }
 
   Future<List<Map<String, dynamic>>?> getSessionQuestions(int sessionId) async {
-    print(
-        'QuestionService - getSessionQuestions başladı, sessionId: $sessionId');
+    print('QuestionService - getSessionQuestions başladı, sessionId: $sessionId');
     try {
       final token = await AuthService().getStoredToken();
       if (token == null) {
@@ -67,8 +72,7 @@ class QuestionService {
         },
       );
 
-      print(
-          'QuestionService - Questions API yanıt kodu: ${response.statusCode}');
+      print('QuestionService - Questions API yanıt kodu: ${response.statusCode}');
       print('QuestionService - Questions API yanıt gövdesi: ${response.body}');
 
       if (response.statusCode == 200) {
@@ -78,10 +82,10 @@ class QuestionService {
         }
       }
 
-      return null;
+      return [];
     } catch (e) {
       print('QuestionService - Questions HATA: $e');
-      return null;
+      return [];
     }
   }
 }
