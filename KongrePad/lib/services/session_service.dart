@@ -127,26 +127,52 @@ class SessionService {
         throw Exception('No token found');
       }
 
+      // Sessions endpoint'ini çağır
+      final uri = Uri.parse('$baseUrl/halls/$hallId/session');
+      print('SessionService - Session API çağrısı yapılıyor: $uri');
+
       final response = await http.get(
-        Uri.parse('$baseUrl/halls/$hallId/stream'),
+        uri,
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
       );
 
-      print('SessionService - Session API yanıt: ${response.statusCode}');
-      print('SessionService - Session API response body: ${response.body}');
+      print('SessionService - Session API yanıt kodu: ${response.statusCode}');
+      print('SessionService - Session API yanıt gövdesi: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('SessionService - Başarılı yanıt: $data');
-        if (data['success'] == true) {
-          return data['data'];
+        print('SessionService - Session yanıtı başarılı: $data');
+
+        if (data['success'] == true && data['data'] != null) {
+          final session = data['data'];
+          print('SessionService - Session data dönülüyor: $session');
+          return {
+            'pdf_url': session['document_url'],
+            'session_id': session['id'],
+            'title': session['title'],
+            'description': session['description']
+          };
+        } else {
+          print('SessionService - Session verisi boş');
+          return {
+            'pdf_url': null,
+            'session_id': null,
+            'title': 'Aktif oturum bulunamadı',
+            'description':
+                'Bu salonda şu anda aktif bir oturum bulunmamaktadır.'
+          };
         }
+      } else if (response.statusCode == 404) {
+        print('SessionService - Session bulunamadı (404)');
+      } else {
+        print(
+            'SessionService - Beklenmeyen durum kodu: ${response.statusCode}');
       }
 
-      print('SessionService - API yanıtı başarısız');
+      print('SessionService - İşlem başarısız');
       return null;
     } catch (e, stackTrace) {
       print('SessionService - HATA: $e');

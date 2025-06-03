@@ -15,22 +15,33 @@ import 'DebateView.dart';
 import 'KeypadView.dart';
 
 class HallsView extends StatefulWidget {
-  const HallsView({super.key, required this.type});
+  const HallsView({super.key, required this.type, required this.meetingId});
 
   final String type;
+  final int meetingId;
 
   @override
-  State<HallsView> createState() => _HallsViewState(type);
+  State<HallsView> createState() => _HallsViewState(type, meetingId);
 }
 
 class _HallsViewState extends State<HallsView> {
+  final String type;
+  final int meetingId;
+  bool _loading = true;
+  bool _hasError = false;
+  String? _errorMessage;
+  List<Hall>? halls;
+
+  _HallsViewState(this.type, this.meetingId);
+
   Future<void> getData() async {
     print('HallsView - getData başladı');
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
     try {
-      final url = Uri.parse('https://api.kongrepad.com/api/v1/halls/list');
+      final url = Uri.parse(
+          'https://api.kongrepad.com/api/v1/meetings/$meetingId/halls');
       print('HallsView - API çağrısı yapılıyor: $url');
       final response = await http.get(
         url,
@@ -87,14 +98,6 @@ class _HallsViewState extends State<HallsView> {
       });
     }
   }
-
-  final String type;
-  bool _loading = true;
-  bool _hasError = false;
-  String? _errorMessage;
-  List<Hall>? halls;
-
-  _HallsViewState(this.type);
 
   @override
   void initState() {

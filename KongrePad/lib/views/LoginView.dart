@@ -110,6 +110,12 @@ class _LoginViewState extends State<LoginView> {
       final result =
           await AuthService().login(_usernameController.text, fcmToken);
 
+      // Login başarılı olduğunda SharedPreferences'a kaydet
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString('userToken', result['token']);
+      await prefs.setString('username', _usernameController.text);
+
       if (mounted) {
         Navigator.pushReplacement(
           context,

@@ -13,6 +13,10 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // SharedPreferences instance'ını al
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -32,23 +36,35 @@ void main() async {
     // Uygulama Pusher olmadan da çalışabilir
   }
 
-  // SharedPreferences ile dil kodunu kontrol et
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? languageCode =
-      prefs.getString('languageCode') ?? 'en'; // Varsayılan olarak İngilizce
+  // Dil kodunu kontrol et
+  String? languageCode = prefs.getString('languageCode') ?? 'en';
 
-  runApp(MyApp(locale: Locale(languageCode)));
+  // Kullanıcı oturum durumunu kontrol et
+  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  String? userToken = prefs.getString('userToken');
+
+  runApp(MyApp(
+    locale: Locale(languageCode),
+    isLoggedIn: isLoggedIn,
+    userToken: userToken,
+  ));
 }
 
 class MyApp extends StatefulWidget {
   final Locale locale;
+  final bool isLoggedIn;
+  final String? userToken;
 
-  const MyApp({Key? key, required this.locale}) : super(key: key);
+  const MyApp({
+    Key? key,
+    required this.locale,
+    required this.isLoggedIn,
+    this.userToken,
+  }) : super(key: key);
 
   static void setLocale(BuildContext context, Locale newLocale) async {
     _MyAppState? state = context.findAncestorStateOfType<_MyAppState>();
     if (state != null) {
-      // Dil tercihlerini kaydet
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('languageCode', newLocale.languageCode);
       state.setLocale(newLocale);
@@ -76,6 +92,10 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    Widget initialRoute = widget.isLoggedIn && widget.userToken != null
+        ? const MainPageView(title: '')
+        : const LoginView();
+
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
@@ -85,7 +105,7 @@ class _MyAppState extends State<MyApp> {
         Locale('tr', ''),
       ],
       localizationsDelegates: const [
-        AppLocalizations.delegate, // AppLocalizations için
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
@@ -98,7 +118,7 @@ class _MyAppState extends State<MyApp> {
         '/login': (context) => const LoginView(),
         '/main': (context) => const MainPageView(title: ''),
       },
-      home: const LoginView(), // Başlangıç sayfası
+      home: initialRoute,
     );
   }
 }

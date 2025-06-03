@@ -28,6 +28,8 @@ class _SessionViewState extends State<SessionView> {
   int _currentPage = 0;
   int _totalPages = 0;
   bool _isReady = false;
+  String? _sessionTitle;
+  String? _sessionDescription;
 
   Future<void> _downloadAndSavePdf() async {
     if (_pdfUrl == null) return;
@@ -81,7 +83,10 @@ class _SessionViewState extends State<SessionView> {
       print('Session başlatılıyor - Hall ID: ${widget.hallId}');
 
       final streamData = await _sessionService.getSessionStream(widget.hallId);
+      print('Stream data response: $streamData');
+
       if (streamData == null) {
+        print('Stream data null geldi');
         setState(() {
           _loading = false;
           _hasError = true;
@@ -92,28 +97,28 @@ class _SessionViewState extends State<SessionView> {
 
       print('Stream data alındı: $streamData');
 
-      if (streamData['pdf_url'] == null) {
-        setState(() {
-          _loading = false;
-          _hasError = true;
-          _errorMessage = 'Bu oturumda henüz bir doküman paylaşılmadı';
-        });
-        return;
-      }
-
       setState(() {
         _pdfUrl = streamData['pdf_url'];
+        _sessionTitle = streamData['title'];
+        _sessionDescription = streamData['description'];
       });
 
-      await _downloadAndSavePdf();
+      if (_pdfUrl != null) {
+        print('PDF indirme başlıyor: $_pdfUrl');
+        await _downloadAndSavePdf();
+      }
 
       // Questions'ı yükle
-      final questions =
-          await _sessionService.getSessionQuestions(widget.hallId);
-      if (mounted && questions != null) {
-        setState(() {
-          _questions = questions;
-        });
+      if (streamData['session_id'] != null) {
+        final questions =
+            await _sessionService.getSessionQuestions(widget.hallId);
+        print('Questions response: $questions');
+
+        if (mounted && questions != null) {
+          setState(() {
+            _questions = questions;
+          });
+        }
       }
 
       if (mounted) {
@@ -121,8 +126,9 @@ class _SessionViewState extends State<SessionView> {
           _loading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('Session initialization hatası: $e');
+      print('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _loading = false;
@@ -185,14 +191,42 @@ class _SessionViewState extends State<SessionView> {
   }
 
   Widget _buildPdfViewer() {
+    if (_pdfUrl == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.event_busy, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              _sessionTitle ?? 'Oturum Bulunamadı',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _sessionDescription ?? 'Oturum bilgisi bulunamadı',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (_localPdfPath == null) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.picture_as_pdf, size: 64, color: Colors.grey),
+            CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Doküman bulunamadı'),
+            Text('PDF yükleniyor...'),
           ],
         ),
       );

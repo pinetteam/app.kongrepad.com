@@ -173,7 +173,11 @@ class _MainPageViewState extends State<MainPageView>
     }
   }
 
-  void _redirectToLogin() {
+  void _redirectToLogin() async {
+    // Çıkış yaparken SharedPreferences'ı temizle
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Tüm verileri temizle
+
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -194,663 +198,471 @@ class _MainPageViewState extends State<MainPageView>
               child: CircularProgressIndicator(),
             )
           : SafeArea(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 200,
-                      child: Image.network(
-                        meeting != null &&
-                                meeting!.bannerName != null &&
-                                meeting!.bannerExtension != null
-                            ? "https://api.kongrepad.com/storage/meeting-banners/${meeting!.bannerName}.${meeting!.bannerExtension}"
-                            : "https://api.kongrepad.com/storage/meeting-banners/default.png",
-                        errorBuilder: (context, error, stackTrace) {
-                          print('Banner yükleme hatası: $error');
-                          return Container(
-                            height: 200,
-                            color: AppConstants.backgroundBlue,
-                            child: Center(
-                              child: Text(
-                                meeting?.title ?? 'Kongre',
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 24),
-                              ),
-                            ),
-                          );
-                        },
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    ),
-                    Stack(
-                      alignment: Alignment.topCenter,
+              child: Column(
+                children: [
+                  // Banner Section - Daha küçük
+                  SizedBox(
+                    height: screenHeight * 0.2, // %25'ten %20'ye düşürdüm
+                    child: meeting != null &&
+                            meeting!.bannerName != null &&
+                            meeting!.bannerExtension != null
+                        ? Image.network(
+                            "https://api.kongrepad.com/storage/meeting-banners/${meeting!.bannerName}.${meeting!.bannerExtension}",
+                            errorBuilder: (context, error, stackTrace) {
+                              print('Banner yükleme hatası: $error');
+                              return _buildDefaultBanner();
+                            },
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          )
+                        : _buildDefaultBanner(),
+                  ),
+
+                  // Main Content Section
+                  Expanded(
+                    child: Column(
                       children: [
-                        LowerHalfEllipse(screenWidth, screenHeight * 0.07),
-                        Column(
-                          children: [
-                            SizedBox(height: screenHeight * 0.01),
-                            Text(
-                              "${participant?.fullName}",
-                              style: const TextStyle(
-                                  fontSize: 25, color: Colors.white),
-                            ),
-                            SizedBox(height: screenHeight * 0.04),
-                            Container(
-                              width: screenWidth * 0.95,
-                              height: screenHeight * 0.002,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
+                        // User Info Section - Daha kompakt
+                        Container(
+                          color: AppConstants.backgroundBlue,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Column(
+                            children: [
+                              Text(
+                                "${participant?.fullName}",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            SizedBox(
-                              height: screenHeight * 0.1,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icon/chevron.left.svg',
-                                    color: Colors.white,
-                                    height: screenHeight * 0.02,
-                                  ),
-                                  Expanded(
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        children: virtualStands?.map((stand) {
-                                              return Padding(
-                                                padding:
-                                                    const EdgeInsets.all(8.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            VirtualStandView(
-                                                                stand: stand),
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Image.network(
-                                                    'https://api.kongrepad.com/storage/virtual-stands/${stand.fileName}.${stand.fileExtension}',
-                                                    fit: BoxFit.contain,
-                                                    height: screenHeight * 0.08,
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList() ??
-                                            [],
-                                      ),
-                                    ),
-                                  ),
-                                  SvgPicture.asset(
-                                    'assets/icon/chevron.right.svg',
-                                    color: Colors.white,
-                                    height: screenHeight * 0.02,
-                                  ),
-                                ],
+                              Container(
+                                width: screenWidth * 0.95,
+                                height: 1,
+                                color: Colors.white.withOpacity(0.5),
                               ),
-                            ),
-                            Container(
-                              width: screenWidth * 0.95,
-                              height: screenHeight * 0.002,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
+                            ],
+                          ),
+                        ),
+
+                        // Virtual Stands Section - Daha kompakt
+                        SizedBox(
+                          height: screenHeight * 0.08,
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: SvgPicture.asset(
+                                  'assets/icon/chevron.left.svg',
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {},
                               ),
-                            ),
-                            SizedBox(height: screenHeight * 0.04),
-                            // Main buttons
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                        child: AspectRatio(
-                                          aspectRatio: 1,
-                                          child: ElevatedButton(
-                                            style: ButtonStyle(
-                                              backgroundColor:
-                                                  WidgetStateProperty
-                                                      .all<Color>(AppConstants
-                                                          .buttonLightPurple),
-                                              foregroundColor:
-                                                  WidgetStateProperty.all<
-                                                      Color>(Colors.white),
-                                              padding: WidgetStateProperty.all<
-                                                  EdgeInsetsGeometry>(
-                                                const EdgeInsets.all(12),
-                                              ),
-                                              shape: WidgetStateProperty.all<
-                                                  RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                              ),
+                              Expanded(
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: virtualStands?.length ?? 0,
+                                  itemBuilder: (context, index) {
+                                    final stand = virtualStands![index];
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  VirtualStandView(
+                                                      stand: stand),
                                             ),
-                                            onPressed: () {
-                                              print(
-                                                  "MainPageView - Session butonuna tıklandı");
-                                              if (meeting?.sessionHallCount ==
-                                                  1) {
-                                                print(
-                                                    "MainPageView - Tek salon var, direkt SessionView'a yönlendiriliyor. HallId: ${meeting!.sessionFirstHallId}");
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          SessionView(
-                                                              hallId: meeting!
-                                                                  .sessionFirstHallId!)),
-                                                );
-                                              } else {
-                                                print(
-                                                    "MainPageView - Birden fazla salon var, HallsView açılıyor");
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        const Scaffold(
-                                                      backgroundColor:
-                                                          AppConstants
-                                                              .backgroundBlue,
-                                                      body: HallsView(
-                                                          type: "session"),
-                                                    ),
-                                                  ),
-                                                );
-                                              }
-                                            },
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  'assets/icon/play.fill.svg',
-                                                  color: Colors.white,
-                                                  height: screenHeight * 0.06,
-                                                ),
-                                                Text(
-                                                  AppLocalizations.of(context)
-                                                      .translate(
-                                                          'watch_presentation'),
-                                                  style: const TextStyle(
-                                                      fontSize: 18),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
+                                          );
+                                        },
+                                        child: Image.network(
+                                          'https://api.kongrepad.com/storage/virtual-stands/${stand.fileName}.${stand.fileExtension}',
+                                          fit: BoxFit.contain,
+                                          height: screenHeight * 0.06,
                                         ),
                                       ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: AspectRatio(
-                                          aspectRatio: 1,
-                                          child: ElevatedButton(
-                                            style: ButtonStyle(
-                                              backgroundColor:
-                                                  WidgetStateProperty.all<
-                                                      Color>(Colors.redAccent),
-                                              foregroundColor:
-                                                  WidgetStateProperty.all<
-                                                      Color>(Colors.white),
-                                              padding: WidgetStateProperty.all<
-                                                  EdgeInsetsGeometry>(
-                                                const EdgeInsets.all(12),
-                                              ),
-                                              shape: WidgetStateProperty.all<
-                                                  RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                              ),
-                                            ),
-                                            onPressed: () {
-                                              if (participant?.type! !=
-                                                  "attendee") {
-                                                AlertService().showAlertDialog(
-                                                  context,
-                                                  title: 'Uyarı',
-                                                  content:
-                                                      'Soru sorma izniniz yok!',
-                                                );
-                                              } else if (meeting
-                                                      ?.questionHallCount ==
-                                                  1) {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          AskQuestionView(
-                                                              hallId: meeting!
-                                                                  .questionFirstHallId!)),
-                                                );
-                                              } else {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      backgroundColor:
-                                                          AppConstants
-                                                              .backgroundBlue,
-                                                      contentPadding:
-                                                          EdgeInsets.zero,
-                                                      content: SizedBox(
-                                                        width:
-                                                            screenWidth * 0.9,
-                                                        height:
-                                                            screenHeight * 0.8,
-                                                        child: const HallsView(
-                                                            type: "question"),
-                                                      ),
-                                                    );
-                                                  },
-                                                );
-                                              }
-                                            },
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  'assets/icon/questionmark.svg',
-                                                  color: Colors.white,
-                                                  height: screenHeight * 0.06,
-                                                ),
-                                                Text(
-                                                  AppLocalizations.of(context)
-                                                      .translate(
-                                                          'ask_question'),
-                                                  style: const TextStyle(
-                                                      fontSize: 20),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                        child: AspectRatio(
-                                          aspectRatio: 1,
-                                          child: ElevatedButton(
-                                            style: ButtonStyle(
-                                              backgroundColor:
-                                                  WidgetStateProperty
-                                                      .all<Color>(AppConstants
-                                                          .buttonYellow),
-                                              foregroundColor:
-                                                  WidgetStateProperty.all<
-                                                      Color>(Colors.white),
-                                              padding: WidgetStateProperty.all<
-                                                  EdgeInsetsGeometry>(
-                                                const EdgeInsets.all(12),
-                                              ),
-                                              shape: WidgetStateProperty.all<
-                                                  RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                              ),
-                                            ),
-                                            onPressed: () {
-                                              if (meeting?.programHallCount ==
-                                                  1) {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          ProgramDaysView(
-                                                              hallId: meeting!
-                                                                  .programFirstHallId!)),
-                                                );
-                                              } else {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      backgroundColor:
-                                                          AppConstants
-                                                              .backgroundBlue,
-                                                      contentPadding:
-                                                          EdgeInsets.zero,
-                                                      content: SizedBox(
-                                                        width:
-                                                            screenWidth * 0.9,
-                                                        height:
-                                                            screenHeight * 0.8,
-                                                        child: const HallsView(
-                                                            type: "program"),
-                                                      ),
-                                                    );
-                                                  },
-                                                );
-                                              }
-                                            },
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  'assets/icon/book.fill.svg',
-                                                  color: Colors.white,
-                                                  height: screenHeight * 0.06,
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                                Text(
-                                                  AppLocalizations.of(context)
-                                                      .translate(
-                                                          'scientific_program'),
-                                                  style: const TextStyle(
-                                                      fontSize: 16),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: AspectRatio(
-                                          aspectRatio: 1,
-                                          child: ElevatedButton(
-                                            style: ButtonStyle(
-                                              backgroundColor:
-                                                  WidgetStateProperty
-                                                      .all<Color>(AppConstants
-                                                          .buttonLightBlue),
-                                              foregroundColor:
-                                                  WidgetStateProperty.all<
-                                                      Color>(Colors.white),
-                                              padding: WidgetStateProperty.all<
-                                                  EdgeInsetsGeometry>(
-                                                const EdgeInsets.all(12),
-                                              ),
-                                              shape: WidgetStateProperty.all<
-                                                  RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                              ),
-                                            ),
-                                            onPressed: () {
-                                              if (participant?.type! !=
-                                                  "attendee") {
-                                                AlertService().showAlertDialog(
-                                                  context,
-                                                  title: AppLocalizations.of(
-                                                          context)
-                                                      .translate('warning'),
-                                                  content: AppLocalizations.of(
-                                                          context)
-                                                      .translate(
-                                                          'no_permission_mail'),
-                                                );
-                                              } else if (meeting
-                                                      ?.mailHallCount ==
-                                                  1) {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          ProgramDaysForMailView(
-                                                              hallId: meeting!
-                                                                  .mailFirstHallId!)),
-                                                );
-                                              } else {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      backgroundColor:
-                                                          AppConstants
-                                                              .backgroundBlue,
-                                                      contentPadding:
-                                                          EdgeInsets.zero,
-                                                      content: SizedBox(
-                                                        width:
-                                                            screenWidth * 0.9,
-                                                        height:
-                                                            screenHeight * 0.8,
-                                                        child: const HallsView(
-                                                            type: "mail"),
-                                                      ),
-                                                    );
-                                                  },
-                                                );
-                                              }
-                                            },
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  'assets/icon/envelope.open.fill.svg',
-                                                  color: Colors.white,
-                                                  height: screenHeight * 0.06,
-                                                ),
-                                                Text(
-                                                  AppLocalizations.of(context)
-                                                      .translate('send_mail'),
-                                                  style: const TextStyle(
-                                                      fontSize: 20),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                        child: AspectRatio(
-                                          aspectRatio: 1,
-                                          child: ElevatedButton(
-                                            style: ButtonStyle(
-                                              backgroundColor:
-                                                  WidgetStateProperty
-                                                      .all<Color>(AppConstants
-                                                          .buttonDarkBlue),
-                                              foregroundColor:
-                                                  WidgetStateProperty.all<
-                                                      Color>(Colors.white),
-                                              padding: WidgetStateProperty.all<
-                                                  EdgeInsetsGeometry>(
-                                                const EdgeInsets.all(12),
-                                              ),
-                                              shape: WidgetStateProperty.all<
-                                                  RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                              ),
-                                            ),
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        const SurveysView()),
-                                              );
-                                            },
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  'assets/icon/checklist.checked.svg',
-                                                  color: Colors.white,
-                                                  height: screenHeight * 0.06,
-                                                ),
-                                                Text(
-                                                  AppLocalizations.of(context)
-                                                      .translate('surveys'),
-                                                  style: const TextStyle(
-                                                      fontSize: 20),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: AspectRatio(
-                                          aspectRatio: 1,
-                                          child: ElevatedButton(
-                                            style: ButtonStyle(
-                                              backgroundColor:
-                                                  WidgetStateProperty.all<
-                                                          Color>(
-                                                      AppConstants.buttonGreen),
-                                              foregroundColor:
-                                                  WidgetStateProperty.all<
-                                                      Color>(Colors.white),
-                                              padding: WidgetStateProperty.all<
-                                                  EdgeInsetsGeometry>(
-                                                const EdgeInsets.all(12),
-                                              ),
-                                              shape: WidgetStateProperty.all<
-                                                  RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                              ),
-                                            ),
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        const ScoreGameView()),
-                                              );
-                                            },
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                const Center(
-                                                  child: Icon(
-                                                    FontAwesomeIcons.qrcode,
-                                                    size: 60,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  AppLocalizations.of(context)
-                                                      .translate('scan_qr'),
-                                                  style: const TextStyle(
-                                                      fontSize: 20),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            // Bottom navigation
-                            Container(
-                              width: screenWidth * 0.95,
-                              height: screenHeight * 0.001,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
+                              IconButton(
+                                icon: SvgPicture.asset(
+                                  'assets/icon/chevron.right.svg',
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {},
                               ),
+                            ],
+                          ),
+                        ),
+
+                        // Main Buttons Grid - Daha büyük ve profesyonel
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            child: Column(
+                              children: [
+                                _buildButtonRow(
+                                  button1: _buildMainButton(
+                                    icon: 'assets/icon/play.fill.svg',
+                                    label: AppLocalizations.of(context)
+                                        .translate('watch_presentation'),
+                                    color: AppConstants.buttonLightPurple,
+                                    onPressed: () => _handleSessionButton(),
+                                  ),
+                                  button2: _buildMainButton(
+                                    icon: 'assets/icon/questionmark.svg',
+                                    label: AppLocalizations.of(context)
+                                        .translate('ask_question'),
+                                    color: Colors.redAccent,
+                                    onPressed: () => _handleQuestionButton(),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildButtonRow(
+                                  button1: _buildMainButton(
+                                    icon: 'assets/icon/book.fill.svg',
+                                    label: AppLocalizations.of(context)
+                                        .translate('scientific_program'),
+                                    color: AppConstants.buttonYellow,
+                                    onPressed: () => _handleProgramButton(),
+                                  ),
+                                  button2: _buildMainButton(
+                                    icon: 'assets/icon/envelope.open.fill.svg',
+                                    label: AppLocalizations.of(context)
+                                        .translate('send_mail'),
+                                    color: AppConstants.buttonLightBlue,
+                                    onPressed: () => _handleMailButton(),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildButtonRow(
+                                  button1: _buildMainButton(
+                                    icon: 'assets/icon/checklist.checked.svg',
+                                    label: AppLocalizations.of(context)
+                                        .translate('surveys'),
+                                    color: AppConstants.buttonDarkBlue,
+                                    onPressed: () => _handleSurveysButton(),
+                                  ),
+                                  button2: _buildMainButton(
+                                    icon: 'qr_code',
+                                    label: AppLocalizations.of(context)
+                                        .translate('scan_qr'),
+                                    color: AppConstants.buttonGreen,
+                                    onPressed: () => _handleQRButton(),
+                                    isIconAsset: false,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      if (participant?.type! != "attendee") {
-                                        AlertService().showAlertDialog(
-                                          context,
-                                          title: AppLocalizations.of(context)
-                                              .translate('success'),
-                                          content: AppLocalizations.of(context)
-                                              .translate('logout_success'),
-                                        );
-                                      }
-                                      Navigator.pop(context);
-                                    },
-                                    child: SvgPicture.asset(
-                                      'assets/icon/power.svg',
-                                      color: Colors.white,
-                                      height: screenHeight * 0.03,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const AnnouncementsView()),
-                                      );
-                                    },
-                                    child: SvgPicture.asset(
-                                      'assets/icon/bell.svg',
-                                      color: Colors.white,
-                                      height: screenHeight * 0.03,
-                                    ),
-                                  ),
-                                  SizedBox(width: screenWidth * 0.01),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const ProfileView()),
-                                      );
-                                    },
-                                    child: SvgPicture.asset(
-                                      'assets/icon/person.svg',
-                                      color: Colors.white,
-                                      height: screenHeight * 0.03,
-                                    ),
-                                  ),
-                                ],
+                          ),
+                        ),
+
+                        // Bottom Navigation - Daha kompakt
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: SvgPicture.asset(
+                                  'assets/icon/power.svg',
+                                  color: Colors.white,
+                                ),
+                                onPressed: _redirectToLogin,
                               ),
-                            ),
-                          ],
+                              const Spacer(),
+                              IconButton(
+                                icon: SvgPicture.asset(
+                                  'assets/icon/bell.svg',
+                                  color: Colors.white,
+                                ),
+                                onPressed: () => _handleAnnouncementsButton(),
+                              ),
+                              IconButton(
+                                icon: SvgPicture.asset(
+                                  'assets/icon/person.svg',
+                                  color: Colors.white,
+                                ),
+                                onPressed: () => _handleProfileButton(),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
+    );
+  }
+
+  Widget _buildButtonRow({required Widget button1, required Widget button2}) {
+    return Expanded(
+      child: Row(
+        children: [
+          Expanded(child: button1),
+          const SizedBox(width: 12),
+          Expanded(child: button2),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainButton({
+    required String icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+    bool isIconAsset = true,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isIconAsset)
+                  SvgPicture.asset(
+                    icon,
+                    color: Colors.white,
+                    height: 48, // Daha büyük ikon
+                  )
+                else
+                  const Icon(
+                    FontAwesomeIcons.qrcode,
+                    size: 48, // Daha büyük ikon
+                    color: Colors.white,
+                  ),
+                const SizedBox(height: 12),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 16, // Daha büyük yazı
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Button Handler Methods
+  void _handleSessionButton() {
+    if (meeting?.sessionHallCount == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              SessionView(hallId: meeting!.sessionFirstHallId!),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            backgroundColor: AppConstants.backgroundBlue,
+            body: HallsView(
+              type: "session",
+              meetingId: meeting!.id!,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _handleQuestionButton() {
+    if (participant?.type! != "attendee") {
+      AlertService().showAlertDialog(
+        context,
+        title: 'Uyarı',
+        content: 'Soru sorma izniniz yok!',
+      );
+    } else if (meeting?.questionHallCount == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              AskQuestionView(hallId: meeting!.questionFirstHallId!),
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: AppConstants.backgroundBlue,
+            contentPadding: EdgeInsets.zero,
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: HallsView(
+                type: "question",
+                meetingId: meeting!.id!,
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  void _handleProgramButton() {
+    if (meeting?.programHallCount == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ProgramDaysView(hallId: meeting!.programFirstHallId!),
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: AppConstants.backgroundBlue,
+            contentPadding: EdgeInsets.zero,
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: HallsView(
+                type: "program",
+                meetingId: meeting!.id!,
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  void _handleMailButton() {
+    if (participant?.type! != "attendee") {
+      AlertService().showAlertDialog(
+        context,
+        title: AppLocalizations.of(context).translate('warning'),
+        content: AppLocalizations.of(context).translate('no_permission_mail'),
+      );
+    } else if (meeting?.mailHallCount == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ProgramDaysForMailView(hallId: meeting!.mailFirstHallId!),
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: AppConstants.backgroundBlue,
+            contentPadding: EdgeInsets.zero,
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: HallsView(
+                type: "mail",
+                meetingId: meeting!.id!,
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  void _handleSurveysButton() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SurveysView(),
+      ),
+    );
+  }
+
+  void _handleQRButton() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ScoreGameView(),
+      ),
+    );
+  }
+
+  void _handleAnnouncementsButton() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AnnouncementsView(),
+      ),
+    );
+  }
+
+  void _handleProfileButton() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ProfileView(),
+      ),
+    );
+  }
+
+  Widget _buildDefaultBanner() {
+    return Container(
+      height: 200,
+      color: AppConstants.backgroundBlue,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/app_icon.png',
+              height: 80,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              meeting?.title ?? 'Kongre',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -39,8 +39,18 @@ class Meeting {
 
     print('Processing meeting data: $meetingData');
 
+    // ID'yi integer'a çevir
+    int? id;
+    if (meetingData['id'] != null) {
+      if (meetingData['id'] is int) {
+        id = meetingData['id'];
+      } else if (meetingData['id'] is String) {
+        id = int.tryParse(meetingData['id']);
+      }
+    }
+
     return Meeting(
-      id: meetingData['id'],
+      id: id,
       bannerName: meetingData['banner_name'],
       bannerExtension: meetingData['banner_extension'],
       code: meetingData['code'],

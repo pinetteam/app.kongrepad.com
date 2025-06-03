@@ -3,11 +3,11 @@ class Hall {
   int? meetingId;
   String? code;
   String? title;
-  int? showOnSession;
-  int? showOnAskQuestion;
-  int? showOnViewProgram;
-  int? showOnSendMail;
-  int? status;
+  bool? showOnSession;
+  bool? showOnAskQuestion;
+  bool? showOnViewProgram;
+  bool? showOnSendMail;
+  bool? status;
 
   Hall({
     this.id,
@@ -27,11 +27,19 @@ class Hall {
       meetingId: json['meeting_id'],
       code: json['code'],
       title: json['title'],
-      showOnSession: json['show_on_session'],
-      showOnAskQuestion: json['show_on_ask_question'],
-      showOnViewProgram: json['show_on_view_program'],
-      showOnSendMail: json['show_on_send_mail'],
-      status: json['status'],
+      showOnSession: json['show_on_session'] is bool
+          ? json['show_on_session']
+          : json['show_on_session'] == 1,
+      showOnAskQuestion: json['show_on_ask_question'] is bool
+          ? json['show_on_ask_question']
+          : json['show_on_ask_question'] == 1,
+      showOnViewProgram: json['show_on_view_program'] is bool
+          ? json['show_on_view_program']
+          : json['show_on_view_program'] == 1,
+      showOnSendMail: json['show_on_send_mail'] is bool
+          ? json['show_on_send_mail']
+          : json['show_on_send_mail'] == 1,
+      status: json['status'] is bool ? json['status'] : json['status'] == 1,
     );
   }
 }
@@ -52,7 +60,8 @@ class HallsJSON {
       data: (json['data'] as List<dynamic>?)
           ?.map((e) => Hall.fromJson(e as Map<String, dynamic>))
           .toList(),
-      errors: (json['errors'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+      errors:
+          (json['errors'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
       status: json['status'],
     );
   }
@@ -71,8 +80,11 @@ class HallJSON {
 
   factory HallJSON.fromJson(Map<String, dynamic> json) {
     return HallJSON(
-      data: json['data'] != null ? Hall.fromJson(json['data'] as Map<String, dynamic>) : null,
-      errors: (json['errors'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+      data: json['data'] != null
+          ? Hall.fromJson(json['data'] as Map<String, dynamic>)
+          : null,
+      errors:
+          (json['errors'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
       status: json['status'],
     );
   }
