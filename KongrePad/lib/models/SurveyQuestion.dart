@@ -8,6 +8,7 @@ class SurveyQuestion {
   String? question;
   List<SurveyOption>? options;
   int? status;
+  bool? required; // Zorunlu alan kontrolü için
 
   SurveyQuestion({
     this.id,
@@ -17,6 +18,7 @@ class SurveyQuestion {
     this.question,
     this.options,
     this.status,
+    this.required,
   });
 
   factory SurveyQuestion.fromJson(Map<String, dynamic> json) {
@@ -30,6 +32,7 @@ class SurveyQuestion {
           ?.map((e) => SurveyOption.fromJson(e))
           .toList(),
       status: json['status'],
+      required: json['required'] ?? true, // Default zorunlu
     );
   }
 
@@ -42,7 +45,47 @@ class SurveyQuestion {
     data['question'] = question;
     data['options'] = options?.map((e) => e.toJson()).toList();
     data['status'] = status;
+    data['required'] = required;
     return data;
+  }
+
+  /// Helper method to check if question has valid options
+  bool get hasValidOptions => options != null && options!.isNotEmpty;
+
+  /// Helper method to get selected option
+  SurveyOption? get getSelectedOption {
+    if (options == null || selectedOption == null) return null;
+    try {
+      return options!.firstWhere((option) => option.id == selectedOption);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Helper method to check if an option is selected
+  bool isOptionSelected(int optionId) {
+    return selectedOption == optionId;
+  }
+
+  /// Helper method to select an option
+  void selectOption(int optionId) {
+    selectedOption = optionId;
+    // Update options selection state
+    if (options != null) {
+      for (var option in options!) {
+        option.isSelected = (option.id == optionId);
+      }
+    }
+  }
+
+  /// Helper method to clear selection
+  void clearSelection() {
+    selectedOption = null;
+    if (options != null) {
+      for (var option in options!) {
+        option.isSelected = false;
+      }
+    }
   }
 }
 
@@ -74,6 +117,17 @@ class SurveyQuestionsJSON {
     data['status'] = status;
     return data;
   }
+
+  /// Helper method to check if response is successful
+  bool get isSuccess => status == true && data != null;
+
+  /// Helper method to get error message
+  String get errorMessage {
+    if (errors != null && errors!.isNotEmpty) {
+      return errors!.join(', ');
+    }
+    return 'Bilinmeyen hata';
+  }
 }
 
 class SurveyQuestionJSON {
@@ -101,5 +155,16 @@ class SurveyQuestionJSON {
     data['errors'] = errors;
     data['status'] = status;
     return data;
+  }
+
+  /// Helper method to check if response is successful
+  bool get isSuccess => status == true && data != null;
+
+  /// Helper method to get error message
+  String get errorMessage {
+    if (errors != null && errors!.isNotEmpty) {
+      return errors!.join(', ');
+    }
+    return 'Bilinmeyen hata';
   }
 }

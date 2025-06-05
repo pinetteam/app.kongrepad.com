@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:http/http.dart' as http;
-
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/Survey.dart';
+import '../services/survey_service.dart';
 import '../utils/app_constants.dart';
 import 'MainPageView.dart';
 import 'SurveyView.dart';
@@ -19,283 +16,529 @@ class SurveysView extends StatefulWidget {
 }
 
 class _SurveysViewState extends State<SurveysView> {
-  Future<void> getData() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    print('SurveysView - getData başladı');
-    print('SurveysView - Token: ${token?.substring(0, 10)}...');
-
-    try {
-      // ✅ Doğru URL - Swagger'a göre güncellendi
-      final url = Uri.parse('https://api.kongrepad.com/api/v1/surveys');
-      print('SurveysView - Request URL: $url');
-
-      final response = await http.get(
-        url,
-        headers: <String, String>{
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      print('SurveysView - Response Status: ${response.statusCode}');
-      print('SurveysView - Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        print('SurveysView - JSON Data Keys: ${jsonData.keys}');
-
-        // API response yapısını kontrol et
-        if (jsonData['success'] == true && jsonData['data'] != null) {
-          final surveysJson = SurveysJSON.fromJson(jsonData);
-          setState(() {
-            surveys = surveysJson.data;
-            _loading = false;
-          });
-          print('SurveysView - ${surveys?.length} survey bulundu');
-        } else {
-          print('SurveysView - API success=false veya data=null');
-          print('SurveysView - Message: ${jsonData['message']}');
-          setState(() {
-            surveys = [];
-            _loading = false;
-          });
-        }
-      } else if (response.statusCode == 401) {
-        print('SurveysView - Unauthorized (401)');
-        setState(() {
-          _loading = false;
-        });
-      } else {
-        print('SurveysView - HTTP Error: ${response.statusCode}');
-        print('SurveysView - Error Body: ${response.body}');
-        setState(() {
-          _loading = false;
-        });
-      }
-    } catch (e) {
-      print('SurveysView - Exception Error: $e');
-      setState(() {
-        _loading = false;
-      });
-    }
-  }
+  final SurveyService _surveyService = SurveyService();
 
   List<Survey>? surveys;
   bool _loading = true;
+  bool _hasError = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    getData();
+    _loadSurveys();
+  }
+
+  Future<void> _loadSurveys() async {
+    if (!mounted) return;
+
+    setState(() {
+      _loading = true;
+      _hasError = false;
+      _errorMessage = null;
+    });
+
+    try {
+      print('SurveysView - Survey yükleme başladı');
+
+      // Aktif survey'leri al
+      final result = await _surveyService.getSurveys(
+        status: 'active',
+        limit: 50, // Sayfa başına maksimum survey sayısı
+      );
+
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        final surveysData = result['data'] as List;
+        print('SurveysView - ${surveysData.length} survey alındı');
+
+        // Survey model'larına dönüştür
+        final surveyList = <Survey>[];
+        for (final surveyJson in surveysData) {
+          try {
+            final survey = Survey.fromJson(surveyJson);
+            surveyList.add(survey);
+          } catch (e) {
+            print('SurveysView - Survey parse hatası: $e');
+            print('SurveysView - Survey data: $surveyJson');
+          }
+        }
+
+        setState(() {
+          surveys = surveyList;
+          _loading = false;
+        });
+
+        print('SurveysView - ✅ ${surveyList.length} survey başarıyla yüklendi');
+      } else {
+        setState(() {
+          surveys = [];
+          _loading = false;
+          _hasError = true;
+          _errorMessage = result['message'] ?? 'Anketler yüklenemedi';
+        });
+        print('SurveysView - Survey yükleme başarısız: ${result['message']}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        surveys = [];
+        _loading = false;
+        _hasError = true;
+        _errorMessage = 'Beklenmeyen hata: $e';
+      });
+      print('SurveysView - Exception: $e');
+    }
+  }
+
+  Future<void> _refreshSurveys() async {
+    print('SurveysView - Refresh tetiklendi');
+    await _loadSurveys();
+  }
+
+  void _navigateToSurvey(Survey survey) async {
+    if (survey.id == null) {
+      _showError('Geçersiz anket');
+      return;
+    }
+
+    print('SurveysView - Survey tıklandı: ${survey.id} - ${survey.title}');
+
+    try {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SurveyView(
+            survey: survey,
+            isEditable: !(survey.isCompleted ?? false),
+          ),
+        ),
+      );
+
+      // Survey'den geri dönüldüğünde liste güncelle
+      if (result == true) {
+        print('SurveysView - Survey tamamlandı, liste güncelleniyor');
+        await _refreshSurveys();
+      }
+    } catch (e) {
+      print('SurveysView - Navigation hatası: $e');
+      _showError('Anket açılırken hata oluştu: $e');
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Widget _buildSurveyCard(Survey survey) {
+    final isCompleted = survey.isCompleted ?? false;
+    final hasTitle = survey.title?.isNotEmpty == true;
+    final hasDescription = survey.description?.isNotEmpty == true;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          borderRadius: BorderRadius.circular(16),
+          color: isCompleted ? Colors.green[600] : AppConstants.buttonDarkBlue,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _navigateToSurvey(survey),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  // Survey icon
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SvgPicture.asset(
+                      isCompleted
+                          ? 'assets/icon/checklist.checked.svg'
+                          : 'assets/icon/checklist.svg',
+                      color: Colors.white,
+                      height: 28,
+                      width: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Survey content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          hasTitle ? survey.title! : 'İsimsiz Anket',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        // Description
+                        if (hasDescription) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            survey.description!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white.withOpacity(0.85),
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+
+                        // Status
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            if (isCompleted) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'Tamamlandı',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ] else ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'Bekliyor',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Arrow icon
+                  const SizedBox(width: 12),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white.withOpacity(0.7),
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.poll_outlined,
+                size: 80,
+                color: Colors.grey[400],
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Henüz anket bulunmuyor',
+              style: TextStyle(
+                fontSize: 22,
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Şu anda katılabileceğiniz aktif bir anket yok.\nYeni anketler için bu sayfayı kontrol edin.',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[500],
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _refreshSurveys,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Yenile'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.backgroundBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline,
+                size: 80,
+                color: Colors.red[400],
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Bir hata oluştu',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.red[700],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage ?? 'Bilinmeyen hata',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _refreshSurveys,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Tekrar Dene'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.backgroundBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppConstants.backgroundBlue.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppConstants.backgroundBlue),
+              strokeWidth: 4,
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'Anketler yükleniyor...',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppConstants.backgroundBlue,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Lütfen bekleyin',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    Size screenSize = MediaQuery.of(context).size;
-    double screenWidth = screenSize.width;
-    double screenHeight = screenSize.height;
-    return SafeArea(
-      child: Scaffold(
-        body: _loading
-            ? const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
-            : Container(
-          height: screenHeight,
-          alignment: Alignment.center,
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                height: screenHeight * 0.1,
-                decoration: const BoxDecoration(
-                  color: AppConstants.backgroundBlue,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.white, // Border color
-                      width: 2, // Border width
-                    ),
-                  ),
-                ),
-                child: SizedBox(
-                  width: screenWidth,
-                  child: Stack(
-                    alignment: Alignment.centerLeft,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MainPageView(
-                                  title: '',
-                                )),
-                          );
-                        },
-                        child: Container(
-                          height: screenHeight * 0.05,
-                          width: screenHeight * 0.05,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color:
-                            Colors.white, // Circular background color
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SvgPicture.asset(
-                              'assets/icon/chevron.left.svg',
-                              color: AppConstants.backgroundBlue,
-                              height: screenHeight * 0.03,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              AppLocalizations.of(context)
-                                  .translate('surveys'),
-                              style: const TextStyle(
-                                  fontSize: 25, color: Colors.white),
-                            )
-                          ]),
-                    ],
-                  ),
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: AppConstants.backgroundBlue,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
                 ),
               ),
-              // Surveys listesi
-              Expanded(
-                child: surveys == null || surveys!.isEmpty
-                    ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.poll_outlined,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Henüz anket bulunmuyor',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _loading = true;
-                          });
-                          getData();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Yenile'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppConstants.backgroundBlue,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-                    : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: surveys!.map((survey) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: screenHeight * 0.1,
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor:
-                              WidgetStateProperty.all<Color>(
-                                  survey.isCompleted == true
-                                      ? Colors.redAccent
-                                      : AppConstants
-                                      .buttonDarkBlue),
-                              foregroundColor:
-                              WidgetStateProperty.all<Color>(
-                                  AppConstants.backgroundBlue),
-                              padding: WidgetStateProperty.all<
-                                  EdgeInsetsGeometry>(
-                                const EdgeInsets.all(12),
-                              ),
-                              shape: WidgetStateProperty.all<
-                                  RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius:
-                                  BorderRadius.circular(14),
-                                ),
-                              ),
-                            ),
-                            onPressed: () {
-                              print('Survey tıklandı: ${survey.id} - ${survey.title}');
-                              // Navigate to SurveyView with isEditable flag
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SurveyView(
-                                    survey: survey,
-                                    isEditable: !(survey
-                                        .isCompleted ??
-                                        false), // Provide a default value of false if isCompleted is null
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: SvgPicture.asset(
-                                    'assets/icon/checklist.checked.svg',
-                                    color: Colors.white,
-                                    height: screenHeight * 0.03,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    survey.title.toString(),
-                                    style: const TextStyle(
-                                        fontSize: 20,
-                                        color: Colors.white),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (survey.isCompleted == true)
-                                  const Padding(
-                                    padding: EdgeInsets.only(right: 12),
-                                    child: Icon(
-                                      Icons.check_circle,
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MainPageView(title: ''),
                         ),
                       );
-                    }).toList(),
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      child: SvgPicture.asset(
+                        'assets/icon/chevron.left.svg',
+                        color: AppConstants.backgroundBlue,
+                        height: 24,
+                      ),
+                    ),
                   ),
+                  Expanded(
+                    child: Text(
+                      AppLocalizations.of(context).translate('surveys'),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  // Refresh button
+                  GestureDetector(
+                    onTap: _refreshSurveys,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                      child: const Icon(
+                        Icons.refresh,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content
+            Expanded(
+              child: _loading
+                  ? _buildLoadingState()
+                  : _hasError
+                  ? _buildErrorState()
+                  : surveys == null || surveys!.isEmpty
+                  ? _buildEmptyState()
+                  : RefreshIndicator(
+                onRefresh: _refreshSurveys,
+                color: AppConstants.backgroundBlue,
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: surveys!.length,
+                  itemBuilder: (context, index) {
+                    final survey = surveys![index];
+                    return _buildSurveyCard(survey);
+                  },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
