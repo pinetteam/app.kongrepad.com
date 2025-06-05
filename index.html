@@ -159,15 +159,17 @@
     <h1>KongrePad</h1>
     <p class="subtitle">Mobil uygulamayı indirin ve toplantılarınıza katılın</p>
 
-    <a href="#"
+    <a href="KongrePad/build/app/outputs/flutter-apk/app-release.apk"
        id="downloadBtn"
-       class="download-btn checking"
+       class="download-btn"
        download="KongrePad.apk"
        onclick="trackDownload()">
-        🔄 Kontrol ediliyor...
+        📱 APK İndir (Release)
     </a>
 
-    <div id="status" class="status" style="display: none;"></div>
+    <div id="status" class="status success" style="display: block;">
+        ✅ Release APK hazır (94.6 MB)
+    </div>
 
     <div class="info">
         <h3>Kurulum Talimatları</h3>
@@ -185,85 +187,24 @@
 </div>
 
 <script>
-    // APK dosyası yolları (sırayla kontrol edilecek)
-    const apkPaths = [
-        'build/app/outputs/flutter-apk/app-release.apk',   // 🆕 Release APK (öncelikli)
-        'build/app/outputs/flutter-apk/app-debug.apk',     // Debug APK (yedek)
-        'build/app/outputs/apk/debug/app-debug.apk',       // Eski Flutter yapısı
-        'app-release.apk',                                  // Manuel yüklenmiş release
-        'app-debug.apk',                                    // Manuel yüklenmiş debug
-        'downloads/KongrePad-latest.apk'                    // Organized struktur
-    ];
-
-    const downloadBtn = document.getElementById('downloadBtn');
-    const statusDiv = document.getElementById('status');
-
     // Son güncelleme tarihini göster
     document.getElementById('lastUpdate').textContent = new Date().toLocaleDateString('tr-TR');
 
-    // APK dosyasını bul ve kontrol et
-    async function findAndSetAPK() {
-        for (const path of apkPaths) {
-            try {
-                const response = await fetch(path, { method: 'HEAD' });
-                if (response.ok) {
-                    // APK bulundu
-                    downloadBtn.href = path;
-                    downloadBtn.className = 'download-btn';
-
-                    // APK tipini belirle
-                    const isRelease = path.includes('release');
-                    const apkType = isRelease ? 'Release' : 'Debug';
-
-                    downloadBtn.innerHTML = `📱 APK İndir (${apkType})`;
-
-                    // Dosya boyutunu al
-                    const size = response.headers.get('content-length');
-                    if (size) {
-                        const sizeMB = (parseInt(size) / 1024 / 1024).toFixed(1);
-                        statusDiv.innerHTML = `✅ ${apkType} APK hazır (${sizeMB} MB)`;
-                        statusDiv.className = 'status success';
-                        statusDiv.style.display = 'block';
-                    }
-
-                    console.log(`APK found at: ${path} (${apkType})`);
-                    return;
-                }
-            } catch (error) {
-                console.log(`Checking ${path}:`, error.message);
-            }
-        }
-
-        // APK bulunamadı
-        downloadBtn.className = 'download-btn error';
-        downloadBtn.innerHTML = '❌ APK Bulunamadı';
-        statusDiv.innerHTML = '❌ APK dosyası sunucuda bulunamadı. Lütfen geliştirici ile iletişime geçin.';
-        statusDiv.className = 'status error';
-        statusDiv.style.display = 'block';
-    }
-
     // Download tracking
     function trackDownload() {
-        if (downloadBtn.className.includes('error')) {
-            return false;
-        }
-
         console.log('APK download started');
 
         // Analytics ekleyebilirsiniz
         if (typeof gtag !== 'undefined') {
             gtag('event', 'download', {
                 'event_category': 'APK',
-                'event_label': 'KongrePad',
+                'event_label': 'KongrePad Release',
                 'value': 1
             });
         }
 
         return true;
     }
-
-    // Sayfa yüklendiğinde APK'yı kontrol et
-    document.addEventListener('DOMContentLoaded', findAndSetAPK);
 </script>
 </body>
 </html>
