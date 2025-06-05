@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:pusher_beams/pusher_beams.dart';
 import '../../services/auth_service.dart';
@@ -9,6 +12,7 @@ import '../../services/alert_service.dart';
 import '../../utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_localizations.dart';
+import '../services/session_service.dart';
 import 'AnnouncementsView.dart';
 import 'AskQuestionView.dart';
 import 'HallsView.dart';
@@ -26,7 +30,6 @@ import 'VirtualStandView.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../utils/notification_helper.dart';
 import 'lower_half_ellipse.dart';
-
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 class MainPageView extends StatefulWidget {
@@ -502,30 +505,174 @@ class _MainPageViewState extends State<MainPageView>
   }
 
   // Button Handler Methods
-  void _handleSessionButton() {
-    if (meeting?.sessionHallCount == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              SessionView(hallId: meeting!.sessionFirstHallId!),
-        ),
+// MainPageView.dart - _handleSessionButton metodunu bu ile değiştir:
+
+  // MainPageView.dart - _handleSessionButton metodunu bu ile değiştir:
+
+  void _handleSessionButton() async {
+    try {
+      print('MainPage - Session button tıklandı');
+
+      // SessionService'i kullanarak aktif session'ları al
+      final sessionService = SessionService();
+
+      // Current meeting'den live sessions'ları al
+      final authService = AuthService();
+      final response = await http.get(
+        Uri.parse('https://api.kongrepad.com/api/v1/meetings/current'),
+        headers: {
+          'Authorization': 'Bearer ${await authService.getStoredToken()}',
+          'Accept': 'application/json',
+        },
       );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Scaffold(
-            backgroundColor: AppConstants.backgroundBlue,
-            body: HallsView(
-              type: "session",
-              meetingId: meeting!.id!,
-            ),
-          ),
-        ),
-      );
+
+      if (response.statusCode == 200) {
+        final meetingData = jsonDecode(response.body);
+        final currentActivities = meetingData['data']?['current_activities'];
+
+        if (currentActivities != null && currentActivities['live_sessions'] != null) {
+          final liveSessions = currentActivities['live_sessions'] as List;
+
+          print('MainPage - ${liveSessions.length} aktif session bulundu');
+
+          if (liveSessions.isEmpty) {
+            // Hiç aktif session yok
+            _showNoActiveSessionDialog();
+            return;
+          }
+
+          if (liveSessions.length == 1) {
+            // TEK SESSION VAR → DİREKT AÇ
+            final session = liveSessions.first;
+            final sessionId = session['id'];
+            final hallId = session['program']?['hall_id'] ?? sessionId;
+
+            print('MainPage - Tek session var, direkt açılıyor: Session $sessionId, Hall $hallId');
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SessionView(hallId: hallId),
+              ),
+            );
+            return;
+          }
+
+          // ÇOKLU SESSION VAR → Aktif hall'ları belirle
+          print('MainPage - Çoklu session var');
+
+          final activeHalls = <int>{};
+          for (var session in liveSessions) {
+            final hallId = session['program']?['hall_id'];
+            if (hallId != null) activeHalls.add(hallId);
+          }
+
+          print('MainPage - Aktif hall\'lar: $activeHalls');
+
+          if (activeHalls.length == 1) {
+            // Tüm session'lar aynı hall'da → Direkt aç
+            final hallId = activeHalls.first;
+            print('MainPage - Tüm session\'lar Hall $hallId\'de, direkt açılıyor');
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SessionView(hallId: hallId),
+              ),
+            );
+          } else {
+            // Farklı hall'larda session'lar var → Hall listesi göster
+            print('MainPage - Farklı hall\'larda session\'lar var, liste gösteriliyor');
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  backgroundColor: AppConstants.backgroundBlue,
+                  body: HallsView(
+                    type: "session",
+                    meetingId: meeting!.id!,
+                  ),
+                ),
+              ),
+            );
+          }
+        } else {
+          // Hiç current activities yok
+          print('MainPage - Current activities bulunamadı');
+          _showNoActiveSessionDialog();
+        }
+      } else {
+        print('MainPage - Meeting current API failed: ${response.statusCode}');
+        _showErrorDialog('Meeting bilgileri alınamadı');
+      }
+    } catch (e) {
+      print('MainPage - Session button error: $e');
+      _showErrorDialog('Oturum bilgileri alınamadı: $e');
     }
   }
+
+  void _showNoActiveSessionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(
+          'Aktif Oturum Yok',
+          style: TextStyle(
+            color: AppConstants.backgroundBlue,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Şu anda hiçbir hall\'da aktif oturum bulunmuyor.',
+          style: TextStyle(color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Tamam',
+              style: TextStyle(color: AppConstants.backgroundBlue),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(
+          'Hata',
+          style: TextStyle(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          message,
+          style: TextStyle(color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Tamam',
+              style: TextStyle(color: AppConstants.backgroundBlue),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+
 
   void _handleQuestionButton() {
     if (participant?.type! != "attendee") {

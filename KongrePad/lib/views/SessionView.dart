@@ -4,6 +4,7 @@ import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../services/auth_service.dart';
 import '../utils/app_constants.dart';
 import '../services/session_service.dart';
 import '../services/question_service.dart';
@@ -41,7 +42,10 @@ class _SessionViewState extends State<SessionView> {
   }
 
   Future<void> _downloadAndSavePdf() async {
-    if (_pdfUrl == null) return;
+    if (_pdfUrl == null || _pdfUrl!.isEmpty) {
+      print('PDF URL boş, indirme atlanıyor');
+      return;
+    }
 
     setState(() {
       _isPdfDownloading = true;
@@ -49,22 +53,70 @@ class _SessionViewState extends State<SessionView> {
 
     try {
       print('PDF indiriliyor: $_pdfUrl');
-      final response = await http.get(Uri.parse(_pdfUrl!));
 
-      if (response.statusCode != 200) {
-        throw Exception('PDF indirilemedi: ${response.statusCode}');
+      // Token'ı header'a ekle
+      final token = await AuthService().getStoredToken();
+      final headers = <String, String>{
+        'Accept': 'application/pdf, application/octet-stream, */*',
+      };
+
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
       }
 
-      final bytes = response.bodyBytes;
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/session_document_${widget.hallId}.pdf');
-      await file.writeAsBytes(bytes);
+      final response = await http.get(
+        Uri.parse(_pdfUrl!),
+        headers: headers,
+      );
 
-      if (mounted) {
-        setState(() {
-          _localPdfPath = file.path;
-          _isPdfDownloading = false;
-        });
+      print('PDF Download Response Status: ${response.statusCode}');
+      print('PDF Download Response Headers: ${response.headers}');
+      print('PDF Download Response Content-Length: ${response.contentLength}');
+
+      if (response.statusCode == 200) {
+        final bytes = response.bodyBytes;
+        print('PDF bytes length: ${bytes.length}');
+
+        if (bytes.isEmpty) {
+          throw Exception('PDF dosyası boş');
+        }
+
+        // PDF header kontrolü
+        if (bytes.length >= 4) {
+          final header = String.fromCharCodes(bytes.take(4));
+          print('PDF header: $header');
+          if (!header.startsWith('%PDF')) {
+            print('UYARI: Dosya PDF formatında görünmüyor');
+            // Yine de kaydetmeyi dene
+          }
+        }
+
+        final dir = await getTemporaryDirectory();
+        final file = File('${dir.path}/session_document_${widget.hallId}_${DateTime.now().millisecondsSinceEpoch}.pdf');
+        await file.writeAsBytes(bytes);
+
+        // Dosya yazıldıktan sonra kontrol et
+        if (await file.exists()) {
+          final fileSize = await file.length();
+          print('PDF dosya başarıyla kaydedildi: ${file.path}, Boyut: $fileSize bytes');
+
+          if (mounted) {
+            setState(() {
+              _localPdfPath = file.path;
+              _isPdfDownloading = false;
+            });
+          }
+        } else {
+          throw Exception('PDF dosyası kaydedilemedi');
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('Yetkilendirme hatası (401): PDF erişimi reddedildi');
+      } else if (response.statusCode == 404) {
+        throw Exception('PDF bulunamadı (404): $_pdfUrl');
+      } else if (response.statusCode == 403) {
+        throw Exception('Erişim yasak (403): PDF indirme izni yok');
+      } else {
+        throw Exception('PDF indirilemedi (${response.statusCode}): ${response.reasonPhrase}');
       }
     } catch (e) {
       print('PDF download hatası: $e');
@@ -81,6 +133,8 @@ class _SessionViewState extends State<SessionView> {
 
   Future<void> _initializeSession() async {
     try {
+      print('SessionView - Session initialization başladı, Hall ID: ${widget.hallId}');
+
       setState(() {
         _loading = true;
         _hasError = false;
@@ -89,26 +143,58 @@ class _SessionViewState extends State<SessionView> {
 
       final sessionData = await _sessionService.getActiveSession(widget.hallId);
 
+      print('SessionView - Session data alındı: $sessionData');
+
+      // Null safety kontrolleri
       if (sessionData == null) {
+        print('SessionView - Session data null');
         setState(() {
           _loading = false;
           _hasError = true;
-          _errorMessage = 'Oturum bilgileri alınamadı';
+          _errorMessage = 'Hall ID ${widget.hallId} için oturum bilgileri alınamadı';
         });
         return;
       }
 
+      // Data içeriğini kontrol et
+      print('SessionView - Session data keys: ${sessionData.keys}');
+
       setState(() {
         _pdfUrl = sessionData['pdf_url'];
-        _sessionTitle = sessionData['title'];
-        _sessionDescription = sessionData['description'];
-        _sessionId = sessionData['session_id'] != null
-            ? int.parse(sessionData['session_id'].toString())
-            : null;
+        _sessionTitle = sessionData['title'] ?? 'Oturum';
+        _sessionDescription = sessionData['description'] ?? 'Oturum açıklaması mevcut değil';
+
+        // Session ID güvenli parse
+        if (sessionData['session_id'] != null) {
+          try {
+            _sessionId = int.parse(sessionData['session_id'].toString());
+            print('SessionView - Session ID parsed: $_sessionId');
+          } catch (e) {
+            print('SessionView - Session ID parse hatası: $e');
+            _sessionId = null;
+          }
+        } else {
+          print('SessionView - Session ID null');
+          _sessionId = null;
+        }
       });
 
-      if (_pdfUrl != null) {
+      print('SessionView - PDF URL: $_pdfUrl');
+      print('SessionView - Session Title: $_sessionTitle');
+      print('SessionView - Session ID: $_sessionId');
+
+      // Materials test et (eğer session ID varsa)
+      if (_sessionId != null) {
+        print('SessionView - Materials test başlatılıyor...');
+        await _testMaterialsEndpoint(_sessionId!);
+      }
+
+      // PDF indirme
+      if (_pdfUrl != null && _pdfUrl!.isNotEmpty) {
+        print('SessionView - PDF indirme başlatılıyor...');
         await _downloadAndSavePdf();
+      } else {
+        print('SessionView - PDF URL yok, indirme atlanıyor');
       }
 
       if (mounted) {
@@ -116,67 +202,175 @@ class _SessionViewState extends State<SessionView> {
           _loading = false;
         });
       }
+
+      print('SessionView - Initialization tamamlandı');
+
     } catch (e, stackTrace) {
-      print('Session initialization hatası: $e');
-      print('Stack trace: $stackTrace');
+      print('SessionView - Initialization EXCEPTION: $e');
+      print('SessionView - Stack trace: $stackTrace');
+
       if (mounted) {
         setState(() {
           _loading = false;
           _hasError = true;
-          _errorMessage = 'Oturum yüklenirken bir hata oluştu: $e';
+          _errorMessage = 'Oturum yüklenirken beklenmeyen bir hata oluştu: ${e.toString()}';
         });
       }
     }
   }
 
+  // Materials endpoint test metodu
+  Future<void> _testMaterialsEndpoint(int sessionId) async {
+    print('=== MATERIALS ENDPOINT TEST ===');
+
+    try {
+      final token = await AuthService().getStoredToken();
+      if (token == null) {
+        print('TEST - Token yok');
+        return;
+      }
+
+      // 1. Session detayını al
+      print('1. Session detayı test ediliyor...');
+      final sessionResponse = await http.get(
+        Uri.parse('https://api.kongrepad.com/api/v1/sessions/$sessionId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      print('Session Detail Status: ${sessionResponse.statusCode}');
+      print('Session Detail Body: ${sessionResponse.body}');
+
+      // 2. Materials endpoint'ini test et
+      print('\n2. Materials endpoint test ediliyor...');
+      final materialsResponse = await http.get(
+        Uri.parse('https://api.kongrepad.com/api/v1/sessions/$sessionId/materials'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      print('Materials Status: ${materialsResponse.statusCode}');
+      print('Materials Headers: ${materialsResponse.headers}');
+      print('Materials Body: ${materialsResponse.body}');
+
+      // 3. Document endpoint'lerini test et
+      print('\n3. Document endpoint\'leri test ediliyor...');
+      final documentEndpoints = [
+        'https://api.kongrepad.com/api/v1/documents',
+        'https://api.kongrepad.com/api/v1/sessions/$sessionId/documents',
+      ];
+
+      for (String endpoint in documentEndpoints) {
+        try {
+          final response = await http.get(
+            Uri.parse(endpoint),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+            },
+          );
+          print('$endpoint - Status: ${response.statusCode}');
+          if (response.body.length > 100) {
+            print('$endpoint - Body: ${response.body.substring(0, 100)}...');
+          } else {
+            print('$endpoint - Body: ${response.body}');
+          }
+        } catch (e) {
+          print('$endpoint - Error: $e');
+        }
+      }
+
+    } catch (e) {
+      print('TEST ERROR: $e');
+    }
+
+    print('=== TEST BİTTİ ===');
+  }
+
   void _navigateToAskQuestion() {
-    print('Soru Sor butonuna tıklandı - Session ID: $_sessionId');
+    print('SessionView - Soru Sor butonuna tıklandı');
+    print('SessionView - Session ID: $_sessionId');
+    print('SessionView - Session Title: $_sessionTitle');
 
     if (_sessionId == null) {
-      print('Session ID null, soru sorma sayfasına gidemez');
+      print('SessionView - Session ID null, uyarı gösteriliyor');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Oturum bilgisi bulunamadı. Lütfen sayfayı yenileyin.'),
+          content: Text('Aktif oturum bulunamadı. Hall ID: ${widget.hallId}'),
           backgroundColor: Colors.orange,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          action: SnackBarAction(
+            label: 'Yenile',
+            textColor: Colors.white,
+            onPressed: () {
+              _initializeSession();
+            },
+          ),
         ),
       );
       return;
     }
 
-    // Session ID'yi hallId olarak geçir (AskQuestionView sessionId ile çalışacak)
-    Navigator.pushNamed(
-      context,
-      '/ask-question',
-      arguments: {
-        'hallId': _sessionId, // Session ID'yi hallId olarak geçir
-        'sessionTitle': _sessionTitle,
-      },
-    ).then((result) {
-      print('AskQuestionView\'den döndü, result: $result');
-      if (result == true) {
-        // Soru başarılı bir şekilde gönderildi
+    try {
+      // Navigation arguments'ı güvenli hale getir
+      final arguments = <String, dynamic>{
+        'hallId': _sessionId!, // Session ID'yi hallId olarak geçir
+        'sessionTitle': _sessionTitle ?? 'Oturum',
+        'actualHallId': widget.hallId, // Gerçek hall ID'yi de gönder
+      };
+
+      print('SessionView - Navigation arguments: $arguments');
+
+      Navigator.pushNamed(
+        context,
+        '/ask-question',
+        arguments: arguments,
+      ).then((result) {
+        print('SessionView - AskQuestionView\'den döndü, result: $result');
+        if (result == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Sorunuz başarıyla gönderildi!'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        } else if (result == false) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Soru gönderilemedi. Backend\'de question API eksik.'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+      }).catchError((error) {
+        print('SessionView - Navigation hatası: $error');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sorunuz başarıyla gönderildi!'),
-            backgroundColor: Colors.green,
+            content: Text('Soru sorma sayfası açılamadı: ${error.toString()}'),
+            backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
-      }
-    }).catchError((error) {
-      print('Navigation hatası: $error');
+      });
+    } catch (e) {
+      print('SessionView - Navigation exception: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Soru sorma sayfası bulunamadı. Route tanımlanmamış.'),
+          content: Text('Beklenmeyen hata: ${e.toString()}'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
-    });
+    }
   }
 
   Widget _buildPdfViewer() {
@@ -216,6 +410,16 @@ class _SessionViewState extends State<SessionView> {
                 fontSize: 16,
                 color: Colors.grey[600],
                 height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _initializeSession,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Yenile'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.backgroundBlue,
+                foregroundColor: Colors.white,
               ),
             ),
           ],
@@ -534,12 +738,11 @@ class _SessionViewState extends State<SessionView> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          if (_localPdfPath != null)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _initializeSession,
-              tooltip: 'Yenile',
-            ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _initializeSession,
+            tooltip: 'Yenile',
+          ),
         ],
       ),
       body: _buildContent(),

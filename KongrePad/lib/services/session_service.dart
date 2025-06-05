@@ -55,7 +55,6 @@ class SessionService {
       );
 
       print('SessionService - Current Meeting API yanıt kodu: ${currentMeetingResponse.statusCode}');
-      print('SessionService - Current Meeting API yanıt gövdesi: ${currentMeetingResponse.body}');
 
       if (currentMeetingResponse.statusCode != 200) {
         print('SessionService - Current Meeting API failed');
@@ -86,7 +85,7 @@ class SessionService {
 
         print('SessionService - Aranan Hall ID: $hallId');
 
-        // Önce tam eşleşme dene
+        // 1. Önce tam eşleşme dene
         var currentSession = liveSessions.firstWhere(
                 (session) =>
             session['program'] != null &&
@@ -94,178 +93,38 @@ class SessionService {
             orElse: () => null
         );
 
-        // Eğer tam eşleşme bulunamazsa, boş session bilgisi döndür
+        // 2. Tam eşleşme yoksa alternatif seç
         if (currentSession == null) {
           print('SessionService - Hall ID $hallId için aktif session bulunamadı');
-          return {
-            'pdf_url': null,
-            'session_id': null,
-            'title': 'Bu Hall\'da Aktif Oturum Yok',
-            'description': 'Hall ID $hallId için şu anda aktif bir oturum bulunmuyor'
-          };
-        }
 
-        if (currentSession != null) {
-          print('SessionService - Aktif oturum bulundu: ${currentSession['id']}');
-          print('SessionService - Oturum detayları: $currentSession');
-
-          // Session ID ile materials al
-          final sessionId = currentSession['id'];
-          print('SessionService - Session ID bulundu: $sessionId');
-
-          // Materials endpoint'ini kullan
-          final materialsResponse = await http.get(
-            Uri.parse('$baseUrl/sessions/$sessionId/materials'),
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Accept': 'application/json',
-            },
-          );
-
-          print('SessionService - Materials API yanıt kodu: ${materialsResponse.statusCode}');
-          print('SessionService - Materials API yanıt gövdesi: ${materialsResponse.body}');
-
-          if (materialsResponse.statusCode == 200) {
-            final materialsData = jsonDecode(materialsResponse.body);
-            if (materialsData['success'] == true && materialsData['data'] != null) {
-              final materials = materialsData['data'] as List;
-              print('SessionService - Bulunan materyal sayısı: ${materials.length}');
-
-              // Presentation dokümanını bul
-              final presentationDoc = materials.firstWhere(
-                      (material) => material['category'] == 'presentation',
-                  orElse: () => materials.isNotEmpty ? materials.first : null
-              );
-
-              if (presentationDoc != null) {
-                final downloadUrl = presentationDoc['download_url'];
-                print('SessionService - Materials download URL: $downloadUrl');
-
-                return {
-                  'pdf_url': downloadUrl,
-                  'session_id': currentSession['id'].toString(),
-                  'title': currentSession['title'],
-                  'description': currentSession['description'],
-                  'document_title': presentationDoc['title'],
-                  'document_filename': presentationDoc['filename']
-                };
-              }
-            }
-          }
-
-          // Document yoksa sadece session bilgilerini döndür
-          return {
-            'pdf_url': null,
-            'session_id': currentSession['id'].toString(),
-            'title': currentSession['title'],
-            'description': currentSession['description']
-          };
-        } else {
-          print('SessionService - Hall ID $hallId için aktif session bulunamadı');
-        }
-      }
-
-      // Fallback: Eski yöntemle sessions/live endpoint'ini dene (Backend hatası varsa atla)
-      print('SessionService - Fallback: sessions/live endpoint\'i deneniyor');
-      try {
-        final liveSessionsResponse = await http.get(
-          Uri.parse('$baseUrl/sessions/live'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Accept': 'application/json',
-          },
-        );
-
-        print('SessionService - Live Sessions API yanıt kodu: ${liveSessionsResponse.statusCode}');
-
-        // Backend hatası varsa (500) skip et
-        if (liveSessionsResponse.statusCode == 500) {
-          print('SessionService - Backend hatası (500), live sessions atlanıyor');
-          return {
-            'pdf_url': null,
-            'session_id': null,
-            'title': 'Oturum Yükleniyor...',
-            'description': 'Hall ID: $hallId için session bilgileri alınıyor'
-          };
-        }
-
-        if (liveSessionsResponse.statusCode == 200) {
-          final liveData = jsonDecode(liveSessionsResponse.body);
-          print('SessionService - Live Sessions data: $liveData');
-
-          if (liveData['success'] == true && liveData['data'] != null) {
-            final sessions = liveData['data'] as List;
-            print('SessionService - Bulunan oturum sayısı: ${sessions.length}');
-
-            // Program içindeki hall_id'ye göre oturumu bul
-            final currentSession = sessions.firstWhere(
-                    (session) =>
-                session['program'] != null &&
-                    session['program']['hall_id'] == hallId,
-                orElse: () => null
-            );
-
-            if (currentSession != null) {
-              print('SessionService - Aktif oturum bulundu: ${currentSession['id']}');
-
-              // Materials endpoint'ini dene
-              final materialsResponse = await http.get(
-                Uri.parse('$baseUrl/sessions/${currentSession['id']}/materials'),
-                headers: {
-                  'Authorization': 'Bearer $token',
-                  'Accept': 'application/json',
-                },
-              );
-
-              print('SessionService - Materials API yanıt kodu: ${materialsResponse.statusCode}');
-              print('SessionService - Materials API yanıt gövdesi: ${materialsResponse.body}');
-
-              if (materialsResponse.statusCode == 200) {
-                final materialsData = jsonDecode(materialsResponse.body);
-                if (materialsData['success'] == true && materialsData['data'] != null) {
-                  final materials = materialsData['data'] as List;
-                  print('SessionService - Bulunan materyal sayısı: ${materials.length}');
-
-                  // Presentation dokümanını bul
-                  final presentationDoc = materials.firstWhere(
-                          (material) => material['category'] == 'presentation',
-                      orElse: () => materials.isNotEmpty ? materials.first : null
-                  );
-
-                  if (presentationDoc != null) {
-                    final documentUrl = presentationDoc['download_url'];
-                    print('SessionService - Doküman URL: $documentUrl');
-
-                    return {
-                      'pdf_url': documentUrl,
-                      'session_id': currentSession['id'].toString(),
-                      'title': currentSession['title'],
-                      'description': currentSession['description']
-                    };
-                  }
-                }
-              }
-
-              // Materyal bulunamadıysa session bilgilerini döndür
-              return {
-                'pdf_url': null,
-                'session_id': currentSession['id'].toString(),
-                'title': currentSession['title'],
-                'description': currentSession['description']
-              };
-            }
+          if (liveSessions.isNotEmpty) {
+            currentSession = liveSessions.first;
+            final actualHallId = currentSession['program']?['hall_id'];
+            print('SessionService - ⚠️ ALTERNATIF SESSION KULLANILIYOR ⚠️');
+            print('SessionService - İstenen Hall ID: $hallId');
+            print('SessionService - Kullanılan Session: ID=${currentSession['id']}, Hall ID=$actualHallId');
+            print('SessionService - Session Title: ${currentSession['title']}');
+          } else {
+            return {
+              'pdf_url': null,
+              'session_id': null,
+              'title': 'Aktif Oturum Bulunamadı',
+              'description': 'Şu anda hiçbir hall\'da aktif oturum yok'
+            };
           }
         }
-      } catch (fallbackError) {
-        print('SessionService - Fallback error: $fallbackError');
+
+        print('SessionService - Aktif oturum seçildi: ${currentSession['id']}');
+
+        // ✅ ŞİMDİ MATERIALS'I AL
+        return await _getMaterials(currentSession, token);
       }
 
-      print('SessionService - Hiçbir session bulunamadı');
       return {
         'pdf_url': null,
         'session_id': null,
         'title': 'Aktif Oturum Bulunamadı',
-        'description': 'Hall ID: $hallId için aktif bir oturum bulunamadı'
+        'description': 'Şu anda hiçbir oturum aktif değil'
       };
 
     } catch (e, stackTrace) {
@@ -273,5 +132,150 @@ class SessionService {
       print('SessionService - Stack trace: $stackTrace');
       return null;
     }
+  }
+
+  // ✅ MATERIALS METHOD - ŞİMDİ KULLANILIYOR
+  Future<Map<String, dynamic>> _getMaterials(Map<String, dynamic> session, String token) async {
+    final sessionId = session['id'];
+    print('SessionService - _getMaterials başladı, sessionId: $sessionId');
+
+    try {
+      // 1. Materials API'yi dene
+      final materialsResponse = await http.get(
+        Uri.parse('$baseUrl/sessions/$sessionId/materials'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      print('SessionService - Materials API yanıt kodu: ${materialsResponse.statusCode}');
+      print('SessionService - Materials API yanıt gövdesi: ${materialsResponse.body}');
+
+      if (materialsResponse.statusCode == 200) {
+        final materialsData = jsonDecode(materialsResponse.body);
+        if (materialsData['success'] == true && materialsData['data'] != null) {
+          final materials = materialsData['data'] as List;
+          print('SessionService - ✅ ${materials.length} materyal bulundu');
+
+          if (materials.isNotEmpty) {
+            final doc = materials.firstWhere(
+                    (material) => material['category'] == 'presentation',
+                orElse: () => materials.first
+            );
+
+            var downloadUrl = doc['download_url'];
+            print('SessionService - Download URL ham: $downloadUrl');
+
+            // URL düzeltme
+            if (downloadUrl != null && !downloadUrl.toString().startsWith('http')) {
+              if (downloadUrl.toString().startsWith('/')) {
+                downloadUrl = 'https://api.kongrepad.com$downloadUrl';
+              } else {
+                downloadUrl = 'https://api.kongrepad.com/$downloadUrl';
+              }
+              print('SessionService - URL düzeltildi: $downloadUrl');
+            }
+
+            print('SessionService - ✅ PDF BULUNDU: $downloadUrl');
+
+            return {
+              'pdf_url': downloadUrl,
+              'session_id': session['id'].toString(),
+              'title': session['title'],
+              'description': session['description'],
+              'source': 'materials_api'
+            };
+          }
+        }
+      } else if (materialsResponse.statusCode == 500) {
+        print('SessionService - Materials API 500 hatası, direkt document deneniyor...');
+
+        // 2. Backend hatası varsa direkt document_id dene
+        final documentId = session['document_id'];
+        if (documentId != null && documentId != 0) {
+          print('SessionService - Document ID bulundu: $documentId');
+
+          final directUrls = [
+            'https://api.kongrepad.com/api/v1/documents/$documentId/download',
+            'https://api.kongrepad.com/storage/documents/$documentId.pdf',
+            'https://api.kongrepad.com/uploads/documents/$documentId.pdf',
+            'https://api.kongrepad.com/storage/sessions/$sessionId/document.pdf',
+            'https://api.kongrepad.com/storage/meetings/6/documents/$documentId.pdf',
+          ];
+
+          for (String testUrl in directUrls) {
+            try {
+              print('SessionService - Direct URL test: $testUrl');
+
+              final testResponse = await http.get(  // HEAD yerine GET dene
+                Uri.parse(testUrl),
+                headers: {
+                  'Authorization': 'Bearer $token',
+                  'Accept': 'application/pdf, application/octet-stream, */*',
+                },
+              );
+
+              print('SessionService - Direct URL status: ${testResponse.statusCode}');
+
+              if (testResponse.statusCode == 200) {
+                print('SessionService - ✅ DIRECT PDF BULUNDU: $testUrl');
+
+                return {
+                  'pdf_url': testUrl,
+                  'session_id': session['id'].toString(),
+                  'title': session['title'],
+                  'description': session['description'],
+                  'source': 'direct_document_url',
+                  'document_id': documentId.toString()
+                };
+              }
+            } catch (e) {
+              print('SessionService - Direct URL error: $e');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('SessionService - _getMaterials error: $e');
+    }
+
+    // Hiçbir PDF bulunamadı
+    print('SessionService - ❌ Hiçbir PDF bulunamadı');
+    return {
+      'pdf_url': null,
+      'session_id': session['id'].toString(),
+      'title': session['title'],
+      'description': session['description'] ?? 'Bu oturum için doküman bulunamadı'
+    };
+  }
+
+  // Test metodu
+  Future<void> testMaterialsEndpoint(int sessionId) async {
+    print('=== MATERIALS ENDPOINT TEST ===');
+
+    try {
+      final token = await AuthService().getStoredToken();
+      if (token == null) {
+        print('TEST - Token yok');
+        return;
+      }
+
+      // Materials endpoint'ini test et
+      final materialsResponse = await http.get(
+        Uri.parse('$baseUrl/sessions/$sessionId/materials'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      print('Materials Status: ${materialsResponse.statusCode}');
+      print('Materials Body: ${materialsResponse.body}');
+
+    } catch (e) {
+      print('TEST ERROR: $e');
+    }
+
+    print('=== TEST BİTTİ ===');
   }
 }
