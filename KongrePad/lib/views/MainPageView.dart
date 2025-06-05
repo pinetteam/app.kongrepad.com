@@ -117,6 +117,8 @@ class _MainPageViewState extends State<MainPageView>
     super.dispose();
   }
 
+  // MainPageView.dart - _initializeData metodunu bu ile değiştir:
+
   Future<void> _initializeData() async {
     if (_isInitialized || !mounted) return;
 
@@ -125,34 +127,179 @@ class _MainPageViewState extends State<MainPageView>
 
       final authService = AuthService();
 
-      // Profil bilgilerini al
-      final profileData = await authService.getProfile();
-      participant = Participant.fromJson(profileData['participant']);
+      // 1. ÖNCELİKLE LOGIN KONTROLÜ YAP
+      print('MainPage - Login durumu kontrol ediliyor...');
+      final isLoggedIn = await authService.isLoggedIn();
 
-      // Meeting bilgilerini al
-      meeting = await authService.getMeeting();
-
-      if (meeting == null) {
-        print("Meeting bilgisi alınamadı, LoginView'e yönlendiriliyor.");
+      if (!isLoggedIn) {
+        print('MainPage - Kullanıcı giriş yapmamış, LoginView\'e yönlendiriliyor');
         _redirectToLogin();
         return;
       }
 
-      if (mounted) {
-        // Pusher ayarlarını yap
+      print('MainPage - Kullanıcı giriş yapmış, veriler yükleniyor...');
+
+      // 2. STORED DATA'DAN YÜKLEMEYİ DENE
+      final storedParticipant = await authService.getStoredParticipant();
+      final storedMeeting = await authService.getStoredMeeting();
+
+      if (storedParticipant != null && storedMeeting != null) {
+        // Stored data'dan yükle
+        print('MainPage - Stored data\'dan yükleniyor');
+        participant = Participant.fromJson(storedParticipant);
+        meeting = Meeting.fromJson(storedMeeting);
+
+        print('MainPage - ✅ Stored data loaded: ${participant?.fullName}, Meeting: ${meeting?.title}');
+      } else {
+        // Fresh data al
+        print('MainPage - Fresh data alınıyor...');
+
+        try {
+          // Profil bilgilerini al
+          final profileData = await authService.getProfile();
+          if (profileData['participant'] == null) {
+            print('MainPage - Profile participant data yok, logout');
+            _redirectToLogin();
+            return;
+          }
+
+          participant = Participant.fromJson(profileData['participant']);
+
+          // Meeting bilgilerini al
+          meeting = await authService.getMeeting();
+
+          if (meeting == null || participant == null) {
+            print('MainPage - Meeting/Participant alınamadı, logout');
+            _redirectToLogin();
+            return;
+          }
+
+          // Fresh data'yı kaydet
+          await authService.saveLoginData(
+            token: await authService.getStoredToken() ?? '',
+            participant: profileData['participant'],
+            meeting: meeting!.toJson(),
+          );
+
+          print('MainPage - ✅ Fresh data loaded and saved');
+        } catch (e) {
+          print('MainPage - Fresh data load error: $e');
+          _redirectToLogin();
+          return;
+        }
+      }
+
+      if (!mounted) return;
+
+      // 3. PUSHER VE DİĞER SERVİSLERİ BAŞLAT
+      try {
         await setupPusherBeams(meeting!, participant!);
         _subscribeToPusher();
+        print('MainPage - ✅ Pusher setup complete');
+      } catch (e) {
+        print('MainPage - Pusher setup error: $e');
+        // Pusher hatası uygulamayı durdurmasın
+      }
 
+      // 4. VIRTUAL STANDS YÜKLEMEYİ DENE
+      try {
+        await _loadVirtualStands();
+      } catch (e) {
+        print('MainPage - Virtual stands error: $e');
+        // Virtual stands hatası uygulamayı durdurmasın
+        virtualStands = []; // Boş liste ata
+      }
+
+      if (mounted) {
         setState(() {
           _isInitialized = true;
           _loading = false;
         });
+
+        print('MainPage - ✅ Initialization complete');
       }
+
     } catch (e) {
-      print("Initialization error: $e");
+      print('MainPage - Initialization error: $e');
       if (mounted) {
         _redirectToLogin();
       }
+    }
+  }
+
+// Virtual stands yükleme metodu ekle
+  Future<void> _loadVirtualStands() async {
+    try {
+      // Virtual stands API call
+      final authService = AuthService();
+      final token = await authService.getStoredToken();
+
+      if (token != null && meeting?.id != null) {
+        final response = await http.get(
+          Uri.parse('https://api.kongrepad.com/api/v1/meetings/${meeting!.id}/virtual-stands'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data['success'] == true && data['data'] != null) {
+            final standsList = data['data'] as List;
+            virtualStands = standsList.map((stand) => VirtualStand.fromJson(stand)).toList();
+            print('MainPage - ${virtualStands?.length} virtual stand yüklendi');
+
+            if (mounted) setState(() {});
+          }
+        }
+      }
+    } catch (e) {
+      print('MainPage - Virtual stands load error: $e');
+      virtualStands = []; // Boş liste ata
+    }
+  }
+
+// _redirectToLogin metodunu güncelle
+  void _redirectToLogin() async {
+    print('MainPage - Logout işlemi başlatılıyor...');
+
+    try {
+      // Auth service ile temizlik yap
+      final authService = AuthService();
+      await authService.clearStorage();
+
+      // Pusher bağlantısını kes
+      PusherService().disconnectPusher();
+
+      print('MainPage - ✅ Logout complete');
+    } catch (e) {
+      print('MainPage - Logout error: $e');
+    }
+
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginView()),
+            (route) => false, // Tüm önceki route'ları temizle
+      );
+    }
+  }
+
+// _checkLoginStatus metodunu da güncelle (initState'te çağrılıyor)
+  Future<void> _checkLoginStatus() async {
+    // Bu metod artık gerekli değil, _initializeData() her şeyi hallediyor
+    // Ama varsa şunu yap:
+
+    final authService = AuthService();
+    final hasStoredData = await authService.hasValidStoredData();
+
+    if (hasStoredData) {
+      // Stored data var, normal initialization'a devam et
+      return;
+    } else {
+      // Stored data yok, direkt login'e yönlendir
+      _redirectToLogin();
     }
   }
 
@@ -176,18 +323,7 @@ class _MainPageViewState extends State<MainPageView>
     }
   }
 
-  void _redirectToLogin() async {
-    // Çıkış yaparken SharedPreferences'ı temizle
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Tüm verileri temizle
 
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginView()),
-      );
-    }
-  }
 
   Widget _buildBannerImage() {
     return FutureBuilder<String?>(
