@@ -1,18 +1,34 @@
 # Overwrite .gitignore with comprehensive rules
-@"
-# Build directories - MOST IMPORTANT
-**/build/
-build/
-.dart_tool/
 
-# Flutter/Dart generated
+# ==========================================
+# FLUTTER BUILD EXCLUSIONS (Keep APK only)
+# ==========================================
+
+# Build directories - BUT allow APK files
+build/
+!build/app/
+!build/app/outputs/
+!build/app/outputs/flutter-apk/
+!build/app/outputs/flutter-apk/*.apk
+
+# Alternative APK location support
+!build/app/outputs/apk/
+!build/app/outputs/apk/debug/
+!build/app/outputs/apk/debug/*.apk
+
+# Dart/Flutter generated files
+.dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 .pub-cache/
 .pub/
 
-# Android
+# ==========================================
+# ANDROID BUILD EXCLUSIONS
+# ==========================================
+
+# Android build (exclude everything except APKs)
 **/android/build/
 **/android/.gradle/
 **/android/app/debug/
@@ -21,24 +37,63 @@ build/
 android/key.properties
 local.properties
 
-# Large files
-**/*.apk
+# ==========================================
+# EXCLUDE LARGE BINARY FILES (except APK)
+# ==========================================
+
+# Android binaries (but keep APKs)
 **/*.aab
 **/*.so
 **/*.dex
 **/*.jar
 **/*.bin
+**/*.aar
 
-# IDE
+# iOS builds
+**/ios/build/
+**/ios/Runner.xcarchive/
+**/ios/Flutter/App.framework/
+**/ios/Flutter/Flutter.framework/
+
+# ==========================================
+# IDE AND TOOLS
+# ==========================================
+
+# IDE files
 .idea/
 *.iml
 .vscode/
+*.swp
+*.swo
 
-
+# Logs
 *.log
 *.lock
 
-# OS
+# ==========================================
+# OPERATING SYSTEM
+# ==========================================
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
 Thumbs.db
-"@ | Out-File -FilePath ".gitignore" -Encoding UTF8 -Force
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ==========================================
+# SPECIAL EXCEPTIONS FOR DEPLOYMENT
+# ==========================================
+
+# Keep version info
+!version.json
+
+# Keep deployment scripts
+!deploy.sh
+!.github/
