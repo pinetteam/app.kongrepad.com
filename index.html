@@ -1,1 +1,179 @@
-<a href="KongrePad\build\app\outputs\flutter-apk\app-debug.apk">Download APK</a>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KongrePad - APK İndir</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .info ul {
+            text-align: left;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .info li {
+            margin-bottom: 5px;
+        }
+
+        .version-info {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #999;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .download-btn {
+                padding: 12px 25px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">KP</div>
+    <h1>KongrePad</h1>
+    <p class="subtitle">Mobil uygulamayı indirin ve toplantılarınıza katılın</p>
+
+    <a href="KongrePad/build/app/outputs/flutter-apk/app-debug.apk"
+       class="download-btn"
+       download="KongrePad.apk"
+       onclick="trackDownload()">
+        📱 APK İndir
+    </a>
+
+    <div class="info">
+        <h3>Kurulum Talimatları</h3>
+        <ul>
+            <li>APK dosyasını indirdikten sonra telefonunuzda açın</li>
+            <li>"Bilinmeyen kaynaklardan yüklemeye izin ver" seçeneğini aktifleştirin</li>
+            <li>Uygulamayı yükleyin ve açın</li>
+            <li>Giriş bilgilerinizle oturum açın</li>
+        </ul>
+    </div>
+
+    <div class="version-info">
+        <p>Versiyon: 1.0.0 • Son güncelleme: <span id="lastUpdate"></span></p>
+    </div>
+</div>
+
+<script>
+    // Son güncelleme tarihini göster
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleDateString('tr-TR');
+
+    // Download tracking (isteğe bağlı)
+    function trackDownload() {
+        console.log('APK download started');
+        // Burada analytics ekleyebilirsin
+    }
+
+    // APK dosyasının varlığını kontrol et
+    fetch('KongrePad/build/app/outputs/flutter-apk/app-debug.apk', { method: 'HEAD' })
+        .then(response => {
+            if (!response.ok) {
+                document.querySelector('.download-btn').style.background = '#dc3545';
+                document.querySelector('.download-btn').innerHTML = '❌ APK Bulunamadı';
+                document.querySelector('.download-btn').style.pointerEvents = 'none';
+            }
+        })
+        .catch(() => {
+            console.log('APK dosyası kontrol edilemiyor');
+        });
+</script>
+</body>
+</html>
