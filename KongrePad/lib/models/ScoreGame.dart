@@ -19,7 +19,7 @@ class ScoreGame {
       userTotalPoint: json['user_total_point'],
       logo: json['logo'],
       startAt: json['start_at'],
-      finishAt: json['finish_At'],
+      finishAt: json['finish_at'], // Typo düzeltildi
       title: json['title'],
       status: json['status'],
     );
@@ -30,14 +30,16 @@ class ScoreGameJSON {
   ScoreGame? data;
   List<String>? errors;
   bool? status;
+  bool? success; // Yeni API için
 
-  ScoreGameJSON({this.data, this.errors, this.status});
+  ScoreGameJSON({this.data, this.errors, this.status, this.success});
 
   factory ScoreGameJSON.fromJson(Map<String, dynamic> json) {
     return ScoreGameJSON(
       data: json['data'] != null ? ScoreGame.fromJson(json['data']) : null,
       errors: json['errors'] != null ? List<String>.from(json['errors']) : null,
       status: json['status'],
+      success: json['success'],
     );
   }
 }

@@ -134,7 +134,71 @@ class SessionService {
     }
   }
 
-  // ✅ MATERIALS METHOD - ŞİMDİ KULLANILIYOR
+  // ✅ URL Düzeltme Helper Method
+  String? _fixDownloadUrl(String? rawUrl) {
+    if (rawUrl == null || rawUrl.isEmpty) return null;
+
+    print('SessionService - Raw URL: $rawUrl');
+
+    // Zaten tam URL ise olduğu gibi döndür
+    if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+      return rawUrl;
+    }
+
+    // / ile başlıyorsa base URL ekle
+    if (rawUrl.startsWith('/')) {
+      final fixedUrl = 'https://api.kongrepad.com$rawUrl';
+      print('SessionService - URL düzeltildi (slash): $fixedUrl');
+      return fixedUrl;
+    }
+
+    // Hiçbiriyle başlamıyorsa base URL + / ekle
+    final fixedUrl = 'https://api.kongrepad.com/$rawUrl';
+    print('SessionService - URL düzeltildi (no slash): $fixedUrl');
+    return fixedUrl;
+  }
+
+  // ✅ Single URL Test Helper
+  Future<bool> _testSingleUrl(String url, String token) async {
+    try {
+      print('SessionService - Testing URL: $url');
+
+      final response = await http.head(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/pdf, application/octet-stream, */*',
+          'User-Agent': 'KongrePad Mobile App',
+        },
+      );
+
+      print('SessionService - URL Test Result: $url -> ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final contentLength = response.headers['content-length'];
+        final contentType = response.headers['content-type'];
+        print('SessionService - ✅ SUCCESS: Content-Length: $contentLength, Content-Type: $contentType');
+
+        // Content-Length kontrolü
+        if (contentLength != null) {
+          final size = int.tryParse(contentLength) ?? 0;
+          if (size < 1024) { // 1KB'den küçükse şüpheli
+            print('SessionService - ⚠️ UYARI: Dosya boyutu çok küçük ($size bytes)');
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('SessionService - ❌ URL Test Error for $url: $e');
+      return false;
+    }
+  }
+
+  // ✅ MATERIALS METHOD - GELİŞTİRİLMİŞ VERSİYON
   Future<Map<String, dynamic>> _getMaterials(Map<String, dynamic> session, String token) async {
     final sessionId = session['id'];
     print('SessionService - _getMaterials başladı, sessionId: $sessionId');
@@ -146,96 +210,155 @@ class SessionService {
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
+          'User-Agent': 'KongrePad Mobile App',
         },
       );
 
       print('SessionService - Materials API yanıt kodu: ${materialsResponse.statusCode}');
+      print('SessionService - Materials API Headers: ${materialsResponse.headers}');
       print('SessionService - Materials API yanıt gövdesi: ${materialsResponse.body}');
 
       if (materialsResponse.statusCode == 200) {
         final materialsData = jsonDecode(materialsResponse.body);
+        print('SessionService - RAW Materials Data: $materialsData');
+
         if (materialsData['success'] == true && materialsData['data'] != null) {
           final materials = materialsData['data'] as List;
           print('SessionService - ✅ ${materials.length} materyal bulundu');
 
           if (materials.isNotEmpty) {
-            final doc = materials.firstWhere(
+            // Her material'ı detaylı logla
+            for (int i = 0; i < materials.length; i++) {
+              final material = materials[i];
+              print('SessionService - Material $i:');
+              print('  - ID: ${material['id']}');
+              print('  - Category: ${material['category']}');
+              print('  - File Name: ${material['file_name']}');
+              print('  - Download URL: ${material['download_url']}');
+              print('  - File Path: ${material['file_path']}');
+              print('  - MIME Type: ${material['mime_type']}');
+              print('  - URL: ${material['url']}');
+            }
+
+            // Presentation kategorisindeki ilk dokümanı tercih et
+            var selectedMaterial = materials.firstWhere(
                     (material) => material['category'] == 'presentation',
                 orElse: () => materials.first
             );
 
-            var downloadUrl = doc['download_url'];
-            print('SessionService - Download URL ham: $downloadUrl');
+            print('SessionService - Seçilen material: ${selectedMaterial['id']} - ${selectedMaterial['category']}');
 
-            // URL düzeltme
-            if (downloadUrl != null && !downloadUrl.toString().startsWith('http')) {
-              if (downloadUrl.toString().startsWith('/')) {
-                downloadUrl = 'https://api.kongrepad.com$downloadUrl';
-              } else {
-                downloadUrl = 'https://api.kongrepad.com/$downloadUrl';
+            // Farklı URL alanlarını dene
+            final possibleUrlFields = [
+              'download_url',
+              'file_path',
+              'url',
+              'file_url',
+              'document_url'
+            ];
+
+            String? workingUrl;
+
+            for (String urlField in possibleUrlFields) {
+              if (selectedMaterial[urlField] != null) {
+                final rawUrl = selectedMaterial[urlField].toString();
+                final fixedUrl = _fixDownloadUrl(rawUrl);
+
+                if (fixedUrl != null) {
+                  // URL'i test et
+                  final isWorking = await _testSingleUrl(fixedUrl, token);
+                  if (isWorking) {
+                    workingUrl = fixedUrl;
+                    print('SessionService - ✅ ÇALIŞAN URL BULUNDU ($urlField): $workingUrl');
+                    break;
+                  }
+                }
               }
-              print('SessionService - URL düzeltildi: $downloadUrl');
             }
 
-            print('SessionService - ✅ PDF BULUNDU: $downloadUrl');
-
-            return {
-              'pdf_url': downloadUrl,
-              'session_id': session['id'].toString(),
-              'title': session['title'],
-              'description': session['description'],
-              'source': 'materials_api'
-            };
+            if (workingUrl != null) {
+              return {
+                'pdf_url': workingUrl,
+                'session_id': session['id'].toString(),
+                'title': session['title'],
+                'description': session['description'],
+                'source': 'materials_api',
+                'material_id': selectedMaterial['id'].toString(),
+                'material_category': selectedMaterial['category'],
+                'file_name': selectedMaterial['file_name']
+              };
+            } else {
+              print('SessionService - ⚠️ Materials bulundu ama hiçbir URL çalışmıyor');
+            }
           }
         }
       } else if (materialsResponse.statusCode == 500) {
         print('SessionService - Materials API 500 hatası, direkt document deneniyor...');
+      } else if (materialsResponse.statusCode == 404) {
+        print('SessionService - Materials API 404 - Endpoint bulunamadı');
+      } else if (materialsResponse.statusCode == 403) {
+        print('SessionService - Materials API 403 - Yetki hatası');
+      } else {
+        print('SessionService - Materials API beklenmeyen hata: ${materialsResponse.statusCode}');
+      }
 
-        // 2. Backend hatası varsa direkt document_id dene
-        final documentId = session['document_id'];
-        if (documentId != null && documentId != 0) {
-          print('SessionService - Document ID bulundu: $documentId');
+      // 2. Materials API başarısız olduysa, direkt document_id ile dene
+      print('SessionService - Materials API başarısız, alternatif yöntemler deneniyor...');
 
-          final directUrls = [
-            'https://api.kongrepad.com/api/v1/documents/$documentId/download',
-            'https://api.kongrepad.com/storage/documents/$documentId.pdf',
-            'https://api.kongrepad.com/uploads/documents/$documentId.pdf',
-            'https://api.kongrepad.com/storage/sessions/$sessionId/document.pdf',
-            'https://api.kongrepad.com/storage/meetings/6/documents/$documentId.pdf',
-          ];
+      final documentId = session['document_id'];
+      if (documentId != null && documentId != 0) {
+        print('SessionService - Document ID bulundu: $documentId');
 
-          for (String testUrl in directUrls) {
-            try {
-              print('SessionService - Direct URL test: $testUrl');
+        final directUrls = [
+          'https://api.kongrepad.com/api/v1/documents/$documentId/download',
+          'https://api.kongrepad.com/storage/documents/$documentId.pdf',
+          'https://api.kongrepad.com/uploads/documents/$documentId.pdf',
+          'https://api.kongrepad.com/storage/sessions/$sessionId/document.pdf',
+          'https://api.kongrepad.com/storage/meetings/6/documents/$documentId.pdf',
+          'https://api.kongrepad.com/api/v1/sessions/$sessionId/document',
+          'https://api.kongrepad.com/files/documents/$documentId',
+        ];
 
-              final testResponse = await http.get(  // HEAD yerine GET dene
-                Uri.parse(testUrl),
-                headers: {
-                  'Authorization': 'Bearer $token',
-                  'Accept': 'application/pdf, application/octet-stream, */*',
-                },
-              );
+        for (String testUrl in directUrls) {
+          final isWorking = await _testSingleUrl(testUrl, token);
+          if (isWorking) {
+            print('SessionService - ✅ DIRECT PDF BULUNDU: $testUrl');
 
-              print('SessionService - Direct URL status: ${testResponse.statusCode}');
+            return {
+              'pdf_url': testUrl,
+              'session_id': session['id'].toString(),
+              'title': session['title'],
+              'description': session['description'],
+              'source': 'direct_document_url',
+              'document_id': documentId.toString()
+            };
+          }
+        }
+      }
 
-              if (testResponse.statusCode == 200) {
-                print('SessionService - ✅ DIRECT PDF BULUNDU: $testUrl');
+      // 3. Session içinde başka PDF alanları var mı kontrol et
+      final sessionUrlFields = ['pdf_url', 'document_url', 'file_url', 'attachment_url'];
+      for (String field in sessionUrlFields) {
+        if (session[field] != null) {
+          final fixedUrl = _fixDownloadUrl(session[field].toString());
+          if (fixedUrl != null) {
+            final isWorking = await _testSingleUrl(fixedUrl, token);
+            if (isWorking) {
+              print('SessionService - ✅ SESSION PDF BULUNDU ($field): $fixedUrl');
 
-                return {
-                  'pdf_url': testUrl,
-                  'session_id': session['id'].toString(),
-                  'title': session['title'],
-                  'description': session['description'],
-                  'source': 'direct_document_url',
-                  'document_id': documentId.toString()
-                };
-              }
-            } catch (e) {
-              print('SessionService - Direct URL error: $e');
+              return {
+                'pdf_url': fixedUrl,
+                'session_id': session['id'].toString(),
+                'title': session['title'],
+                'description': session['description'],
+                'source': 'session_field',
+                'field_name': field
+              };
             }
           }
         }
       }
+
     } catch (e) {
       print('SessionService - _getMaterials error: $e');
     }
@@ -246,13 +369,14 @@ class SessionService {
       'pdf_url': null,
       'session_id': session['id'].toString(),
       'title': session['title'],
-      'description': session['description'] ?? 'Bu oturum için doküman bulunamadı'
+      'description': session['description'] ?? 'Bu oturum için doküman bulunamadı',
+      'source': 'no_pdf_found'
     };
   }
 
-  // Test metodu
+  // ✅ DETAYLI MATERIALS ENDPOINT TEST METODU
   Future<void> testMaterialsEndpoint(int sessionId) async {
-    print('=== MATERIALS ENDPOINT TEST ===');
+    print('=== MATERIALS ENDPOINT DEEP TEST ===');
 
     try {
       final token = await AuthService().getStoredToken();
@@ -261,7 +385,20 @@ class SessionService {
         return;
       }
 
-      // Materials endpoint'ini test et
+      // 1. Session detayını al
+      print('\n1. Session detayı test ediliyor...');
+      final sessionResponse = await http.get(
+        Uri.parse('$baseUrl/sessions/$sessionId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      print('Session Detail Status: ${sessionResponse.statusCode}');
+      print('Session Detail Body: ${sessionResponse.body}');
+
+      // 2. Materials endpoint'ini test et
+      print('\n2. Materials endpoint test ediliyor...');
       final materialsResponse = await http.get(
         Uri.parse('$baseUrl/sessions/$sessionId/materials'),
         headers: {
@@ -270,12 +407,127 @@ class SessionService {
         },
       );
       print('Materials Status: ${materialsResponse.statusCode}');
+      print('Materials Headers: ${materialsResponse.headers}');
       print('Materials Body: ${materialsResponse.body}');
+
+      if (materialsResponse.statusCode == 200) {
+        final data = jsonDecode(materialsResponse.body);
+        if (data['data'] != null) {
+          final materials = data['data'] as List;
+
+          print('\n3. Her material için URL test:');
+          for (var material in materials) {
+            print('--- Material ---');
+            print('ID: ${material['id']}');
+            print('Category: ${material['category']}');
+            print('File Name: ${material['file_name']}');
+            print('MIME Type: ${material['mime_type']}');
+
+            // Farklı URL formatlarını test et
+            final possibleUrls = [
+              material['download_url'],
+              material['file_path'],
+              material['url'],
+              _fixDownloadUrl(material['download_url']?.toString()),
+              _fixDownloadUrl(material['file_path']?.toString()),
+            ];
+
+            for (var url in possibleUrls) {
+              if (url != null && url.toString().isNotEmpty) {
+                await _testSingleUrl(url.toString(), token);
+              }
+            }
+            print(''); // Boş satır
+          }
+        }
+      }
+
+      // 3. Document endpoint'lerini test et
+      print('\n4. Document endpoint\'leri test ediliyor...');
+      final documentEndpoints = [
+        '$baseUrl/documents',
+        '$baseUrl/sessions/$sessionId/documents',
+        '$baseUrl/sessions/$sessionId/files',
+        '$baseUrl/sessions/$sessionId/attachments',
+      ];
+
+      for (String endpoint in documentEndpoints) {
+        try {
+          final response = await http.get(
+            Uri.parse(endpoint),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+            },
+          );
+          print('$endpoint - Status: ${response.statusCode}');
+          if (response.statusCode == 200) {
+            if (response.body.length > 100) {
+              print('$endpoint - Body (first 100 chars): ${response.body.substring(0, 100)}...');
+            } else {
+              print('$endpoint - Body: ${response.body}');
+            }
+          }
+        } catch (e) {
+          print('$endpoint - Error: $e');
+        }
+      }
 
     } catch (e) {
       print('TEST ERROR: $e');
     }
 
     print('=== TEST BİTTİ ===');
+  }
+
+  // ✅ BACKEND API ENDPOİNT'LERİNİ KEŞFETME METODU
+  Future<void> discoverApiEndpoints(int sessionId) async {
+    print('=== API ENDPOINT DISCOVERY ===');
+
+    try {
+      final token = await AuthService().getStoredToken();
+      if (token == null) return;
+
+      final endpointsToTest = [
+        '$baseUrl/sessions/$sessionId',
+        '$baseUrl/sessions/$sessionId/materials',
+        '$baseUrl/sessions/$sessionId/documents',
+        '$baseUrl/sessions/$sessionId/files',
+        '$baseUrl/sessions/$sessionId/attachments',
+        '$baseUrl/sessions/$sessionId/resources',
+        '$baseUrl/sessions/$sessionId/media',
+        '$baseUrl/sessions/$sessionId/presentations',
+        '$baseUrl/materials',
+        '$baseUrl/documents',
+        '$baseUrl/files',
+      ];
+
+      for (String endpoint in endpointsToTest) {
+        try {
+          final response = await http.get(
+            Uri.parse(endpoint),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+            },
+          );
+
+          final status = response.statusCode;
+          final icon = status == 200 ? '✅' : status == 404 ? '❌' : status == 403 ? '🔒' : '⚠️';
+
+          print('$icon $endpoint -> $status');
+
+          if (status == 200 && response.body.length < 500) {
+            print('   Response: ${response.body}');
+          }
+        } catch (e) {
+          print('❌ $endpoint -> ERROR: $e');
+        }
+      }
+    } catch (e) {
+      print('Discovery error: $e');
+    }
+
+    print('=== DISCOVERY BİTTİ ===');
   }
 }
