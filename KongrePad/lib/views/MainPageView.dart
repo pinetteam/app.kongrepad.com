@@ -846,34 +846,66 @@ class _MainPageViewState extends State<MainPageView>
     }
   }
 
+  // MainPageView.dart - _handleProgramButton metodunu bu ile değiştir:
+
   void _handleProgramButton() {
-    if (meeting?.programHallCount == 1) {
+    print('MainPage - Program button tıklandı');
+    print('MainPage - Meeting program hall count: ${meeting?.programHallCount}');
+    print('MainPage - Meeting program first hall id: ${meeting?.programFirstHallId}');
+
+    if (participant?.type != "attendee") {
+      print('MainPage - Kullanıcı attendee değil: ${participant?.type}');
+      AlertService().showAlertDialog(
+        context,
+        title: AppLocalizations.of(context).translate('warning'),
+        content: AppLocalizations.of(context).translate('no_permission_program'),
+      );
+      return;
+    }
+
+    // Program hall count kontrolü
+    if (meeting?.programHallCount == null || meeting?.programHallCount == 0) {
+      print('MainPage - Program hall count null veya 0, direkt halls göster');
+      // Hall count bilgisi yoksa direkt HallsView göster
+      _showProgramHallsDialog();
+      return;
+    }
+
+    if (meeting!.programHallCount == 1 && meeting?.programFirstHallId != null) {
+      print('MainPage - Tek program hall var: ${meeting!.programFirstHallId}');
+      // Tek hall varsa direkt ProgramDaysView'a git
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              ProgramDaysView(hallId: meeting!.programFirstHallId!),
+          builder: (context) => ProgramDaysView(hallId: meeting!.programFirstHallId!),
         ),
       );
     } else {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: AppConstants.backgroundBlue,
-            contentPadding: EdgeInsets.zero,
-            content: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.height * 0.8,
-              child: HallsView(
-                type: "program",
-                meetingId: meeting!.id!,
-              ),
-            ),
-          );
-        },
-      );
+      print('MainPage - Çoklu program hall var, HallsView göster');
+      // Çoklu hall varsa HallsView göster
+      _showProgramHallsDialog();
     }
+  }
+
+// Yardımcı method - Program halls dialog
+  void _showProgramHallsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppConstants.backgroundBlue,
+          contentPadding: EdgeInsets.zero,
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.9,
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: HallsView(
+              type: "program",
+              meetingId: meeting!.id!,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _handleMailButton() {

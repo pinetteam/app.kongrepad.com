@@ -31,16 +31,23 @@ class _AskQuestionViewState extends State<AskQuestionView> {
   @override
   void initState() {
     super.initState();
-    // Arguments'tan session title'ı al
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+
+    // Arguments'tan session title'ı al ve debug test yap
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Session title'ı arguments'tan al
       final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null) {
         setState(() {
           _sessionTitle = args['sessionTitle'];
         });
       }
+
+      // DEBUG: Endpoint'leri test et
+      await _questionService.debugCurrentEndpoints(widget.hallId);
+
+      // Normal soru yükleme işlemini başlat
+      _getQuestions();
     });
-    _getQuestions();
   }
 
   Future<void> _getQuestions() async {
