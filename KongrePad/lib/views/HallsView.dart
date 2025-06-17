@@ -12,7 +12,7 @@ import '../models/Hall.dart';
 import '../utils/app_constants.dart';
 import 'ProgramDaysForMailView.dart';
 import 'ProgramDaysView.dart';
-import 'SessionView.dart';
+import 'session_view.dart';
 import 'DebateView.dart';
 import 'KeypadView.dart';
 import 'AskQuestionView.dart';
@@ -198,97 +198,123 @@ class _HallsViewState extends State<HallsView> {
                                   final hall = halls![index];
                                   return // HallsView.dart - onTap metodunu bu ile değiştir:
 
-                                    GestureDetector(
-                                      onTap: () {
-                                        print('HallsView - Hall tıklandı: ${hall.title}, Type: $type, HallId: ${hall.id}');
+                                      GestureDetector(
+                                    onTap: () {
+                                      print(
+                                          'HallsView - Hall tıklandı: ${hall.title}, Type: $type, HallId: ${hall.id}');
 
-                                        if (type == "session") {
-                                          print("HallsView - SessionView'a yönlendiriliyor. HallId: ${hall.id}");
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => SessionView(hallId: hall.id!),
-                                            ),
-                                          );
-                                        } else if (type == "program") {
-                                          print("HallsView - ProgramDaysView'a yönlendiriliyor. HallId: ${hall.id}");
-                                          Navigator.pop(context); // Dialog'u kapat
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ProgramDaysView(hallId: hall.id!),
-                                            ),
-                                          );
-                                        } else if (type == "mail") {
-                                          print("HallsView - ProgramDaysForMailView'a yönlendiriliyor. HallId: ${hall.id}");
-                                          Navigator.pop(context); // Dialog'u kapat
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ProgramDaysForMailView(hallId: hall.id!),
-                                            ),
-                                          );
-                                        } else if (type == "debate") {
-                                          print("HallsView - DebateView'a yönlendiriliyor. HallId: ${hall.id}");
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => DebateView(hallId: hall.id!),
-                                            ),
-                                          );
-                                        } else if (type == "keypad") {
-                                          print("HallsView - KeypadView'a yönlendiriliyor. HallId: ${hall.id}");
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => KeypadView(hallId: hall.id!),
-                                            ),
-                                          );
-                                        } else if (type == "question") {
-                                          print("HallsView - AskQuestionView'a yönlendiriliyor. HallId: ${hall.id}");
-                                          Navigator.pop(context); // Dialog'u kapat
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => AskQuestionView(hallId: hall.id!),
-                                            ),
-                                          );
-                                        } else {
-                                          print("HallsView - Bilinmeyen type: $type");
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Bu özellik henüz desteklenmiyor: $type')),
-                                          );
-                                        }
-                                      },
-                                      child: Container(
-                                        // Container içeriği aynı kalacak
-                                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          color: AppConstants.hallsButtonBlue,
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                hall.title ?? '',
-                                                style: const TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
+                                      if (type == "session") {
+                                        print(
+                                            "HallsView - SessionView'a yönlendiriliyor. HallId: ${hall.id}");
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                SessionView(hallId: hall.id!),
+                                          ),
+                                        );
+                                      } else if (type == "program") {
+                                        print(
+                                            "HallsView - ProgramDaysView'a yönlendiriliyor. HallId: ${hall.id}");
+                                        Navigator.pop(
+                                            context); // Dialog'u kapat
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ProgramDaysView(
+                                                    hallId: hall.id!),
+                                          ),
+                                        );
+                                      } else if (type == "mail") {
+                                        print(
+                                            "HallsView - ProgramDaysForMailView'a yönlendiriliyor. HallId: ${hall.id}");
+                                        Navigator.pop(
+                                            context); // Dialog'u kapat
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ProgramDaysForMailView(
+                                                    hallId: hall.id!),
+                                          ),
+                                        );
+                                      } else if (type == "debate") {
+                                        print(
+                                            "HallsView - DebateView'a yönlendiriliyor. HallId: ${hall.id}");
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                DebateView(hallId: hall.id!),
+                                          ),
+                                        );
+                                      } else if (type == "keypad") {
+                                        print(
+                                            "HallsView - KeypadView'a yönlendiriliyor. HallId: ${hall.id}");
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                KeypadView(hallId: hall.id!),
+                                          ),
+                                        );
+                                      } else if (type == "question") {
+                                        print(
+                                            "HallsView - AskQuestionView'a yönlendiriliyor. HallId: ${hall.id}");
+                                        Navigator.pop(
+                                            context); // Dialog'u kapat
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                AskQuestionView(
+                                                    hallId: hall.id!),
+                                          ),
+                                        );
+                                      } else {
+                                        print(
+                                            "HallsView - Bilinmeyen type: $type");
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text(
+                                                  'Bu özellik henüz desteklenmiyor: $type')),
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      // Container içeriği aynı kalacak
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.hallsButtonBlue,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              hall.title ?? '',
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                            SvgPicture.asset(
-                                              'assets/icon/chevron.right.svg',
-                                              colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                          SvgPicture.asset(
+                                            'assets/icon/chevron.right.svg',
+                                            colorFilter: const ColorFilter.mode(
+                                                Colors.black, BlendMode.srcIn),
+                                          ),
+                                        ],
                                       ),
-                                    );
+                                    ),
+                                  );
                                 },
                               ),
                             ),

@@ -24,12 +24,13 @@ import 'ProfileView.dart';
 import 'ProgramDaysForMailView.dart';
 import 'ProgramDaysView.dart';
 import 'ScoreGameView.dart';
-import 'SessionView.dart';
+import 'session_view.dart';
 import 'SurveysView.dart';
 import 'VirtualStandView.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../utils/notification_helper.dart';
 import 'lower_half_ellipse.dart';
+
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 class MainPageView extends StatefulWidget {
@@ -132,7 +133,8 @@ class _MainPageViewState extends State<MainPageView>
       final isLoggedIn = await authService.isLoggedIn();
 
       if (!isLoggedIn) {
-        print('MainPage - Kullanıcı giriş yapmamış, LoginView\'e yönlendiriliyor');
+        print(
+            'MainPage - Kullanıcı giriş yapmamış, LoginView\'e yönlendiriliyor');
         _redirectToLogin();
         return;
       }
@@ -149,7 +151,8 @@ class _MainPageViewState extends State<MainPageView>
         participant = Participant.fromJson(storedParticipant);
         meeting = Meeting.fromJson(storedMeeting);
 
-        print('MainPage - ✅ Stored data loaded: ${participant?.fullName}, Meeting: ${meeting?.title}');
+        print(
+            'MainPage - ✅ Stored data loaded: ${participant?.fullName}, Meeting: ${meeting?.title}');
       } else {
         // Fresh data al
         print('MainPage - Fresh data alınıyor...');
@@ -218,7 +221,6 @@ class _MainPageViewState extends State<MainPageView>
 
         print('MainPage - ✅ Initialization complete');
       }
-
     } catch (e) {
       print('MainPage - Initialization error: $e');
       if (mounted) {
@@ -236,7 +238,8 @@ class _MainPageViewState extends State<MainPageView>
 
       if (token != null && meeting?.id != null) {
         final response = await http.get(
-          Uri.parse('https://api.kongrepad.com/api/v1/meetings/${meeting!.id}/virtual-stands'),
+          Uri.parse(
+              'https://api.kongrepad.com/api/v1/meetings/${meeting!.id}/virtual-stands'),
           headers: {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
@@ -247,7 +250,9 @@ class _MainPageViewState extends State<MainPageView>
           final data = jsonDecode(response.body);
           if (data['success'] == true && data['data'] != null) {
             final standsList = data['data'] as List;
-            virtualStands = standsList.map((stand) => VirtualStand.fromJson(stand)).toList();
+            virtualStands = standsList
+                .map((stand) => VirtualStand.fromJson(stand))
+                .toList();
             print('MainPage - ${virtualStands?.length} virtual stand yüklendi');
 
             if (mounted) setState(() {});
@@ -281,7 +286,7 @@ class _MainPageViewState extends State<MainPageView>
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const LoginView()),
-            (route) => false, // Tüm önceki route'ları temizle
+        (route) => false, // Tüm önceki route'ları temizle
       );
     }
   }
@@ -322,8 +327,6 @@ class _MainPageViewState extends State<MainPageView>
       print("FCM Token alma hatası: $e");
     }
   }
-
-
 
   Widget _buildBannerImage() {
     return FutureBuilder<String?>(
@@ -666,7 +669,8 @@ class _MainPageViewState extends State<MainPageView>
         final meetingData = jsonDecode(response.body);
         final currentActivities = meetingData['data']?['current_activities'];
 
-        if (currentActivities != null && currentActivities['live_sessions'] != null) {
+        if (currentActivities != null &&
+            currentActivities['live_sessions'] != null) {
           final liveSessions = currentActivities['live_sessions'] as List;
 
           print('MainPage - ${liveSessions.length} aktif session bulundu');
@@ -683,7 +687,8 @@ class _MainPageViewState extends State<MainPageView>
             final sessionId = session['id'];
             final hallId = session['program']?['hall_id'] ?? sessionId;
 
-            print('MainPage - Tek session var, direkt açılıyor: Session $sessionId, Hall $hallId');
+            print(
+                'MainPage - Tek session var, direkt açılıyor: Session $sessionId, Hall $hallId');
 
             Navigator.push(
               context,
@@ -708,7 +713,8 @@ class _MainPageViewState extends State<MainPageView>
           if (activeHalls.length == 1) {
             // Tüm session'lar aynı hall'da → Direkt aç
             final hallId = activeHalls.first;
-            print('MainPage - Tüm session\'lar Hall $hallId\'de, direkt açılıyor');
+            print(
+                'MainPage - Tüm session\'lar Hall $hallId\'de, direkt açılıyor');
 
             Navigator.push(
               context,
@@ -718,7 +724,8 @@ class _MainPageViewState extends State<MainPageView>
             );
           } else {
             // Farklı hall'larda session'lar var → Hall listesi göster
-            print('MainPage - Farklı hall\'larda session\'lar var, liste gösteriliyor');
+            print(
+                'MainPage - Farklı hall\'larda session\'lar var, liste gösteriliyor');
 
             Navigator.push(
               context,
@@ -806,10 +813,6 @@ class _MainPageViewState extends State<MainPageView>
     );
   }
 
-
-
-
-
   void _handleQuestionButton() {
     if (participant?.type! != "attendee") {
       AlertService().showAlertDialog(
@@ -850,15 +853,18 @@ class _MainPageViewState extends State<MainPageView>
 
   void _handleProgramButton() {
     print('MainPage - Program button tıklandı');
-    print('MainPage - Meeting program hall count: ${meeting?.programHallCount}');
-    print('MainPage - Meeting program first hall id: ${meeting?.programFirstHallId}');
+    print(
+        'MainPage - Meeting program hall count: ${meeting?.programHallCount}');
+    print(
+        'MainPage - Meeting program first hall id: ${meeting?.programFirstHallId}');
 
     if (participant?.type != "attendee") {
       print('MainPage - Kullanıcı attendee değil: ${participant?.type}');
       AlertService().showAlertDialog(
         context,
         title: AppLocalizations.of(context).translate('warning'),
-        content: AppLocalizations.of(context).translate('no_permission_program'),
+        content:
+            AppLocalizations.of(context).translate('no_permission_program'),
       );
       return;
     }
@@ -877,7 +883,8 @@ class _MainPageViewState extends State<MainPageView>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ProgramDaysView(hallId: meeting!.programFirstHallId!),
+          builder: (context) =>
+              ProgramDaysView(hallId: meeting!.programFirstHallId!),
         ),
       );
     } else {
