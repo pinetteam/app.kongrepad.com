@@ -32,7 +32,6 @@ class _AskQuestionViewState extends State<AskQuestionView> {
   void initState() {
     super.initState();
 
-    // Arguments'tan session title'ı al ve debug test yap
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Session title'ı arguments'tan al
       final args =
@@ -77,7 +76,7 @@ class _AskQuestionViewState extends State<AskQuestionView> {
           _questions = [];
           _loading = false;
           _hasError = true;
-          _errorMessage = 'Sorular yüklenirken hata oluştu: $e';
+          _errorMessage = 'Sorular yüklenirken hata oluştu';
         });
       }
     }
@@ -92,7 +91,7 @@ class _AskQuestionViewState extends State<AskQuestionView> {
 
     try {
       final success = await _questionService.askQuestion(
-        widget.hallId, // sessionId olarak kullan
+        widget.hallId,
         _questionController.text.trim(),
         anonymous: _isAnonymous,
       );
@@ -104,14 +103,16 @@ class _AskQuestionViewState extends State<AskQuestionView> {
             _isAnonymous = false;
           });
 
-          // Success popup
+          // Success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.white),
                   SizedBox(width: 8),
-                  Text('Sorunuz başarıyla gönderildi!'),
+                  Expanded(
+                    child: Text('Sorunuz başarıyla gönderildi!'),
+                  ),
                 ],
               ),
               backgroundColor: Colors.green,
@@ -128,35 +129,13 @@ class _AskQuestionViewState extends State<AskQuestionView> {
           // SessionView'a başarı bilgisi döndür
           Navigator.pop(context, true);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.error, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Soru gönderilemedi. Tekrar deneyin.'),
-                ],
-              ),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
+          _showErrorMessage('Bu oturum şu anda aktif değil');
         }
       }
     } catch (e) {
       print('Soru gönderme hatası: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Bağlantı hatası: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
+        _showErrorMessage('Bağlantı hatası oluştu');
       }
     } finally {
       if (mounted) {
@@ -165,6 +144,25 @@ class _AskQuestionViewState extends State<AskQuestionView> {
         });
       }
     }
+  }
+
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(message),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   Widget _buildQuestionsList() {
@@ -328,7 +326,7 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.all(16),
               ),
-              maxLines: 3,
+              maxLines: 4,
               minLines: 2,
               onChanged: (value) {
                 setState(() {}); // Button state güncelle
@@ -336,9 +334,12 @@ class _AskQuestionViewState extends State<AskQuestionView> {
             ),
           ),
           SizedBox(height: 12),
+          // ✅ TAŞMA SORUNU ÇÖZÜLDİ - Responsive Row Layout
           Row(
             children: [
+              // Checkbox ve text için flex alan
               Expanded(
+                flex: 3,
                 child: Row(
                   children: [
                     Checkbox(
@@ -349,40 +350,47 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                         });
                       },
                       activeColor: AppConstants.backgroundBlue,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    Flexible(
+                    Expanded(
+                      // ✅ Flexible yerine Expanded - TAŞMA ÇÖZÜLDÜ
                       child: Text(
                         'Anonim olarak sor',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                        style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                         overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ),
                   ],
                 ),
               ),
               SizedBox(width: 8),
-              SizedBox(
-                width: 110,
+              // Button için sabit alan
+              Expanded(
+                flex: 2,
                 child: ElevatedButton.icon(
                   onPressed: _sending || _questionController.text.trim().isEmpty
                       ? null
                       : _askQuestion,
                   icon: _sending
                       ? SizedBox(
-                          width: 16,
-                          height: 16,
+                          width: 14,
+                          height: 14,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor:
                                 AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : Icon(Icons.send, size: 18),
-                  label: Text(_sending ? 'Gönderiliyor' : 'Gönder'),
+                      : Icon(Icons.send, size: 16),
+                  label: Text(
+                    _sending ? 'Gönder...' : 'Gönder',
+                    style: TextStyle(fontSize: 13),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.backgroundBlue,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12),
+                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

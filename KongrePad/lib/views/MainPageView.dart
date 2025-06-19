@@ -882,8 +882,6 @@ class _MainPageViewState extends State<MainPageView>
     }
   }
 
-  // MainPageView.dart - _handleProgramButton metodunu bu ile değiştir:
-
   void _handleProgramButton() {
     print('MainPage - Program button tıklandı');
     print(
@@ -927,7 +925,6 @@ class _MainPageViewState extends State<MainPageView>
     }
   }
 
-// Yardımcı method - Program halls dialog
   void _showProgramHallsDialog() {
     showDialog(
       context: context,

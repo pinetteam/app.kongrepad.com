@@ -4,6 +4,7 @@ import 'package:KongrePad/views/LoginView.dart';
 import 'package:KongrePad/views/MainPageView.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:pusher_beams/pusher_beams.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -109,6 +110,7 @@ class _MyAppState extends State<MyApp> {
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
       theme: ThemeData(
         scaffoldBackgroundColor: AppConstants.backgroundBlue,
@@ -122,7 +124,8 @@ class _MyAppState extends State<MyApp> {
       onGenerateRoute: (RouteSettings settings) {
         switch (settings.name) {
           case '/ask-question':
-            final Map<String, dynamic> args = settings.arguments as Map<String, dynamic>;
+            final Map<String, dynamic> args =
+                settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(
               builder: (context) => AskQuestionView(
                 hallId: args['hallId'], // Sadece hallId geçir
