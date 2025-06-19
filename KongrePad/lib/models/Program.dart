@@ -1,4 +1,3 @@
-
 import 'Debate.dart';
 import 'Participant.dart';
 import 'Session.dart';
@@ -55,7 +54,6 @@ class Program {
     this.chairs,
     this.sessions,
     this.debates,
-
   });
 
   factory Program.fromJson(Map<String, dynamic> json) {
@@ -71,8 +69,8 @@ class Program {
       startAt: json['start_at'],
       finishAt: json['finish_at'],
       type: json['type'],
-      onAir: json['on_air'],
-      status: json['status'],
+      onAir: _parseIntOrBool(json['on_air']),
+      status: _parseIntOrBool(json['status']),
       chairs: (json['chairs'] as List<dynamic>?)
           ?.map((e) => Participant.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -83,6 +81,18 @@ class Program {
           ?.map((e) => Debate.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
+  }
+
+  static int? _parseIntOrBool(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is bool) return value ? 1 : 0;
+    if (value is String) {
+      if (value.toLowerCase() == 'true') return 1;
+      if (value.toLowerCase() == 'false') return 0;
+      return int.tryParse(value);
+    }
+    return null;
   }
 }
 
@@ -98,7 +108,8 @@ class ProgramsJson {
       data: (json['data'] as List<dynamic>?)
           ?.map((e) => ProgramDay.fromJson(e as Map<String, dynamic>))
           .toList(),
-      errors: (json['errors'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+      errors:
+          (json['errors'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
       status: json['status'],
     );
   }

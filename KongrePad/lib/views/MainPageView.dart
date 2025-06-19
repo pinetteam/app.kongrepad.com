@@ -49,6 +49,8 @@ class _MainPageViewState extends State<MainPageView>
   List<VirtualStand>? virtualStands;
   bool _loading = true;
   bool _isInitialized = false;
+  bool _sessionButtonLoading = false; // Session button için loading state
+  String? _errorMessage;
 
   // Fetch the FCM token
   Future<String?> getFCMToken() async {
@@ -345,6 +347,7 @@ class _MainPageViewState extends State<MainPageView>
                 },
                 errorBuilder: (context, error, stackTrace) {
                   print('Banner yükleme hatası: $error');
+                  // 404 hatası durumunda default banner'a geç, retry yapma
                   return _buildDefaultBanner();
                 },
                 loadingBuilder: (BuildContext context, Widget child,
@@ -356,11 +359,15 @@ class _MainPageViewState extends State<MainPageView>
                           ? loadingProgress.cumulativeBytesLoaded /
                               loadingProgress.expectedTotalBytes!
                           : null,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   );
                 },
                 fit: BoxFit.cover,
                 width: double.infinity,
+                // Retry mekanizmasını kaldır - sürekli 404 retry'ı engelle
+                cacheWidth: 800, // Cache boyutunu sınırla
+                cacheHeight: 400,
               )
             : _buildDefaultBanner();
       },
@@ -481,6 +488,7 @@ class _MainPageViewState extends State<MainPageView>
                                         .translate('watch_presentation'),
                                     color: AppConstants.buttonLightPurple,
                                     onPressed: () => _handleSessionButton(),
+                                    isLoading: _sessionButtonLoading,
                                   ),
                                   button2: _buildMainButton(
                                     icon: 'assets/icon/questionmark.svg',
@@ -588,10 +596,11 @@ class _MainPageViewState extends State<MainPageView>
     required Color color,
     required VoidCallback onPressed,
     bool isIconAsset = true,
+    bool isLoading = false,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: color,
+        color: isLoading ? color.withOpacity(0.7) : color,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -604,30 +613,39 @@ class _MainPageViewState extends State<MainPageView>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onPressed,
+          onTap: isLoading ? null : onPressed,
           borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (isIconAsset)
+                if (isLoading)
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 3,
+                    ),
+                  )
+                else if (isIconAsset)
                   SvgPicture.asset(
                     icon,
                     color: Colors.white,
-                    height: 48, // Daha büyük ikon
+                    height: 48,
                   )
                 else
                   const Icon(
                     FontAwesomeIcons.qrcode,
-                    size: 48, // Daha büyük ikon
+                    size: 48,
                     color: Colors.white,
                   ),
                 const SizedBox(height: 12),
                 Text(
-                  label,
+                  isLoading ? 'Yükleniyor...' : label,
                   style: const TextStyle(
-                    fontSize: 16, // Daha büyük yazı
+                    fontSize: 16,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
@@ -646,9 +664,17 @@ class _MainPageViewState extends State<MainPageView>
   // Button Handler Methods
 // MainPageView.dart - _handleSessionButton metodunu bu ile değiştir:
 
-  // MainPageView.dart - _handleSessionButton metodunu bu ile değiştir:
-
   void _handleSessionButton() async {
+    // Eğer zaten loading ise, tekrar çalıştırma
+    if (_sessionButtonLoading) {
+      print('MainPage - Session button zaten çalışıyor, işlem engellendi');
+      return;
+    }
+
+    setState(() {
+      _sessionButtonLoading = true;
+    });
+
     try {
       print('MainPage - Session button tıklandı');
 
@@ -752,6 +778,13 @@ class _MainPageViewState extends State<MainPageView>
     } catch (e) {
       print('MainPage - Session button error: $e');
       _showErrorDialog('Oturum bilgileri alınamadı: $e');
+    } finally {
+      // Loading state'i temizle
+      if (mounted) {
+        setState(() {
+          _sessionButtonLoading = false;
+        });
+      }
     }
   }
 

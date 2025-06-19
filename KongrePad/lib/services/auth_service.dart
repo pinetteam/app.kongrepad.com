@@ -11,6 +11,11 @@ import '../models/participant.dart';
 class AuthService {
   static const String baseUrl = 'https://api.kongrepad.com/api/v1';
 
+  // Token validation cache
+  static String? _lastValidatedToken;
+  static DateTime? _lastValidationTime;
+  static const int _validationCacheMinutes = 5; // 5 dakika cache
+
   Future<Map<String, dynamic>> _getDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
     final packageInfo = await PackageInfo.fromPlatform();
@@ -281,20 +286,27 @@ class AuthService {
       final participantData = prefs.getString('participant');
       final meetingData = prefs.getString('meeting');
 
-      print('AuthService - isLoggedIn kontrol:');
-      print('- Token var: ${token != null}');
-      print('- Participant var: ${participantData != null}');
-      print('- Meeting var: ${meetingData != null}');
+      print('AuthService - isLoggedIn check:');
+      print('- Token exists: ${token != null}');
+      print('- Participant exists: ${participantData != null}');
+      print('- Meeting exists: ${meetingData != null}');
 
-      // Token ve gerekli veriler var mı?
       if (token == null) {
-        print('AuthService - Token yok, logged out');
+        print('AuthService - No token found, logged out');
         return false;
       }
 
-      // Token geçerli mi kontrol et
+      if (_lastValidatedToken == token && _lastValidationTime != null) {
+        final timeDiff = DateTime.now().difference(_lastValidationTime!);
+        if (timeDiff.inMinutes < _validationCacheMinutes) {
+          print(
+              'AuthService - Using cached token (validated ${timeDiff.inMinutes} minutes ago)');
+          return true;
+        }
+      }
+
       final isValid = await validateToken(token);
-      print('AuthService - Token valid: $isValid');
+      print('AuthService - Token validation result: $isValid');
 
       return isValid;
     } catch (e) {
@@ -303,7 +315,7 @@ class AuthService {
     }
   }
 
-  /// Token'ın backend'de geçerli olup olmadığını kontrol et
+  /// Validate token with backend
   Future<bool> validateToken(String token) async {
     try {
       final response = await http.get(
@@ -318,13 +330,21 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['success'] == true;
+        final isValid = data['success'] == true;
+
+        if (isValid) {
+          _lastValidatedToken = token;
+          _lastValidationTime = DateTime.now();
+          print('AuthService - Token validated and cached');
+        }
+
+        return isValid;
       }
 
-      // 401 = token expired/invalid
       if (response.statusCode == 401) {
         print('AuthService - Token expired, clearing storage');
         await clearStorage();
+        _clearValidationCache();
         return false;
       }
 
@@ -333,6 +353,13 @@ class AuthService {
       print('AuthService - Token validation error: $e');
       return false;
     }
+  }
+
+  /// Clear validation cache
+  void _clearValidationCache() {
+    _lastValidatedToken = null;
+    _lastValidationTime = null;
+    print('AuthService - Validation cache cleared');
   }
 
   /// Tüm auth verilerini temizle
@@ -348,6 +375,10 @@ class AuthService {
       await prefs.remove('username');
       await prefs.remove('participant_id');
       await prefs.remove('login_time');
+
+      // Cache'i de temizle
+      _clearValidationCache();
+
       print('AuthService - Storage cleared');
     } catch (e) {
       print('AuthService - Clear storage error: $e');

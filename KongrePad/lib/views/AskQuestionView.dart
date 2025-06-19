@@ -35,7 +35,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
     // Arguments'tan session title'ı al ve debug test yap
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Session title'ı arguments'tan al
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null) {
         setState(() {
           _sessionTitle = args['sessionTitle'];
@@ -51,7 +52,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
   }
 
   Future<void> _getQuestions() async {
-    print('AskQuestionView - _getQuestions başladı, sessionId: ${widget.hallId}');
+    print(
+        'AskQuestionView - _getQuestions başladı, sessionId: ${widget.hallId}');
 
     setState(() {
       _loading = true;
@@ -59,7 +61,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
     });
 
     try {
-      final questions = await _questionService.getSessionQuestions(widget.hallId);
+      final questions =
+          await _questionService.getSessionQuestions(widget.hallId);
 
       if (mounted) {
         setState(() {
@@ -113,7 +116,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
               ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
               duration: Duration(seconds: 3),
             ),
           );
@@ -135,7 +139,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
               ),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
           );
         }
@@ -148,7 +153,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
             content: Text('Bağlantı hatası: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
@@ -254,7 +260,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: AppConstants.backgroundBlue.withOpacity(0.1),
+                    backgroundColor:
+                        AppConstants.backgroundBlue.withOpacity(0.1),
                     child: Icon(
                       Icons.person_outline,
                       size: 16,
@@ -321,7 +328,7 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.all(16),
               ),
-              maxLines: 4,
+              maxLines: 3,
               minLines: 2,
               onChanged: (value) {
                 setState(() {}); // Button state güncelle
@@ -343,30 +350,33 @@ class _AskQuestionViewState extends State<AskQuestionView> {
                       },
                       activeColor: AppConstants.backgroundBlue,
                     ),
-                    Expanded(
+                    Flexible(
                       child: Text(
                         'Anonim olarak sor',
                         style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
               ),
+              SizedBox(width: 8),
               SizedBox(
-                width: 120,
+                width: 110,
                 child: ElevatedButton.icon(
                   onPressed: _sending || _questionController.text.trim().isEmpty
                       ? null
                       : _askQuestion,
                   icon: _sending
                       ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
                       : Icon(Icons.send, size: 18),
                   label: Text(_sending ? 'Gönderiliyor' : 'Gönder'),
                   style: ElevatedButton.styleFrom(

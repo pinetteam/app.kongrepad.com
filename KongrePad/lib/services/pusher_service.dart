@@ -105,8 +105,12 @@ class PusherService {
         await _pusher.unsubscribe(channelName: _currentChannel!);
         _currentChannel = null;
       }
-      await _pusher.disconnect();
-      print("Successfully disconnected from Pusher");
+
+      // Pusher instance'ının bağlı olup olmadığını kontrol et
+      if (_pusher != null) {
+        await _pusher.disconnect();
+        print("Successfully disconnected from Pusher");
+      }
     } catch (e) {
       print("Disconnect error: $e");
     }
