@@ -9,6 +9,7 @@ import 'package:pusher_beams/pusher_beams.dart';
 import '../../services/auth_service.dart';
 import '../../services/pusher_service.dart';
 import '../../services/alert_service.dart';
+import '../../services/banner_service.dart';
 import '../../utils/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_localizations.dart';
@@ -331,45 +332,42 @@ class _MainPageViewState extends State<MainPageView>
   }
 
   Widget _buildBannerImage() {
-    return FutureBuilder<String?>(
-      future: SharedPreferences.getInstance()
-          .then((prefs) => prefs.getString('token')),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return _buildDefaultBanner();
+    // BannerService error state kontrolü
+    if (BannerService().isInErrorState || meeting?.id == null) {
+      return _buildDefaultBanner();
+    }
 
-        return meeting != null &&
-                meeting!.bannerName != null &&
-                meeting!.bannerExtension != null
-            ? Image.network(
-                "https://api.kongrepad.com/api/v1/meetings/${meeting!.id}/banner",
-                headers: {
-                  'Authorization': 'Bearer ${snapshot.data}',
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  print('Banner yükleme hatası: $error');
-                  // 404 hatası durumunda default banner'a geç, retry yapma
-                  return _buildDefaultBanner();
-                },
-                loadingBuilder: (BuildContext context, Widget child,
-                    ImageChunkEvent? loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  );
-                },
-                fit: BoxFit.cover,
-                width: double.infinity,
-                // Retry mekanizmasını kaldır - sürekli 404 retry'ı engelle
-                cacheWidth: 800, // Cache boyutunu sınırla
-                cacheHeight: 400,
-              )
-            : _buildDefaultBanner();
+    return FutureBuilder<http.Response?>(
+      future: BannerService().loadBanner(meeting!.id!),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          );
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          return _buildDefaultBanner();
+        }
+
+        final response = snapshot.data!;
+        if (response.statusCode != 200) {
+          return _buildDefaultBanner();
+        }
+
+        // Başarılı banner response'u
+        return Image.memory(
+          response.bodyBytes,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          cacheWidth: 800,
+          cacheHeight: 400,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultBanner();
+          },
+        );
       },
     );
   }
