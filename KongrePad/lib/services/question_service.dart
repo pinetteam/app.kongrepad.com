@@ -26,7 +26,7 @@ class QuestionService {
 
       // Request body hazırla
       final requestBody = <String, dynamic>{
-        'question': question,
+        'question_text': question,
         'anonymous': anonymous,
       };
 
@@ -75,7 +75,8 @@ class QuestionService {
           print('QuestionService - JSON parse hatası: $jsonError');
           // JSON parse edilemezse ama status code başarılıysa OK say
           if (response.statusCode == 201 || response.statusCode == 200) {
-            print('QuestionService - ✅ Status code başarılı, JSON parse hatası göz ardı edildi');
+            print(
+                'QuestionService - ✅ Status code başarılı, JSON parse hatası göz ardı edildi');
             return true;
           }
           return false;
@@ -85,7 +86,6 @@ class QuestionService {
         print('QuestionService - Error Body: ${response.body}');
         return false;
       }
-
     } catch (e, stackTrace) {
       print('QuestionService - ❌ EXCEPTION: $e');
       print('QuestionService - StackTrace: $stackTrace');
@@ -95,7 +95,8 @@ class QuestionService {
 
   /// List Session Questions - GET /api/v1/sessions/{session_id}/questions
   Future<List<Map<String, dynamic>>?> getSessionQuestions(int sessionId) async {
-    print('QuestionService - getSessionQuestions başladı, sessionId: $sessionId');
+    print(
+        'QuestionService - getSessionQuestions başladı, sessionId: $sessionId');
 
     try {
       final token = await AuthService().getStoredToken();
@@ -135,7 +136,6 @@ class QuestionService {
         print('QuestionService - ❌ HTTP Error: ${response.statusCode}');
         return [];
       }
-
     } catch (e, stackTrace) {
       print('QuestionService - ❌ Get Questions EXCEPTION: $e');
       print('QuestionService - StackTrace: $stackTrace');
@@ -145,7 +145,8 @@ class QuestionService {
 
   /// Get Question Details - GET /api/v1/questions/{id}
   Future<Map<String, dynamic>?> getQuestionDetails(int questionId) async {
-    print('QuestionService - getQuestionDetails başladı, questionId: $questionId');
+    print(
+        'QuestionService - getQuestionDetails başladı, questionId: $questionId');
 
     try {
       final token = await AuthService().getStoredToken();
@@ -164,7 +165,8 @@ class QuestionService {
         },
       );
 
-      print('QuestionService - Question Details Status: ${response.statusCode}');
+      print(
+          'QuestionService - Question Details Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -280,7 +282,8 @@ class QuestionService {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['data'] != null) {
           final questions = List<Map<String, dynamic>>.from(data['data']);
-          print('QuestionService - ✅ ${questions.length} kendi sorunuz bulundu');
+          print(
+              'QuestionService - ✅ ${questions.length} kendi sorunuz bulundu');
           return questions;
         }
       }
@@ -317,11 +320,11 @@ class QuestionService {
       print('Status: ${response.statusCode}');
       print('Response: ${response.body}');
 
-      if (response.statusCode == 500 && response.body.contains('session_questions')) {
+      if (response.statusCode == 500 &&
+          response.body.contains('session_questions')) {
         print('❌ Backend hala yanlış tablo ismi kullanıyor: session_questions');
         print('✅ Doğru tablo ismi: meeting_hall_program_session_questions');
       }
-
     } catch (e) {
       print('❌ GET test error: $e');
     }
@@ -347,10 +350,10 @@ class QuestionService {
       print('Status: ${response.statusCode}');
       print('Response: ${response.body}');
 
-      if (response.statusCode == 500 && response.body.contains('session_questions')) {
+      if (response.statusCode == 500 &&
+          response.body.contains('session_questions')) {
         print('❌ Backend POST da yanlış tablo ismi kullanıyor');
       }
-
     } catch (e) {
       print('❌ POST test error: $e');
     }

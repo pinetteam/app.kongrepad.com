@@ -353,6 +353,26 @@ class _SessionViewState extends State<SessionView> {
                 foregroundColor: Colors.white,
               ),
             ),
+            // SessionView'ın _buildPdfSection metoduna bu butonu ekleyin:
+
+            ElevatedButton.icon(
+              onPressed: () async {
+                print('SessionView - Document ID debug başlatılıyor...');
+                await _sessionService.debugDocumentId();
+              },
+              icon: const Icon(Icons.search, size: 20),
+              label: const Text('Debug Doc ID'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 1,
+              ),
+            ),
           ],
         ),
       );

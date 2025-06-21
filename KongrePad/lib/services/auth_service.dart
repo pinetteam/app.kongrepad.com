@@ -152,6 +152,168 @@ class AuthService {
     }
   }
 
+  Future<bool> isParticipantEnrolled() async {
+    try {
+      final participant = await getStoredParticipant();
+      if (participant == null) return false;
+
+      final isEnrolled = participant['enrolled'] ?? false;
+      final hasGdprConsent = participant['gdpr_consent'] ?? false;
+
+      print('AuthService - Enrollment check:');
+      print('- Enrolled: $isEnrolled');
+      print('- GDPR Consent: $hasGdprConsent');
+
+      return isEnrolled && hasGdprConsent;
+    } catch (e) {
+      print('AuthService - isParticipantEnrolled error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> enrollParticipant({bool gdprConsent = true}) async {
+    try {
+      print('AuthService - Starting enrollment...');
+
+      final token = await getStoredToken();
+      if (token == null) {
+        print('AuthService - No token for enrollment');
+        return false;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/participants/enroll'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'enrolled': true,
+          'gdpr_consent': gdprConsent,
+        }),
+      );
+
+      print('AuthService - Enrollment response status: ${response.statusCode}');
+      print('AuthService - Enrollment response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['success'] == true) {
+          // Profile data'yı fresh al
+          await refreshProfileData();
+          print('AuthService - ✅ Enrollment successful');
+          return true;
+        }
+      }
+
+      print('AuthService - ❌ Enrollment failed');
+      return false;
+    } catch (e) {
+      print('AuthService - Enrollment error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> refreshProfileData() async {
+    try {
+      print('AuthService - Refreshing profile data...');
+
+      final token = await getStoredToken();
+      if (token == null) return false;
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['success'] == true && data['data'] != null) {
+          // Güncel participant data'yı kaydet
+          final SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('participant', jsonEncode(data['data']));
+
+          print('AuthService - ✅ Profile data refreshed');
+          return true;
+        }
+      }
+
+      print('AuthService - ❌ Failed to refresh profile data');
+      return false;
+    } catch (e) {
+      print('AuthService - refreshProfileData error: $e');
+      return false;
+    }
+  }
+
+  // ✅ YENİ: Enrollment durumunu kontrol et ve gerekirse yönlendir
+  Future<Map<String, dynamic>> checkEnrollmentStatus() async {
+    try {
+      final participant = await getStoredParticipant();
+
+      if (participant == null) {
+        return {
+          'needs_enrollment': true,
+          'reason': 'no_participant_data',
+          'message': 'Kullanıcı bilgileri bulunamadı'
+        };
+      }
+
+      final isEnrolled = participant['enrolled'] ?? false;
+      final hasGdprConsent = participant['gdpr_consent'] ?? false;
+      final status = participant['status'] ?? false;
+
+      print('AuthService - Enrollment status check:');
+      print('- Enrolled: $isEnrolled');
+      print('- GDPR Consent: $hasGdprConsent');
+      print('- Status: $status');
+
+      if (!isEnrolled) {
+        return {
+          'needs_enrollment': true,
+          'reason': 'not_enrolled',
+          'message': 'Etkinliğe kayıt olmanız gerekiyor'
+        };
+      }
+
+      if (!hasGdprConsent) {
+        return {
+          'needs_enrollment': true,
+          'reason': 'no_gdpr_consent',
+          'message': 'GDPR onayı vermeniz gerekiyor'
+        };
+      }
+
+      if (!status) {
+        return {
+          'needs_enrollment': false,
+          'can_participate': false,
+          'reason': 'inactive_status',
+          'message': 'Hesabınız aktif değil, yönetici ile iletişime geçin'
+        };
+      }
+
+      return {
+        'needs_enrollment': false,
+        'can_participate': true,
+        'message': 'Katılıma hazır'
+      };
+    } catch (e) {
+      print('AuthService - checkEnrollmentStatus error: $e');
+      return {
+        'needs_enrollment': true,
+        'reason': 'error',
+        'message': 'Enrollment durumu kontrol edilemedi'
+      };
+    }
+  }
+
   Future<String?> getStoredToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
@@ -307,6 +469,15 @@ class AuthService {
 
       final isValid = await validateToken(token);
       print('AuthService - Token validation result: $isValid');
+
+      // ✅ YENİ: Enrollment durumunu da kontrol et
+      if (isValid) {
+        final enrollmentStatus = await checkEnrollmentStatus();
+        print('AuthService - Enrollment status: $enrollmentStatus');
+
+        // Not: Enrollment olmamış olsa bile login durumu true döner
+        // UI tarafında enrollment kontrolü ayrıca yapılmalı
+      }
 
       return isValid;
     } catch (e) {

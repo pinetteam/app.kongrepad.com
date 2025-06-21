@@ -20,6 +20,7 @@ class AskQuestionView extends StatefulWidget {
 
 class _AskQuestionViewState extends State<AskQuestionView> {
   final QuestionService _questionService = QuestionService();
+  final AuthService _authService = AuthService();
   List<Map<String, dynamic>>? _questions;
   final TextEditingController _questionController = TextEditingController();
   bool _isAnonymous = false;
@@ -64,7 +65,7 @@ class _AskQuestionViewState extends State<AskQuestionView> {
       print(
           'AskQuestionView - Gerçek session ID aranıyor, Hall ID: ${widget.hallId}');
 
-      final token = await AuthService().getStoredToken();
+      final token = await _authService.getStoredToken();
       if (token == null) return;
 
       // Current activities'den live sessions'ları al
@@ -149,8 +150,144 @@ class _AskQuestionViewState extends State<AskQuestionView> {
     }
   }
 
+  // ✅ YENİ: Enrollment kontrol dialog'u
+  Future<void> _showEnrollmentDialog(String message, String reason) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: AppConstants.backgroundBlue),
+            SizedBox(width: 8),
+            Text('Kayıt Gerekli'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(message),
+            if (reason == 'not_enrolled') ...[
+              SizedBox(height: 12),
+              Text(
+                'Etkinliğe kayıt olmak için aşağıdaki butona tıklayın.',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('İptal'),
+          ),
+          if (reason == 'not_enrolled' || reason == 'no_gdpr_consent') ...[
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _performEnrollment();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.backgroundBlue,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Kayıt Ol'),
+            ),
+          ] else ...[
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Tamam'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ✅ YENİ: Enrollment işlemi
+  Future<void> _performEnrollment() async {
+    // Loading dialog göster
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('Kayıt olunuyor...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final success = await _authService.enrollParticipant(gdprConsent: true);
+
+      Navigator.pop(context); // Loading dialog'u kapat
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Başarıyla kayıt oldunuz!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        _showErrorMessage(
+            'Kayıt işlemi başarısız oldu. Lütfen tekrar deneyin.');
+      }
+    } catch (e) {
+      Navigator.pop(context); // Loading dialog'u kapat
+      print('Enrollment error: $e');
+      _showErrorMessage('Kayıt işlemi sırasında hata oluştu.');
+    }
+  }
+
   Future<void> _askQuestion() async {
-    if (_questionController.text.trim().isEmpty) return;
+    final questionText = _questionController.text.trim();
+
+    // ✅ YENİ: Frontend validation
+    if (questionText.isEmpty) {
+      _showErrorMessage('Lütfen bir soru yazın');
+      return;
+    }
+
+    if (questionText.length < 10) {
+      _showErrorMessage('Soru en az 10 karakter olmalıdır');
+      return;
+    }
+
+    // ✅ YENİ: Önce enrollment durumunu kontrol et
+    final enrollmentStatus = await _authService.checkEnrollmentStatus();
+
+    if (enrollmentStatus['needs_enrollment'] == true) {
+      final reason = enrollmentStatus['reason'] ?? 'unknown';
+      final message = enrollmentStatus['message'] ?? 'Kayıt gerekli';
+
+      print('AskQuestionView - Enrollment gerekli: $reason');
+      await _showEnrollmentDialog(message, reason);
+      return;
+    }
+
+    if (enrollmentStatus['can_participate'] != true) {
+      final message = enrollmentStatus['message'] ?? 'Katılım izni yok';
+      print('AskQuestionView - Katılım izni yok: $message');
+      _showErrorMessage(message);
+      return;
+    }
 
     final sessionId = _realSessionId ?? widget.hallId;
     print('AskQuestionView - Soru gönderiliyor, sessionId: $sessionId');
@@ -161,8 +298,8 @@ class _AskQuestionViewState extends State<AskQuestionView> {
 
     try {
       final success = await _questionService.askQuestion(
-        sessionId, // ✅ YENİ: Gerçek session ID'yi kullan
-        _questionController.text.trim(),
+        sessionId,
+        questionText, // ✅ Temizlenmiş text kullan
         anonymous: _isAnonymous,
       );
 
@@ -214,6 +351,124 @@ class _AskQuestionViewState extends State<AskQuestionView> {
         });
       }
     }
+  }
+
+  // ✅ YENİ: Button state kontrolü
+  Widget _buildQuestionInput() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: TextField(
+              controller: _questionController,
+              decoration: InputDecoration(
+                hintText:
+                    'Sorunuzu yazın (en az 10 karakter)...', // ✅ YENİ: Hint güncellendi
+                hintStyle: TextStyle(color: Colors.grey[500]),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.all(16),
+                // ✅ YENİ: Karakter sayacı ekle
+                helperText:
+                    '${_questionController.text.length}/10 karakter minimum',
+                helperStyle: TextStyle(
+                  color: _questionController.text.length >= 10
+                      ? Colors.green
+                      : Colors.orange,
+                  fontSize: 12,
+                ),
+              ),
+              maxLines: 4,
+              minLines: 2,
+              onChanged: (value) {
+                setState(() {}); // Button state ve counter güncelle
+              },
+            ),
+          ),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: _isAnonymous,
+                      onChanged: (value) {
+                        setState(() {
+                          _isAnonymous = value ?? false;
+                        });
+                      },
+                      activeColor: AppConstants.backgroundBlue,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Anonim olarak sor',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  // ✅ YENİ: Minimum karakter kontrolü eklendi
+                  onPressed:
+                      _sending || _questionController.text.trim().length < 10
+                          ? null
+                          : _askQuestion,
+                  icon: _sending
+                      ? SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Icon(Icons.send, size: 16),
+                  label: Text(
+                    _sending ? 'Gönder...' : 'Gönder',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.backgroundBlue,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   void _showErrorMessage(String message) {
@@ -362,115 +617,6 @@ class _AskQuestionViewState extends State<AskQuestionView> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildQuestionInput() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: TextField(
-              controller: _questionController,
-              decoration: InputDecoration(
-                hintText: 'Sorunuzu yazın...',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.all(16),
-              ),
-              maxLines: 4,
-              minLines: 2,
-              onChanged: (value) {
-                setState(() {}); // Button state güncelle
-              },
-            ),
-          ),
-          SizedBox(height: 12),
-          // ✅ TAŞMA SORUNU ÇÖZÜLDİ - Responsive Row Layout
-          Row(
-            children: [
-              // Checkbox ve text için flex alan
-              Expanded(
-                flex: 3,
-                child: Row(
-                  children: [
-                    Checkbox(
-                      value: _isAnonymous,
-                      onChanged: (value) {
-                        setState(() {
-                          _isAnonymous = value ?? false;
-                        });
-                      },
-                      activeColor: AppConstants.backgroundBlue,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    Expanded(
-                      // ✅ Flexible yerine Expanded - TAŞMA ÇÖZÜLDÜ
-                      child: Text(
-                        'Anonim olarak sor',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8),
-              // Button için sabit alan
-              Expanded(
-                flex: 2,
-                child: ElevatedButton.icon(
-                  onPressed: _sending || _questionController.text.trim().isEmpty
-                      ? null
-                      : _askQuestion,
-                  icon: _sending
-                      ? SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Icon(Icons.send, size: 16),
-                  label: Text(
-                    _sending ? 'Gönder...' : 'Gönder',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.backgroundBlue,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
