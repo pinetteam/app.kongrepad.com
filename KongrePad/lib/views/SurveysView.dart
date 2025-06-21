@@ -49,21 +49,66 @@ class _SurveysViewState extends State<SurveysView> {
 
       if (!mounted) return;
 
-      if (result['success'] == true) {
-        final surveysData = result['data'] as List;
+      if (result['success'] == true && result['data'] != null) {
+        final surveysData = result['data'];
+
+        // ✅ YENİ: Data formatını kontrol et
+        if (surveysData is! List) {
+          print(
+              'SurveysView - Surveys data List değil: ${surveysData.runtimeType}');
+          setState(() {
+            surveys = [];
+            _loading = false;
+            _hasError = true;
+            _errorMessage = 'Anket verisi beklenmeyen formatta';
+          });
+          return;
+        }
+
         print('SurveysView - ${surveysData.length} survey alındı');
 
         // Survey model'larına dönüştür
         final surveyList = <Survey>[];
         for (final surveyJson in surveysData) {
           try {
+            // ✅ YENİ: JSON formatını kontrol et
+            if (surveyJson is! Map<String, dynamic>) {
+              print(
+                  'SurveysView - Survey data Map değil: ${surveyJson.runtimeType}');
+              continue;
+            }
+
             final survey = Survey.fromJson(surveyJson);
+
+            // ✅ YENİ: Survey geçerliliğini kontrol et
+            if (survey.id == null) {
+              print('SurveysView - Survey ID null, atlanıyor');
+              continue;
+            }
+
             surveyList.add(survey);
-          } catch (e) {
+            print(
+                'SurveysView - ✅ Survey parse edildi: ${survey.id} - ${survey.title}');
+          } catch (e, stackTrace) {
             print('SurveysView - Survey parse hatası: $e');
             print('SurveysView - Survey data: $surveyJson');
+            print('SurveysView - Stack trace: $stackTrace');
+
+            // Hata durumunda kullanıcıya bilgi ver (sadece ilk hatada)
+            if (surveyList.isEmpty && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Bazı anketler yüklenirken hata oluştu'),
+                  backgroundColor: Colors.orange,
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
           }
         }
+
+        if (!mounted) return;
 
         setState(() {
           surveys = surveyList;
@@ -72,6 +117,8 @@ class _SurveysViewState extends State<SurveysView> {
 
         print('SurveysView - ✅ ${surveyList.length} survey başarıyla yüklendi');
       } else {
+        if (!mounted) return;
+
         setState(() {
           surveys = [];
           _loading = false;
@@ -80,8 +127,11 @@ class _SurveysViewState extends State<SurveysView> {
         });
         print('SurveysView - Survey yükleme başarısız: ${result['message']}');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (!mounted) return;
+
+      print('SurveysView - Exception: $e');
+      print('SurveysView - Stack trace: $stackTrace');
 
       setState(() {
         surveys = [];
@@ -89,7 +139,6 @@ class _SurveysViewState extends State<SurveysView> {
         _hasError = true;
         _errorMessage = 'Beklenmeyen hata: $e';
       });
-      print('SurveysView - Exception: $e');
     }
   }
 
@@ -147,6 +196,14 @@ class _SurveysViewState extends State<SurveysView> {
     final hasTitle = survey.title?.isNotEmpty == true;
     final hasDescription = survey.description?.isNotEmpty == true;
 
+    // ✅ YENİ: Renk seçimi - Cevaplanmış survey'ler kırmızı olsun
+    Color cardColor;
+    if (isCompleted) {
+      cardColor = Colors.red[600]!; // ✅ Kırmızı renk
+    } else {
+      cardColor = AppConstants.buttonDarkBlue; // Mavi renk
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
@@ -162,7 +219,7 @@ class _SurveysViewState extends State<SurveysView> {
         ),
         child: Material(
           borderRadius: BorderRadius.circular(16),
-          color: isCompleted ? Colors.green[600] : AppConstants.buttonDarkBlue,
+          color: cardColor,
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () => _navigateToSurvey(survey),
@@ -180,7 +237,7 @@ class _SurveysViewState extends State<SurveysView> {
                     child: SvgPicture.asset(
                       isCompleted
                           ? 'assets/icon/checklist.checked.svg'
-                          : 'assets/icon/checklist.svg',
+                          : 'assets/icon/book.fill.svg', // ✅ Eksik checklist.svg yerine book.fill.svg kullan
                       color: Colors.white,
                       height: 28,
                       width: 28,
@@ -331,7 +388,8 @@ class _SurveysViewState extends State<SurveysView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConstants.backgroundBlue,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -393,7 +451,8 @@ class _SurveysViewState extends State<SurveysView> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.backgroundBlue,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -419,7 +478,8 @@ class _SurveysViewState extends State<SurveysView> {
               shape: BoxShape.circle,
             ),
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppConstants.backgroundBlue),
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(AppConstants.backgroundBlue),
               strokeWidth: 4,
             ),
           ),
@@ -522,21 +582,21 @@ class _SurveysViewState extends State<SurveysView> {
               child: _loading
                   ? _buildLoadingState()
                   : _hasError
-                  ? _buildErrorState()
-                  : surveys == null || surveys!.isEmpty
-                  ? _buildEmptyState()
-                  : RefreshIndicator(
-                onRefresh: _refreshSurveys,
-                color: AppConstants.backgroundBlue,
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: surveys!.length,
-                  itemBuilder: (context, index) {
-                    final survey = surveys![index];
-                    return _buildSurveyCard(survey);
-                  },
-                ),
-              ),
+                      ? _buildErrorState()
+                      : surveys == null || surveys!.isEmpty
+                          ? _buildEmptyState()
+                          : RefreshIndicator(
+                              onRefresh: _refreshSurveys,
+                              color: AppConstants.backgroundBlue,
+                              child: ListView.builder(
+                                padding: const EdgeInsets.all(20),
+                                itemCount: surveys!.length,
+                                itemBuilder: (context, index) {
+                                  final survey = surveys![index];
+                                  return _buildSurveyCard(survey);
+                                },
+                              ),
+                            ),
             ),
           ],
         ),

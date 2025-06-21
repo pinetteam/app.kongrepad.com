@@ -22,18 +22,75 @@ class SurveyQuestion {
   });
 
   factory SurveyQuestion.fromJson(Map<String, dynamic> json) {
-    return SurveyQuestion(
-      id: json['id'],
-      sortOrder: json['sort_order'],
-      surveyId: json['survey_id'],
-      selectedOption: json['selected_option'],
-      question: json['question'],
-      options: (json['options'] as List<dynamic>?)
-          ?.map((e) => SurveyOption.fromJson(e))
-          .toList(),
-      status: json['status'],
-      required: json['required'] ?? true, // Default zorunlu
-    );
+    try {
+      return SurveyQuestion(
+        id: _parseIntSafely(json['id']),
+        sortOrder: _parseIntSafely(json['sort_order']),
+        surveyId: _parseIntSafely(json['survey_id']),
+        selectedOption: _parseIntSafely(json['selected_option']),
+        question: json['question']?.toString() ?? '',
+        options: _parseOptionsSafely(json['options']),
+        status: _parseIntSafely(json['status']),
+        required: _parseBoolSafely(json['required']),
+      );
+    } catch (e) {
+      print('SurveyQuestion.fromJson - Parse hatası: $e');
+      print('SurveyQuestion.fromJson - JSON data: $json');
+      // Hata durumunda minimum geçerli question döndür
+      return SurveyQuestion(
+        id: _parseIntSafely(json['id']),
+        question: json['question']?.toString() ?? 'Bilinmeyen Soru',
+        required: true,
+      );
+    }
+  }
+
+  // ✅ YENİ: Type safe parsing metodları
+  static int? _parseIntSafely(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is bool) return value ? 1 : 0;
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      if (parsed != null) return parsed;
+      // String'de "true"/"false" varsa bool'a çevir
+      if (value.toLowerCase() == 'true') return 1;
+      if (value.toLowerCase() == 'false') return 0;
+    }
+    return null;
+  }
+
+  static bool? _parseBoolSafely(dynamic value) {
+    if (value == null) return null;
+    if (value is bool) return value;
+    if (value is int) return value != 0;
+    if (value is String) {
+      if (value.toLowerCase() == 'true') return true;
+      if (value.toLowerCase() == 'false') return false;
+      // String'de sayı varsa int'e çevir
+      final parsed = int.tryParse(value);
+      if (parsed != null) return parsed != 0;
+    }
+    return null;
+  }
+
+  static List<SurveyOption>? _parseOptionsSafely(dynamic value) {
+    if (value == null) return null;
+    if (value is! List) return null;
+
+    final options = <SurveyOption>[];
+    for (final optionJson in value) {
+      try {
+        if (optionJson is Map<String, dynamic>) {
+          final option = SurveyOption.fromJson(optionJson);
+          options.add(option);
+        }
+      } catch (e) {
+        print('SurveyQuestion - Option parse hatası: $e');
+        continue;
+      }
+    }
+    return options;
   }
 
   Map<String, dynamic> toJson() {

@@ -695,7 +695,26 @@ class _MainPageViewState extends State<MainPageView>
 
         if (currentActivities != null &&
             currentActivities['live_sessions'] != null) {
-          final liveSessions = currentActivities['live_sessions'] as List;
+          // ✅ YENİ: Map ve List formatını destekle
+          final liveSessionsData = currentActivities['live_sessions'];
+          List liveSessions;
+
+          if (liveSessionsData is Map) {
+            // Map formatından List'e çevir
+            liveSessions = liveSessionsData.values.toList();
+            print(
+                'MainPage - Live sessions Map formatında, ${liveSessions.length} session bulundu');
+          } else if (liveSessionsData is List) {
+            // Zaten List formatında
+            liveSessions = liveSessionsData;
+            print(
+                'MainPage - Live sessions List formatında, ${liveSessions.length} session bulundu');
+          } else {
+            // Bilinmeyen format
+            print(
+                'MainPage - Live sessions bilinmeyen format: ${liveSessionsData.runtimeType}');
+            liveSessions = [];
+          }
 
           print('MainPage - ${liveSessions.length} aktif session bulundu');
 

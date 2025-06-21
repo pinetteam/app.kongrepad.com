@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_localizations.dart';
 import '../services/question_service.dart';
 import '../utils/app_constants.dart';
+import '../services/auth_service.dart';
 
 class AskQuestionView extends StatefulWidget {
   final int hallId; // Bu aslında sessionId olarak kullanılacak
@@ -27,6 +28,7 @@ class _AskQuestionViewState extends State<AskQuestionView> {
   String _errorMessage = '';
   bool _sending = false;
   String? _sessionTitle;
+  int? _realSessionId; // ✅ YENİ: Gerçek session ID'yi sakla
 
   @override
   void initState() {
@@ -39,20 +41,86 @@ class _AskQuestionViewState extends State<AskQuestionView> {
       if (args != null) {
         setState(() {
           _sessionTitle = args['sessionTitle'];
+          _realSessionId =
+              args['realSessionId']; // ✅ YENİ: Gerçek session ID'yi al
         });
       }
 
+      // ✅ YENİ: Önce gerçek session ID'yi bul
+      await _findRealSessionId();
+
       // DEBUG: Endpoint'leri test et
-      await _questionService.debugCurrentEndpoints(widget.hallId);
+      final sessionIdToTest = _realSessionId ?? widget.hallId;
+      await _questionService.debugCurrentEndpoints(sessionIdToTest);
 
       // Normal soru yükleme işlemini başlat
       _getQuestions();
     });
   }
 
+  // ✅ YENİ: Gerçek session ID'yi bul
+  Future<void> _findRealSessionId() async {
+    try {
+      print(
+          'AskQuestionView - Gerçek session ID aranıyor, Hall ID: ${widget.hallId}');
+
+      final token = await AuthService().getStoredToken();
+      if (token == null) return;
+
+      // Current activities'den live sessions'ları al
+      final response = await http.get(
+        Uri.parse('https://api.kongrepad.com/api/v1/meetings/current'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final meetingData = jsonDecode(response.body);
+        final currentActivities = meetingData['data']?['current_activities'];
+
+        if (currentActivities != null &&
+            currentActivities['live_sessions'] != null) {
+          final liveSessionsData = currentActivities['live_sessions'];
+          List liveSessions;
+
+          if (liveSessionsData is Map) {
+            liveSessions = liveSessionsData.values.toList();
+          } else if (liveSessionsData is List) {
+            liveSessions = liveSessionsData;
+          } else {
+            liveSessions = [];
+          }
+
+          // Bu hall ID'ye ait session'ı bul
+          for (var session in liveSessions) {
+            final sessionHallId = session['program']?['hall_id'];
+            final sessionId = session['id'];
+
+            if (sessionHallId == widget.hallId) {
+              print(
+                  'AskQuestionView - ✅ Gerçek session ID bulundu: $sessionId (Hall ID: $sessionHallId)');
+              setState(() {
+                _realSessionId = sessionId;
+              });
+              return;
+            }
+          }
+
+          print(
+              'AskQuestionView - ❌ Hall ID ${widget.hallId} için session bulunamadı');
+        }
+      }
+    } catch (e) {
+      print('AskQuestionView - Session ID bulma hatası: $e');
+    }
+  }
+
   Future<void> _getQuestions() async {
+    final sessionId = _realSessionId ?? widget.hallId;
     print(
-        'AskQuestionView - _getQuestions başladı, sessionId: ${widget.hallId}');
+        'AskQuestionView - _getQuestions başladı, sessionId: $sessionId (Hall ID: ${widget.hallId})');
 
     setState(() {
       _loading = true;
@@ -60,8 +128,7 @@ class _AskQuestionViewState extends State<AskQuestionView> {
     });
 
     try {
-      final questions =
-          await _questionService.getSessionQuestions(widget.hallId);
+      final questions = await _questionService.getSessionQuestions(sessionId);
 
       if (mounted) {
         setState(() {
@@ -85,13 +152,16 @@ class _AskQuestionViewState extends State<AskQuestionView> {
   Future<void> _askQuestion() async {
     if (_questionController.text.trim().isEmpty) return;
 
+    final sessionId = _realSessionId ?? widget.hallId;
+    print('AskQuestionView - Soru gönderiliyor, sessionId: $sessionId');
+
     setState(() {
       _sending = true;
     });
 
     try {
       final success = await _questionService.askQuestion(
-        widget.hallId,
+        sessionId, // ✅ YENİ: Gerçek session ID'yi kullan
         _questionController.text.trim(),
         anonymous: _isAnonymous,
       );

@@ -100,10 +100,13 @@ class _SessionViewState extends State<SessionView> {
     }
 
     final arguments = <String, dynamic>{
-      'hallId': _sessionId!,
+      'hallId': widget.hallId,
       'sessionTitle': _sessionTitle ?? 'Oturum',
-      'actualHallId': widget.hallId,
+      'realSessionId': _sessionId,
     };
+
+    print(
+        'SessionView - AskQuestionView\'a yönlendiriliyor: Hall ID=${widget.hallId}, Real Session ID=$_sessionId');
 
     Navigator.pushNamed(context, '/ask-question', arguments: arguments);
   }

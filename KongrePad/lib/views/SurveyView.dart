@@ -56,35 +56,99 @@ class _SurveyViewState extends State<SurveyView> {
         throw Exception('Survey ID bulunamadı');
       }
 
-      // Stored answers'ı yükle
-      await _loadStoredAnswers();
-
-      // SurveyService kullanarak survey detaylarını al
-      final result = await _surveyService.getSurveyDetails(
+      // ✅ YENİ: Önce survey'in cevaplanıp cevaplanmadığını kontrol et
+      final surveyResult = await _surveyService.getSurveyDetails(
         survey!.id!,
-        includeResults: false,
+        includeResults: true, // ✅ Cevapları da al
       );
 
       if (!mounted) return;
 
-      if (result['success'] == true && result['data'] != null) {
-        final surveyData = result['data'];
+      if (surveyResult['success'] == true && surveyResult['data'] != null) {
+        final surveyData = surveyResult['data'];
         print('SurveyView - Survey detayları alındı: ${surveyData['title']}');
+
+        // ✅ YENİ: Survey'in cevaplanıp cevaplanmadığını kontrol et
+        final participantStatus = surveyData['participant_status'];
+        final hasParticipated = participantStatus?['has_participated'] ?? false;
+
+        print('SurveyView - Survey cevaplanmış mı: $hasParticipated');
+
+        // Eğer survey cevaplanmışsa, isEditable'i false yap
+        if (hasParticipated) {
+          setState(() {
+            isEditable = false;
+          });
+          print('SurveyView - Survey zaten cevaplanmış, read-only mod');
+        }
 
         // Questions'ı parse et
         if (surveyData['questions'] != null) {
-          final questionsData = surveyData['questions'] as List;
+          final questionsData = surveyData['questions'];
+
+          // ✅ YENİ: Data formatını kontrol et
+          if (questionsData is! List) {
+            print(
+                'SurveyView - Questions data List değil: ${questionsData.runtimeType}');
+            setState(() {
+              questions = [];
+              _loading = false;
+            });
+            return;
+          }
+
           final questionsList = <SurveyQuestion>[];
 
           for (final questionJson in questionsData) {
             try {
+              // ✅ YENİ: JSON formatını kontrol et
+              if (questionJson is! Map<String, dynamic>) {
+                print(
+                    'SurveyView - Question data Map değil: ${questionJson.runtimeType}');
+                continue;
+              }
+
               final question = SurveyQuestion.fromJson(questionJson);
+
+              // ✅ YENİ: Question geçerliliğini kontrol et
+              if (question.id == null) {
+                print('SurveyView - Question ID null, atlanıyor');
+                continue;
+              }
+
+              // ✅ YENİ: Eğer survey cevaplanmışsa, kullanıcının seçtiği option'ı işaretle
+              if (hasParticipated &&
+                  questionJson['selected_option_id'] != null) {
+                final selectedOptionId = questionJson['selected_option_id'];
+                question.selectedOption = selectedOptionId;
+                selectedAnswers[question.id!] = selectedOptionId;
+                print(
+                    'SurveyView - Önceki cevap yüklendi: Question ${question.id}, Option $selectedOptionId');
+              }
+
               questionsList.add(question);
-            } catch (e) {
+              print(
+                  'SurveyView - ✅ Question parse edildi: ${question.id} - ${question.question}');
+            } catch (e, stackTrace) {
               print('SurveyView - Question parse hatası: $e');
               print('SurveyView - Question data: $questionJson');
+              print('SurveyView - Stack trace: $stackTrace');
+
+              // Hata durumunda kullanıcıya bilgi ver (sadece ilk hatada)
+              if (questionsList.isEmpty && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Bazı sorular yüklenirken hata oluştu'),
+                    backgroundColor: Colors.orange,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
             }
           }
+
+          if (!mounted) return;
 
           setState(() {
             questions = questionsList;
@@ -93,7 +157,7 @@ class _SurveyViewState extends State<SurveyView> {
 
           print('SurveyView - ✅ ${questionsList.length} soru yüklendi');
 
-          // Pre-select stored answers
+          // Pre-select stored answers (sadece edit modda)
           if (!isEditable) {
             _preselectStoredAnswers();
           }
@@ -108,9 +172,11 @@ class _SurveyViewState extends State<SurveyView> {
         setState(() {
           _loading = false;
           _hasError = true;
-          _errorMessage = result['message'] ?? 'Anket detayları yüklenemedi';
+          _errorMessage =
+              surveyResult['message'] ?? 'Anket detayları yüklenemedi';
         });
-        print('SurveyView - Survey detayları yükleme başarısız: ${result['message']}');
+        print(
+            'SurveyView - Survey detayları yükleme başarısız: ${surveyResult['message']}');
       }
     } catch (e) {
       if (!mounted) return;
@@ -128,19 +194,24 @@ class _SurveyViewState extends State<SurveyView> {
     if (!isEditable && survey?.id != null) {
       try {
         final SharedPreferences prefs = await SharedPreferences.getInstance();
-        final storedAnswersString = prefs.getString('survey_${survey!.id}_answers');
+        final storedAnswersString =
+            prefs.getString('survey_${survey!.id}_answers');
 
         if (storedAnswersString != null && storedAnswersString.isNotEmpty) {
           print('SurveyView - Stored answers bulundu: $storedAnswersString');
 
           // JSON parse et
-          final Map<String, dynamic> storedData = jsonDecode(storedAnswersString);
+          final Map<String, dynamic> storedData =
+              jsonDecode(storedAnswersString);
 
           // Answers'ı yükle
           if (storedData['selectedAnswers'] != null) {
-            final Map<String, dynamic> selectedMap = storedData['selectedAnswers'];
-            selectedAnswers = selectedMap.map((key, value) => MapEntry(int.parse(key), value as int));
-            print('SurveyView - ${selectedAnswers.length} stored answer yüklendi');
+            final Map<String, dynamic> selectedMap =
+                storedData['selectedAnswers'];
+            selectedAnswers = selectedMap
+                .map((key, value) => MapEntry(int.parse(key), value as int));
+            print(
+                'SurveyView - ${selectedAnswers.length} stored answer yüklendi');
           }
         }
       } catch (e) {
@@ -174,14 +245,15 @@ class _SurveyViewState extends State<SurveyView> {
 
       // Update question selection state
       final question = questions?.firstWhere(
-            (q) => q.id == questionId,
+        (q) => q.id == questionId,
         orElse: () => SurveyQuestion(),
       );
 
       question?.selectOption(optionId);
     });
 
-    print('SurveyView - Answer selected: Question $questionId, Option $optionId');
+    print(
+        'SurveyView - Answer selected: Question $questionId, Option $optionId');
   }
 
   bool _validateAnswers() {
@@ -273,26 +345,86 @@ class _SurveyViewState extends State<SurveyView> {
         AlertService().showAlertDialog(
           context,
           title: 'Başarılı',
-          content: result['message'] ?? 'Anket başarıyla gönderildi. Katılımınız için teşekkürler!',
+          content: result['message'] ??
+              'Anket başarıyla gönderildi. Katılımınız için teşekkürler!',
           onDismiss: () {
             Navigator.pop(context, true); // Return true to indicate success
           },
         );
       } else {
         print('SurveyView - Survey gönderme başarısız: ${result['message']}');
-        AlertService().showAlertDialog(
-          context,
-          title: 'Hata',
-          content: result['message'] ?? 'Anket gönderilemedi',
-        );
+
+        // ✅ YENİ: Daha detaylı hata mesajları
+        String errorMessage = result['message'] ?? 'Anket gönderilemedi';
+        String errorTitle = 'Hata';
+        bool showRetryButton = false;
+
+        // Backend 500 hatası için özel mesaj
+        if (errorMessage.contains('500') ||
+            errorMessage.contains('INTERNAL_SERVER_ERROR')) {
+          errorTitle = 'Sunucu Hatası';
+          errorMessage =
+              'Sunucuda geçici bir sorun oluştu. Lütfen birkaç dakika sonra tekrar deneyiniz.';
+          showRetryButton = true;
+        } else if (errorMessage.contains('401') ||
+            errorMessage.contains('Unauthorized')) {
+          errorTitle = 'Oturum Hatası';
+          errorMessage = 'Oturum süreniz dolmuş. Lütfen tekrar giriş yapınız.';
+        } else if (errorMessage.contains('403') ||
+            errorMessage.contains('Forbidden')) {
+          errorTitle = 'Yetki Hatası';
+          errorMessage = 'Bu ankete cevap verme yetkiniz bulunmuyor.';
+        } else if (errorMessage.contains('409') ||
+            errorMessage.contains('Conflict')) {
+          errorTitle = 'Zaten Cevaplandı';
+          errorMessage = 'Bu anketi daha önce cevaplamışsınız.';
+        } else if (errorMessage.contains('422') ||
+            errorMessage.contains('Validation')) {
+          errorTitle = 'Geçersiz Veri';
+          errorMessage =
+              'Gönderilen veriler geçersiz. Lütfen kontrol edip tekrar deneyiniz.';
+        }
+
+        if (showRetryButton) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(errorTitle),
+                content: Text(errorMessage),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close dialog
+                      _submitSurvey(); // Retry
+                    },
+                    child: const Text('Tekrar Dene'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('İptal'),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          AlertService().showAlertDialog(
+            context,
+            title: errorTitle,
+            content: errorMessage,
+          );
+        }
       }
     } catch (e) {
       print('SurveyView - Submit Exception: $e');
       if (mounted) {
         AlertService().showAlertDialog(
           context,
-          title: 'Hata',
-          content: 'Anket gönderilirken bir hata oluştu',
+          title: 'Bağlantı Hatası',
+          content: 'İnternet bağlantınızı kontrol edip tekrar deneyiniz.',
         );
       }
     } finally {
@@ -308,7 +440,8 @@ class _SurveyViewState extends State<SurveyView> {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final answersData = {
-        'selectedAnswers': selectedAnswers.map((key, value) => MapEntry(key.toString(), value)),
+        'selectedAnswers': selectedAnswers
+            .map((key, value) => MapEntry(key.toString(), value)),
         'timestamp': DateTime.now().millisecondsSinceEpoch,
         'completed': true,
       };
@@ -376,7 +509,8 @@ class _SurveyViewState extends State<SurveyView> {
                       children: [
                         Expanded(
                           child: Text(
-                            question.question?.toString() ?? 'Soru metni bulunamadı',
+                            question.question?.toString() ??
+                                'Soru metni bulunamadı',
                             style: const TextStyle(
                               fontSize: 18,
                               color: Colors.black87,
@@ -388,7 +522,8 @@ class _SurveyViewState extends State<SurveyView> {
                         if (question.required == true)
                           Container(
                             margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: Colors.red[600],
                               borderRadius: BorderRadius.circular(6),
@@ -452,6 +587,28 @@ class _SurveyViewState extends State<SurveyView> {
         final isSelected = selectedAnswers[question.id] == option.id;
         final isLast = index == question.options!.length - 1;
 
+        // ✅ YENİ: Read-only mod için renk seçimi
+        Color optionColor;
+        Color borderColor;
+        Color textColor;
+
+        if (isSelected) {
+          if (isEditable) {
+            optionColor = AppConstants.backgroundBlue.withOpacity(0.1);
+            borderColor = AppConstants.backgroundBlue;
+            textColor = AppConstants.backgroundBlue;
+          } else {
+            // Read-only modda seçili option'lar kırmızı olsun
+            optionColor = Colors.red[50]!;
+            borderColor = Colors.red[400]!;
+            textColor = Colors.red[700]!;
+          }
+        } else {
+          optionColor = Colors.grey[50]!;
+          borderColor = Colors.grey[200]!;
+          textColor = Colors.black87;
+        }
+
         return Container(
           margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
           child: Material(
@@ -464,14 +621,10 @@ class _SurveyViewState extends State<SurveyView> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppConstants.backgroundBlue.withOpacity(0.1)
-                      : Colors.grey[50],
+                  color: optionColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected
-                        ? AppConstants.backgroundBlue
-                        : Colors.grey[200]!,
+                    color: borderColor,
                     width: isSelected ? 2 : 1,
                   ),
                 ),
@@ -483,22 +636,18 @@ class _SurveyViewState extends State<SurveyView> {
                       height: 20,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isSelected
-                            ? AppConstants.backgroundBlue
-                            : Colors.transparent,
+                        color: isSelected ? borderColor : Colors.transparent,
                         border: Border.all(
-                          color: isSelected
-                              ? AppConstants.backgroundBlue
-                              : Colors.grey[400]!,
+                          color: borderColor,
                           width: 2,
                         ),
                       ),
                       child: isSelected
-                          ? const Icon(
-                        Icons.check,
-                        size: 12,
-                        color: Colors.white,
-                      )
+                          ? Icon(
+                              Icons.check,
+                              size: 12,
+                              color: isEditable ? Colors.white : Colors.white,
+                            )
                           : null,
                     ),
                     const SizedBox(width: 16),
@@ -509,12 +658,21 @@ class _SurveyViewState extends State<SurveyView> {
                         option.option?.toString() ?? 'Seçenek metni bulunamadı',
                         style: TextStyle(
                           fontSize: 16,
-                          color: isSelected ? AppConstants.backgroundBlue : Colors.black87,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          color: textColor,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w400,
                           height: 1.3,
                         ),
                       ),
                     ),
+
+                    // ✅ YENİ: Read-only modda seçili option'a işaret ekle
+                    if (!isEditable && isSelected)
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.red[600],
+                        size: 20,
+                      ),
                   ],
                 ),
               ),
@@ -537,7 +695,8 @@ class _SurveyViewState extends State<SurveyView> {
               shape: BoxShape.circle,
             ),
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppConstants.backgroundBlue),
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(AppConstants.backgroundBlue),
               strokeWidth: 4,
             ),
           ),
@@ -609,7 +768,8 @@ class _SurveyViewState extends State<SurveyView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConstants.backgroundBlue,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -667,7 +827,8 @@ class _SurveyViewState extends State<SurveyView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConstants.backgroundBlue,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -751,20 +912,24 @@ class _SurveyViewState extends State<SurveyView> {
             child: _loading
                 ? _buildLoadingState()
                 : _hasError
-                ? _buildErrorState()
-                : questions == null || questions!.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: questions!.length,
-              itemBuilder: (context, index) {
-                return _buildQuestionWidget(questions![index], index);
-              },
-            ),
+                    ? _buildErrorState()
+                    : questions == null || questions!.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(20),
+                            itemCount: questions!.length,
+                            itemBuilder: (context, index) {
+                              return _buildQuestionWidget(
+                                  questions![index], index);
+                            },
+                          ),
           ),
 
           // Submit Button
-          if (!_loading && !_hasError && questions != null && questions!.isNotEmpty)
+          if (!_loading &&
+              !_hasError &&
+              questions != null &&
+              questions!.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -778,52 +943,79 @@ class _SurveyViewState extends State<SurveyView> {
                 ],
               ),
               child: SafeArea(
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isEditable
-                          ? AppConstants.buttonGreen
-                          : Colors.grey[400],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: _sending || !isEditable ? null : _submitSurvey,
-                    child: _sending
-                        ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        strokeWidth: 2,
-                      ),
-                    )
-                        : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          isEditable ? Icons.send : Icons.check_circle,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isEditable
-                              ? 'Anketi Gönder'
-                              : 'Zaten Cevaplandı',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                child: isEditable
+                    ? SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppConstants.buttonGreen,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
                           ),
+                          onPressed: _sending ? null : _submitSurvey,
+                          child: _sending
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.send,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Anketi Gönder',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
+                      )
+                    : Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16, horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.red[600],
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Bu anketi zaten cevapladınız',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.red[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
               ),
             ),
         ],

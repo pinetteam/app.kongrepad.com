@@ -45,7 +45,127 @@ class SessionService {
         throw Exception('No token found');
       }
 
-      // Önce aktif toplantıyı al
+      // ✅ YENİ: Önce current activities'den live sessions'ları al
+      final currentActivitiesResponse = await http.get(
+        Uri.parse('$baseUrl/meetings/current'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      print(
+          'SessionService - Current Activities API yanıt kodu: ${currentActivitiesResponse.statusCode}');
+
+      if (currentActivitiesResponse.statusCode == 200) {
+        final meetingData = jsonDecode(currentActivitiesResponse.body);
+        final currentActivities = meetingData['data']?['current_activities'];
+
+        if (currentActivities != null &&
+            currentActivities['live_sessions'] != null) {
+          // Live sessions'ları al
+          final liveSessionsData = currentActivities['live_sessions'];
+          List liveSessions;
+
+          if (liveSessionsData is Map) {
+            liveSessions = liveSessionsData.values.toList();
+          } else if (liveSessionsData is List) {
+            liveSessions = liveSessionsData;
+          } else {
+            liveSessions = [];
+          }
+
+          print('SessionService - ${liveSessions.length} live session bulundu');
+
+          // Bu hall ID'ye ait session'ı bul
+          for (var session in liveSessions) {
+            final sessionHallId = session['program']?['hall_id'];
+            final sessionId = session['id'];
+
+            print(
+                'SessionService - Session kontrol: Session ID=$sessionId, Hall ID=$sessionHallId, Aranan Hall ID=$hallId');
+
+            if (sessionHallId == hallId) {
+              print(
+                  'SessionService - ✅ Eşleşen session bulundu: Session ID=$sessionId, Hall ID=$sessionHallId');
+
+              // Session ID ile questions API'sini çağır
+              final questionsResponse = await http.get(
+                Uri.parse('$baseUrl/sessions/$sessionId/questions'),
+                headers: {
+                  'Authorization': 'Bearer $token',
+                  'Accept': 'application/json',
+                },
+              );
+
+              print(
+                  'SessionService - Questions API yanıt kodu: ${questionsResponse.statusCode}');
+
+              if (questionsResponse.statusCode == 200) {
+                final questionsData = jsonDecode(questionsResponse.body);
+                final documentId = questionsData['data']?['document_id'];
+
+                if (documentId != null) {
+                  final downloadUrl =
+                      'https://api.kongrepad.com/api/v1/documents/$documentId/download';
+
+                  return {
+                    'pdf_url': downloadUrl,
+                    'session_id': sessionId.toString(),
+                    'title': session['title'] ?? 'Oturum',
+                    'description': session['description'] ?? 'Oturum dokümanı',
+                    'source': 'live_session_mapping',
+                    'document_id': documentId.toString(),
+                    'file_name': session['title'] ?? 'Doküman',
+                    'real_session_id': sessionId,
+                    'mapped_hall_id': hallId
+                  };
+                } else {
+                  return {
+                    'pdf_url': null,
+                    'session_id': sessionId.toString(),
+                    'title': session['title'] ?? 'Oturum',
+                    'description': 'Bu oturum için doküman bulunmuyor',
+                    'source': 'live_session_no_document',
+                    'real_session_id': sessionId,
+                    'mapped_hall_id': hallId
+                  };
+                }
+              } else {
+                print(
+                    'SessionService - Questions API failed: ${questionsResponse.statusCode}');
+                return {
+                  'pdf_url': null,
+                  'session_id': sessionId.toString(),
+                  'title': session['title'] ?? 'Oturum',
+                  'description': 'Oturum bilgileri alınamadı',
+                  'source': 'questions_api_failed',
+                  'real_session_id': sessionId,
+                  'mapped_hall_id': hallId
+                };
+              }
+            }
+          }
+
+          // Bu hall ID için session bulunamadı
+          print(
+              'SessionService - ❌ Hall ID $hallId için live session bulunamadı');
+          return {
+            'pdf_url': null,
+            'session_id': null,
+            'title': 'Aktif Oturum Yok',
+            'description': 'Bu salonda şu anda aktif oturum bulunmuyor',
+            'source': 'no_live_session_for_hall',
+            'mapped_hall_id': hallId
+          };
+        }
+      }
+
+      // Fallback: Eski yöntem (live sessions yoksa)
+      print(
+          'SessionService - Live sessions bulunamadı, fallback yöntemi kullanılıyor');
+
+      // Aktif toplantıyı al
       final currentMeetingResponse = await http.get(
         Uri.parse('$baseUrl/meetings/current'),
         headers: {
@@ -71,66 +191,119 @@ class SessionService {
       final meetingId = meetingData['data']['id'];
       print('SessionService - Active Meeting ID alındı: $meetingId');
 
-      // Current activities'ten live sessions'ı al
-      final currentActivities = meetingData['data']['current_activities'];
-      if (currentActivities != null &&
-          currentActivities['live_sessions'] != null) {
-        final liveSessions = currentActivities['live_sessions'] as List;
-        print(
-            'SessionService - Current activities den ${liveSessions.length} live session bulundu');
+      // Halls array'inden ilgili hall'ı bul
+      final halls = meetingData['data']['halls'] as List;
+      final targetHall = halls.firstWhere(
+        (hall) => hall['id'] == hallId,
+        orElse: () => null,
+      );
 
-        // Debug: Tüm sessions'ları listele
-        for (int i = 0; i < liveSessions.length; i++) {
-          final session = liveSessions[i];
-          final programHallId = session['program']?['hall_id'];
-          print(
-              'SessionService - Session $i: ID=${session['id']}, Program Hall ID=$programHallId, Title=${session['title']}');
-        }
-
-        print('SessionService - Aranan Hall ID: $hallId');
-
-        // 1. Önce tam eşleşme dene
-        var currentSession = liveSessions.firstWhere(
-            (session) =>
-                session['program'] != null &&
-                session['program']['hall_id'] == hallId,
-            orElse: () => null);
-
-        // 2. Tam eşleşme yoksa alternatif seç
-        if (currentSession == null) {
-          print(
-              'SessionService - Hall ID $hallId için aktif session bulunamadı');
-
-          if (liveSessions.isNotEmpty) {
-            currentSession = liveSessions.first;
-            final actualHallId = currentSession['program']?['hall_id'];
-            print('SessionService - ⚠️ ALTERNATIF SESSION KULLANILIYOR ⚠️');
-            print('SessionService - İstenen Hall ID: $hallId');
-            print(
-                'SessionService - Kullanılan Session: ID=${currentSession['id']}, Hall ID=$actualHallId');
-            print('SessionService - Session Title: ${currentSession['title']}');
-          } else {
-            return {
-              'pdf_url': null,
-              'session_id': null,
-              'title': 'Aktif Oturum Bulunamadı',
-              'description': 'Şu anda hiçbir hall\'da aktif oturum yok'
-            };
-          }
-        }
-
-        print('SessionService - Aktif oturum seçildi: ${currentSession['id']}');
-
-        // ✅ ŞİMDİ MATERIALS'I AL
-        return await _getMaterials(currentSession, token);
+      if (targetHall == null) {
+        print('SessionService - Hall ID $hallId bulunamadı');
+        return {
+          'pdf_url': null,
+          'session_id': null,
+          'title': 'Hall Bulunamadı',
+          'description': 'Seçtiğiniz salon bulunamadı'
+        };
       }
 
-      return {
-        'pdf_url': null,
-        'session_id': null,
-        'title': 'Aktif Oturum Bulunamadı',
-        'description': 'Şu anda hiçbir oturum aktif değil'
-      };
+      print('SessionService - Hall bulundu: ${targetHall['title']}');
+
+      // Hall'daki programs'ları kontrol et
+      final programs = targetHall['programs'] as List;
+      if (programs.isEmpty) {
+        print('SessionService - Hall\'da program yok');
+        return {
+          'pdf_url': null,
+          'session_id': null,
+          'title': 'Program Yok',
+          'description': 'Bu salonda henüz program bulunmuyor'
+        };
+      }
+
+      // İlk program'ı al
+      final program = programs.first;
+      final sessions = program['sessions'] as List;
+
+      if (sessions.isEmpty) {
+        print('SessionService - Program\'da session yok');
+        return {
+          'pdf_url': null,
+          'session_id': null,
+          'title': program['title'] ?? 'Program',
+          'description': 'Bu programda henüz oturum bulunmuyor'
+        };
+      }
+
+      // İlk session'ı al
+      final session = sessions.first;
+      final sessionId = session['id'];
+      final documentId = session['document_id'];
+
+      print(
+          'SessionService - Session bulundu: ID=$sessionId, Document ID=$documentId');
+
+      if (documentId == null) {
+        print('SessionService - Session\'da document_id yok');
+        return {
+          'pdf_url': null,
+          'session_id': sessionId.toString(),
+          'title': session['title'],
+          'description': 'Bu oturum için doküman bulunmuyor'
+        };
+      }
+
+      // Document download URL'ini oluştur
+      final downloadUrl =
+          'https://api.kongrepad.com/api/v1/documents/$documentId/download';
+
+      // URL'i test et
+      try {
+        final testResponse = await http.head(
+          Uri.parse(downloadUrl),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/pdf, application/octet-stream',
+          },
+        );
+
+        if (testResponse.statusCode == 200) {
+          print('SessionService - ✅ Document URL çalışıyor: $downloadUrl');
+          return {
+            'pdf_url': downloadUrl,
+            'session_id': sessionId.toString(),
+            'title': session['title'],
+            'description': session['description'] ?? 'Oturum dokümanı',
+            'source': 'document_api',
+            'document_id': documentId.toString(),
+            'file_name': session['title'] ?? 'Doküman'
+          };
+        } else {
+          print(
+              'SessionService - ❌ Document URL çalışmıyor: ${testResponse.statusCode}');
+          return {
+            'pdf_url': null,
+            'session_id': sessionId.toString(),
+            'title': session['title'],
+            'description': 'Doküman bulundu ama indirilemiyor',
+            'source': 'document_found_but_inaccessible',
+            'document_id': documentId.toString(),
+            'file_name': session['title'] ?? 'Doküman'
+          };
+        }
+      } catch (e) {
+        print('SessionService - Document URL test hatası: $e');
+        return {
+          'pdf_url': null,
+          'session_id': sessionId.toString(),
+          'title': session['title'],
+          'description': 'Doküman erişiminde hata oluştu',
+          'source': 'document_access_error',
+          'document_id': documentId.toString(),
+          'file_name': session['title'] ?? 'Doküman'
+        };
+      }
     } catch (e, stackTrace) {
       print('SessionService - HATA: $e');
       print('SessionService - Stack trace: $stackTrace');

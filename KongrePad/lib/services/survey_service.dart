@@ -20,18 +20,15 @@ class SurveyService {
       final token = await AuthService().getStoredToken();
       if (token == null) {
         print('SurveyService - HATA: Token bulunamadı');
-        return {
-          'success': false,
-          'data': [],
-          'message': 'Token bulunamadı'
-        };
+        return {'success': false, 'data': [], 'message': 'Token bulunamadı'};
       }
 
       // Query parameters oluştur
       final queryParams = <String, String>{};
       if (status != null) queryParams['status'] = status;
       if (meetingId != null) queryParams['meeting_id'] = meetingId.toString();
-      if (participated != null) queryParams['participated'] = participated.toString();
+      if (participated != null)
+        queryParams['participated'] = participated.toString();
       if (limit != null) queryParams['limit'] = limit.toString();
       if (page != null) queryParams['page'] = page.toString();
 
@@ -102,37 +99,32 @@ class SurveyService {
         };
       } else {
         print('SurveyService - HTTP Error: ${response.statusCode}');
-        final errorBody = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+        final errorBody =
+            response.body.isNotEmpty ? jsonDecode(response.body) : {};
         return {
           'success': false,
           'data': [],
-          'message': errorBody['message'] ?? 'Anketler yüklenemedi (${response.statusCode})'
+          'message': errorBody['message'] ??
+              'Anketler yüklenemedi (${response.statusCode})'
         };
       }
     } catch (e) {
       print('SurveyService - Exception Error: $e');
-      return {
-        'success': false,
-        'data': [],
-        'message': 'Bağlantı hatası: $e'
-      };
+      return {'success': false, 'data': [], 'message': 'Bağlantı hatası: $e'};
     }
   }
 
   /// Get survey details with questions
   /// API: GET /api/v1/surveys/{id}
-  Future<Map<String, dynamic>> getSurveyDetails(int surveyId, {bool includeResults = false}) async {
+  Future<Map<String, dynamic>> getSurveyDetails(int surveyId,
+      {bool includeResults = false}) async {
     print('SurveyService - getSurveyDetails başladı, surveyId: $surveyId');
 
     try {
       final token = await AuthService().getStoredToken();
       if (token == null) {
         print('SurveyService - HATA: Token bulunamadı');
-        return {
-          'success': false,
-          'data': null,
-          'message': 'Token bulunamadı'
-        };
+        return {'success': false, 'data': null, 'message': 'Token bulunamadı'};
       }
 
       // Query parameters
@@ -154,7 +146,8 @@ class SurveyService {
         },
       );
 
-      print('SurveyService - Survey Details Response Status: ${response.statusCode}');
+      print(
+          'SurveyService - Survey Details Response Status: ${response.statusCode}');
       print('SurveyService - Survey Details Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
@@ -162,12 +155,31 @@ class SurveyService {
 
         if (jsonData['success'] == true && jsonData['data'] != null) {
           final surveyData = jsonData['data'];
-          print('SurveyService - ✅ Survey details alındı: ${surveyData['title']}');
+          print(
+              'SurveyService - ✅ Survey details alındı: ${surveyData['title']}');
 
           // Questions varsa say
           if (surveyData['questions'] != null) {
-            final questions = surveyData['questions'] as List;
-            print('SurveyService - ${questions.length} question bulundu');
+            final questionsData = surveyData['questions'];
+
+            // ✅ YENİ: Questions formatını kontrol et
+            if (questionsData is List) {
+              print('SurveyService - ${questionsData.length} question bulundu');
+
+              // Her question'ın formatını kontrol et
+              for (int i = 0; i < questionsData.length; i++) {
+                final question = questionsData[i];
+                if (question is! Map<String, dynamic>) {
+                  print(
+                      'SurveyService - Question $i Map değil: ${question.runtimeType}');
+                } else if (question['id'] == null) {
+                  print('SurveyService - Question $i ID null');
+                }
+              }
+            } else {
+              print(
+                  'SurveyService - Questions List değil: ${questionsData.runtimeType}');
+            }
           }
 
           return {
@@ -185,11 +197,7 @@ class SurveyService {
         }
       } else if (response.statusCode == 404) {
         print('SurveyService - Survey not found (404)');
-        return {
-          'success': false,
-          'data': null,
-          'message': 'Anket bulunamadı'
-        };
+        return {'success': false, 'data': null, 'message': 'Anket bulunamadı'};
       } else if (response.statusCode == 401) {
         print('SurveyService - Unauthorized (401)');
         return {
@@ -206,37 +214,80 @@ class SurveyService {
         };
       } else {
         print('SurveyService - HTTP Error: ${response.statusCode}');
-        final errorBody = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+        final errorBody =
+            response.body.isNotEmpty ? jsonDecode(response.body) : {};
         return {
           'success': false,
           'data': null,
-          'message': errorBody['message'] ?? 'Anket detayları yüklenemedi (${response.statusCode})'
+          'message': errorBody['message'] ??
+              'Anket detayları yüklenemedi (${response.statusCode})'
         };
       }
     } catch (e) {
       print('SurveyService - Exception Error: $e');
-      return {
-        'success': false,
-        'data': null,
-        'message': 'Bağlantı hatası: $e'
-      };
+      return {'success': false, 'data': null, 'message': 'Bağlantı hatası: $e'};
     }
+  }
+
+  /// Validate survey responses before submission
+  static Map<String, dynamic> validateResponses(
+      List<Map<String, dynamic>> responses) {
+    print('SurveyService - Validating responses: $responses');
+
+    if (responses.isEmpty) {
+      return {'valid': false, 'message': 'En az bir soru cevaplanmalıdır'};
+    }
+
+    for (int i = 0; i < responses.length; i++) {
+      final response = responses[i];
+
+      if (response['question_id'] == null) {
+        return {'valid': false, 'message': 'Soru ${i + 1}: question_id eksik'};
+      }
+
+      if (response['option_id'] == null) {
+        return {'valid': false, 'message': 'Soru ${i + 1}: option_id eksik'};
+      }
+
+      // Check if IDs are valid integers
+      if (response['question_id'] is! int) {
+        return {
+          'valid': false,
+          'message': 'Soru ${i + 1}: question_id sayı olmalıdır'
+        };
+      }
+
+      if (response['option_id'] is! int) {
+        return {
+          'valid': false,
+          'message': 'Soru ${i + 1}: option_id sayı olmalıdır'
+        };
+      }
+    }
+
+    print('SurveyService - ✅ Responses validation passed');
+    return {'valid': true, 'message': 'Responses are valid'};
   }
 
   /// Submit survey responses
   /// API: POST /api/v1/surveys/{id}/submit
-  Future<Map<String, dynamic>> submitSurvey(int surveyId, List<Map<String, dynamic>> responses) async {
+  Future<Map<String, dynamic>> submitSurvey(
+      int surveyId, List<Map<String, dynamic>> responses) async {
     print('SurveyService - submitSurvey başladı, surveyId: $surveyId');
     print('SurveyService - Responses: $responses');
+
+    // ✅ YENİ: Validate responses before submission
+    final validation = validateResponses(responses);
+    if (!validation['valid']) {
+      print('SurveyService - Validation failed: ${validation['message']}');
+      return {'success': false, 'message': validation['message']};
+    }
 
     try {
       final token = await AuthService().getStoredToken();
       if (token == null) {
         print('SurveyService - HATA: Token bulunamadı');
-        return {
-          'success': false,
-          'message': 'Token bulunamadı'
-        };
+        return {'success': false, 'message': 'Token bulunamadı'};
       }
 
       final url = '$baseUrl/surveys/$surveyId/submit';
@@ -247,6 +298,8 @@ class SurveyService {
       });
 
       print('SurveyService - Submit Body: $body');
+      print(
+          'SurveyService - Request Headers: Authorization: Bearer ${token.substring(0, 20)}...');
 
       final response = await http.post(
         Uri.parse(url),
@@ -259,6 +312,7 @@ class SurveyService {
       );
 
       print('SurveyService - Submit Response Status: ${response.statusCode}');
+      print('SurveyService - Submit Response Headers: ${response.headers}');
       print('SurveyService - Submit Response Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -286,10 +340,7 @@ class SurveyService {
         };
       } else if (response.statusCode == 401) {
         print('SurveyService - Unauthorized (401)');
-        return {
-          'success': false,
-          'message': 'Oturum süresi dolmuş'
-        };
+        return {'success': false, 'message': 'Oturum süresi dolmuş'};
       } else if (response.statusCode == 403) {
         print('SurveyService - Forbidden (403)');
         return {
@@ -305,24 +356,36 @@ class SurveyService {
         };
       } else if (response.statusCode == 409) {
         print('SurveyService - Conflict (409) - Already submitted');
-        return {
-          'success': false,
-          'message': 'Bu anketi zaten cevaplamışsınız'
-        };
+        return {'success': false, 'message': 'Bu anketi zaten cevaplamışsınız'};
       } else {
         print('SurveyService - HTTP Error: ${response.statusCode}');
-        final errorBody = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+        final errorBody =
+            response.body.isNotEmpty ? jsonDecode(response.body) : {};
+
+        // ✅ YENİ: Daha detaylı hata mesajları
+        String errorMessage;
+        if (response.statusCode == 500) {
+          errorMessage =
+              'Sunucu hatası (500): ${errorBody['message'] ?? 'An error occurred while processing your request'}';
+          if (errorBody['incident_id'] != null) {
+            errorMessage += '\n\nHata ID: ${errorBody['incident_id']}';
+          }
+        } else {
+          errorMessage = errorBody['message'] ??
+              'Anket gönderilemedi (${response.statusCode})';
+        }
+
         return {
           'success': false,
-          'message': errorBody['message'] ?? 'Anket gönderilemedi (${response.statusCode})'
+          'message': errorMessage,
+          'status_code': response.statusCode,
+          'error_code': errorBody['error_code'],
+          'incident_id': errorBody['incident_id'],
         };
       }
     } catch (e) {
       print('SurveyService - Submit Exception: $e');
-      return {
-        'success': false,
-        'message': 'Bağlantı hatası: $e'
-      };
+      return {'success': false, 'message': 'Bağlantı hatası: $e'};
     }
   }
 
@@ -335,11 +398,7 @@ class SurveyService {
       final token = await AuthService().getStoredToken();
       if (token == null) {
         print('SurveyService - HATA: Token bulunamadı');
-        return {
-          'success': false,
-          'data': null,
-          'message': 'Token bulunamadı'
-        };
+        return {'success': false, 'data': null, 'message': 'Token bulunamadı'};
       }
 
       final url = '$baseUrl/surveys/$surveyId/results';
@@ -383,11 +442,7 @@ class SurveyService {
         };
       } else if (response.statusCode == 404) {
         print('SurveyService - Survey not found (404)');
-        return {
-          'success': false,
-          'data': null,
-          'message': 'Anket bulunamadı'
-        };
+        return {'success': false, 'data': null, 'message': 'Anket bulunamadı'};
       } else if (response.statusCode == 401) {
         return {
           'success': false,
@@ -396,20 +451,18 @@ class SurveyService {
         };
       } else {
         print('SurveyService - HTTP Error: ${response.statusCode}');
-        final errorBody = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+        final errorBody =
+            response.body.isNotEmpty ? jsonDecode(response.body) : {};
         return {
           'success': false,
           'data': null,
-          'message': errorBody['message'] ?? 'Sonuçlar yüklenemedi (${response.statusCode})'
+          'message': errorBody['message'] ??
+              'Sonuçlar yüklenemedi (${response.statusCode})'
         };
       }
     } catch (e) {
       print('SurveyService - Exception Error: $e');
-      return {
-        'success': false,
-        'data': null,
-        'message': 'Bağlantı hatası: $e'
-      };
+      return {'success': false, 'data': null, 'message': 'Bağlantı hatası: $e'};
     }
   }
 
@@ -422,11 +475,7 @@ class SurveyService {
       final token = await AuthService().getStoredToken();
       if (token == null) {
         print('SurveyService - HATA: Token bulunamadı');
-        return {
-          'success': false,
-          'data': [],
-          'message': 'Token bulunamadı'
-        };
+        return {'success': false, 'data': [], 'message': 'Token bulunamadı'};
       }
 
       final url = '$baseUrl/votes/live';
@@ -441,7 +490,8 @@ class SurveyService {
         },
       );
 
-      print('SurveyService - Live Votes Response Status: ${response.statusCode}');
+      print(
+          'SurveyService - Live Votes Response Status: ${response.statusCode}');
       print('SurveyService - Live Votes Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
@@ -483,20 +533,18 @@ class SurveyService {
         };
       } else {
         print('SurveyService - HTTP Error: ${response.statusCode}');
-        final errorBody = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+        final errorBody =
+            response.body.isNotEmpty ? jsonDecode(response.body) : {};
         return {
           'success': false,
           'data': [],
-          'message': errorBody['message'] ?? 'Canlı oylamalar yüklenemedi (${response.statusCode})'
+          'message': errorBody['message'] ??
+              'Canlı oylamalar yüklenemedi (${response.statusCode})'
         };
       }
     } catch (e) {
       print('SurveyService - Exception Error: $e');
-      return {
-        'success': false,
-        'data': [],
-        'message': 'Bağlantı hatası: $e'
-      };
+      return {'success': false, 'data': [], 'message': 'Bağlantı hatası: $e'};
     }
   }
 
@@ -509,11 +557,7 @@ class SurveyService {
       final token = await AuthService().getStoredToken();
       if (token == null) {
         print('SurveyService - HATA: Token bulunamadı');
-        return {
-          'success': false,
-          'data': [],
-          'message': 'Token bulunamadı'
-        };
+        return {'success': false, 'data': [], 'message': 'Token bulunamadı'};
       }
 
       // Query parameters
@@ -536,7 +580,8 @@ class SurveyService {
         },
       );
 
-      print('SurveyService - Voting History Response Status: ${response.statusCode}');
+      print(
+          'SurveyService - Voting History Response Status: ${response.statusCode}');
       print('SurveyService - Voting History Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
@@ -578,44 +623,51 @@ class SurveyService {
         };
       } else {
         print('SurveyService - HTTP Error: ${response.statusCode}');
-        final errorBody = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+        final errorBody =
+            response.body.isNotEmpty ? jsonDecode(response.body) : {};
         return {
           'success': false,
           'data': [],
-          'message': errorBody['message'] ?? 'Oylama geçmişi yüklenemedi (${response.statusCode})'
+          'message': errorBody['message'] ??
+              'Oylama geçmişi yüklenemedi (${response.statusCode})'
         };
       }
     } catch (e) {
       print('SurveyService - Exception Error: $e');
-      return {
-        'success': false,
-        'data': [],
-        'message': 'Bağlantı hatası: $e'
-      };
+      return {'success': false, 'data': [], 'message': 'Bağlantı hatası: $e'};
     }
   }
 
   /// Helper method to format choice responses for submit
-  static List<Map<String, dynamic>> formatChoiceResponses(Map<int, int> selectedAnswers) {
-    return selectedAnswers.entries.map((entry) => {
-      'question_id': entry.key,
-      'option_id': entry.value,
-    }).toList();
+  static List<Map<String, dynamic>> formatChoiceResponses(
+      Map<int, int> selectedAnswers) {
+    return selectedAnswers.entries
+        .map((entry) => {
+              'question_id': entry.key,
+              'option_id': entry.value,
+            })
+        .toList();
   }
 
   /// Helper method to format text responses for submit
-  static List<Map<String, dynamic>> formatTextResponses(Map<int, String> textAnswers) {
-    return textAnswers.entries.map((entry) => {
-      'question_id': entry.key,
-      'text_value': entry.value,
-    }).toList();
+  static List<Map<String, dynamic>> formatTextResponses(
+      Map<int, String> textAnswers) {
+    return textAnswers.entries
+        .map((entry) => {
+              'question_id': entry.key,
+              'text_value': entry.value,
+            })
+        .toList();
   }
 
   /// Helper method to format rating responses for submit
-  static List<Map<String, dynamic>> formatRatingResponses(Map<int, int> ratingAnswers) {
-    return ratingAnswers.entries.map((entry) => {
-      'question_id': entry.key,
-      'rating_value': entry.value,
-    }).toList();
+  static List<Map<String, dynamic>> formatRatingResponses(
+      Map<int, int> ratingAnswers) {
+    return ratingAnswers.entries
+        .map((entry) => {
+              'question_id': entry.key,
+              'rating_value': entry.value,
+            })
+        .toList();
   }
 }
